@@ -9,5 +9,5 @@ Wave 0 intentionally exposes only:
 
 Business endpoints are documented in OpenAPI before handlers are implemented.
 
-Use the root pnpm commands. Copy `.env.example` only for local configuration and
-never commit secret values.
+Use the root pnpm commands. Copy the repository-root `.env.example` to `.env`
+for local configuration and never commit secret values.
