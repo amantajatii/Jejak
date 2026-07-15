@@ -1,0 +1,31 @@
+{
+  "name": "@jejak/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "pnpm generate && tsc -p tsconfig.build.json",
+    "fixtures:validate": "node scripts/validate-fixtures.mjs",
+    "generate": "node scripts/generate-types.mjs",
+    "lint": "pnpm validate",
+    "test": "vitest run",
+    "typecheck": "pnpm generate && tsc -p tsconfig.json --noEmit",
+    "validate": "node scripts/validate-schemas.mjs",
+    "vectors:verify": "node scripts/verify-vectors.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  },
+  "devDependencies": {
+    "@jejak/config": "workspace:*",
+    "@types/node": "24.13.3",
+    "json-canonicalize": "2.0.0",
+    "json-schema-to-typescript": "15.0.4",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

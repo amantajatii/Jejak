@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/fixtures/scenario.schema.json",
+  "title": "ScenarioFixture",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scenario", "version", "sandbox", "description", "source", "expected"],
+  "properties": {
+    "scenario": {
+      "enum": [
+        "happy_claim",
+        "refund_spike",
+        "shortfall",
+        "missing_data",
+        "duplicate_claim",
+        "stale_attestation",
+        "partner_timeout",
+        "unauthorized_actor"
+      ]
+    },
+    "version": { "const": 1 },
+    "sandbox": { "const": true },
+    "description": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sellerId", "claimId", "marketplaceEvents", "adapter"],
+      "properties": {
+        "sellerId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+        "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+        "marketplaceEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["eventId", "type", "occurredAt", "amount"],
+            "properties": {
+              "eventId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+              "type": { "enum": ["ORDER_SETTLED", "REFUND", "CHARGEBACK"] },
+              "occurredAt": { "$ref": "../common/timestamp.schema.json" },
+              "amount": { "$ref": "../common/money.schema.json" }
+            }
+          }
+        },
+        "adapter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["outcome", "retryable", "attemptsBeforeSuccess"],
+          "properties": {
+            "outcome": { "enum": ["SUCCESS", "TIMEOUT_THEN_SUCCESS", "FORBIDDEN"] },
+            "retryable": { "type": "boolean" },
+            "attemptsBeforeSuccess": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot", "evaluation", "stateTransitions", "reasonCodes"],
+      "properties": {
+        "snapshot": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["grossUnsettled", "eligibleSettlementValue", "advanceAmount"],
+          "properties": {
+            "grossUnsettled": { "$ref": "../common/money.schema.json" },
+            "eligibleSettlementValue": { "$ref": "../common/money.schema.json" },
+            "advanceAmount": { "$ref": "../common/money.schema.json" }
+          }
+        },
+        "evaluation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decision", "jccProjected"],
+          "properties": {
+            "decision": { "$ref": "../enums/eligibility-decision.schema.json" },
+            "jccProjected": { "type": "boolean" }
+          }
+        },
+        "stateTransitions": {
+          "type": "array",
+          "items": { "$ref": "../enums/claim-state.schema.json" },
+          "minItems": 1
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": { "$ref": "../enums/reason-code.schema.json" },
+          "uniqueItems": true
+        },
+        "errorCode": {
+          "anyOf": [
+            { "$ref": "../enums/error-code.schema.json" },
+            { "type": "null" }
+          ]
+        },
+        "waterfall": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seniorRepaid", "firstLossApplied", "residual", "resolutionRequired"],
+          "properties": {
+            "seniorRepaid": { "$ref": "../common/money.schema.json" },
+            "firstLossApplied": { "$ref": "../common/money.schema.json" },
+            "residual": { "$ref": "../common/money.schema.json" },
+            "resolutionRequired": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/resolution-case.schema.json",
+  "title": "ResolutionCase",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "claimId", "status", "resolverAddress", "openedReasonCodes", "recoveryExpected", "recoveryRealized", "finalLoss", "evidenceHashes", "openedAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "status": { "$ref": "../enums/resolution-status.schema.json" },
+    "resolverAddress": { "$ref": "../common/identifiers.schema.json#/$defs/stellarAddress" },
+    "openedReasonCodes": { "type": "array", "items": { "$ref": "../enums/reason-code.schema.json" }, "minItems": 1, "uniqueItems": true },
+    "recoveryExpected": { "$ref": "../common/money.schema.json" },
+    "recoveryRealized": { "$ref": "../common/money.schema.json" },
+    "finalLoss": { "$ref": "../common/money.schema.json" },
+    "evidenceHashes": { "type": "array", "items": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" }, "uniqueItems": true },
+    "openedAt": { "$ref": "../common/timestamp.schema.json" },
+    "closedAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

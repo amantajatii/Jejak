@@ -1,0 +1,30 @@
+{
+  "scenario": "partner_timeout",
+  "version": 1,
+  "sandbox": true,
+  "description": "A retryable partner timeout converges to one eventual successful result.",
+  "source": {
+    "sellerId": "0198a5ea-7c9c-7000-8000-000000000007",
+    "claimId": "0198a5ea-7c9c-7000-8000-000000000107",
+    "marketplaceEvents": [
+      {
+        "eventId": "0198a5ea-7c9c-7000-8000-000000001007",
+        "type": "ORDER_SETTLED",
+        "occurredAt": "2026-07-15T00:06:00Z",
+        "amount": { "amountMinor": "10000", "currency": "TIDR", "scale": 2 }
+      }
+    ],
+    "adapter": { "outcome": "TIMEOUT_THEN_SUCCESS", "retryable": true, "attemptsBeforeSuccess": 2 }
+  },
+  "expected": {
+    "snapshot": {
+      "grossUnsettled": { "amountMinor": "10000", "currency": "TIDR", "scale": 2 },
+      "eligibleSettlementValue": { "amountMinor": "8000", "currency": "TIDR", "scale": 2 },
+      "advanceAmount": { "amountMinor": "6400", "currency": "TIDR", "scale": 2 }
+    },
+    "evaluation": { "decision": "ELIGIBLE", "jccProjected": true },
+    "stateTransitions": ["DATA_PENDING", "ANALYZED", "ELIGIBLE"],
+    "reasonCodes": ["PARTNER_UNAVAILABLE"],
+    "errorCode": null
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "rule": "Money amountMinor is a base-10 integer string; scale is never inferred.",
+  "cases": [
+    { "display": "0.00", "scale": 2, "expectedAmountMinor": "0" },
+    { "display": "64.00", "scale": 2, "expectedAmountMinor": "6400" },
+    { "display": "80.00", "scale": 2, "expectedAmountMinor": "8000" },
+    { "display": "123456789.1234567", "scale": 7, "expectedAmountMinor": "1234567891234567" },
+    { "display": "-12.50", "scale": 2, "expectedAmountMinor": "-1250" }
+  ]
+}

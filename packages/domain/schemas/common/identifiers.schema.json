@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/common/identifiers.schema.json",
+  "title": "JejakIdentifiers",
+  "$defs": {
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]{3,12}$"
+    },
+    "integerString": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)$"
+    },
+    "nonNegativeIntegerString": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "sha256Hex": {
+      "type": "string",
+      "format": "sha256-hex"
+    },
+    "stellarAddress": {
+      "type": "string",
+      "format": "stellar-address"
+    },
+    "uuidV7": {
+      "type": "string",
+      "format": "uuid-v7"
+    }
+  }
+}

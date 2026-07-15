@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/enums/claim-state.schema.json",
+  "title": "ClaimState",
+  "type": "string",
+  "enum": [
+    "DRAFT", "DATA_PENDING", "ANALYZED", "ELIGIBLE", "CONTROLLED", "ISSUED",
+    "FUNDED", "SETTLING", "REPAID", "REDEEMED", "CLOSED", "SHORTFALL",
+    "RESOLUTION", "CLOSED_WITH_LOSS", "REVIEW", "REJECTED", "FROZEN",
+    "SUSPENDED", "PAUSED", "CANCELLED"
+  ]
+}

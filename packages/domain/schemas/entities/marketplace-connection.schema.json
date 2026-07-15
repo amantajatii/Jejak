@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/marketplace-connection.schema.json",
+  "title": "MarketplaceConnection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "tenantId", "sellerId", "provider", "mode", "status", "externalAccountRef", "createdAt", "updatedAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "tenantId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "sellerId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "provider": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "mode": { "$ref": "../enums/partner-mode.schema.json" },
+    "status": { "type": "string", "enum": ["PENDING", "ACTIVE", "ERROR", "REVOKED"] },
+    "externalAccountRef": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "credentialSecretRef": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "lastSuccessfulSyncAt": { "$ref": "../common/timestamp.schema.json" },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" },
+    "updatedAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

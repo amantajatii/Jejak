@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/waterfall-result.schema.json",
+  "title": "WaterfallResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "claimId", "runNumber", "inputSettlement", "principalPaid", "feesPaid", "firstLossApplied", "seniorLoss", "sellerResidual", "resultHash", "executedAt"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "runNumber": { "type": "integer", "minimum": 1 },
+    "inputSettlement": { "$ref": "../common/money.schema.json" },
+    "principalPaid": { "$ref": "../common/money.schema.json" },
+    "feesPaid": { "$ref": "../common/money.schema.json" },
+    "firstLossApplied": { "$ref": "../common/money.schema.json" },
+    "seniorLoss": { "$ref": "../common/money.schema.json" },
+    "sellerResidual": { "$ref": "../common/money.schema.json" },
+    "resultHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "onchainTxHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "executedAt": { "$ref": "../common/timestamp.schema.json" }
+  }
+}

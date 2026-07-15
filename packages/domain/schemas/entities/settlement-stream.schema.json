@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/settlement-stream.schema.json",
+  "title": "SettlementStream",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "tenantId", "sellerId", "marketplaceConnectionId", "sourceCurrency", "snapshotCutoffAt", "dataSnapshotHash", "grossUnsettled", "knownAdjustments", "realizedToDate", "orderCount", "firstEventAt", "lastEventAt", "dataQualityScoreBps", "createdAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "tenantId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "sellerId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "marketplaceConnectionId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "sourceCurrency": { "$ref": "../common/identifiers.schema.json#/$defs/currency" },
+    "snapshotCutoffAt": { "$ref": "../common/timestamp.schema.json" },
+    "dataSnapshotHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "grossUnsettled": { "$ref": "../common/money.schema.json" },
+    "knownAdjustments": { "$ref": "../common/money.schema.json" },
+    "realizedToDate": { "$ref": "../common/money.schema.json" },
+    "orderCount": { "type": "integer", "minimum": 0 },
+    "firstEventAt": { "$ref": "../common/timestamp.schema.json" },
+    "lastEventAt": { "$ref": "../common/timestamp.schema.json" },
+    "dataQualityScoreBps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

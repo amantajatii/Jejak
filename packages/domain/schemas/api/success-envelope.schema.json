@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/api/success-envelope.schema.json",
+  "title": "ApiSuccess",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["data", "meta"],
+  "properties": {
+    "data": {},
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "timestamp", "sandbox"],
+      "properties": {
+        "requestId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+        "timestamp": { "$ref": "../common/timestamp.schema.json" },
+        "sandbox": { "type": "boolean" },
+        "nextCursor": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/facility-position.schema.json",
+  "title": "FacilityPosition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "facilityId", "claimId", "jclaimAssetCode", "jclaimIssuer", "fundingAssetCode", "fundingAssetIssuer", "principalBaseUnits", "jclaimBaseUnits", "firstLossBaseUnits", "onchainTxHashes", "createdAt", "updatedAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "facilityId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "jclaimAssetCode": { "$ref": "../common/identifiers.schema.json#/$defs/currency" },
+    "jclaimIssuer": { "$ref": "../common/identifiers.schema.json#/$defs/stellarAddress" },
+    "fundingAssetCode": { "$ref": "../common/identifiers.schema.json#/$defs/currency" },
+    "fundingAssetIssuer": { "$ref": "../common/identifiers.schema.json#/$defs/stellarAddress" },
+    "principalBaseUnits": { "$ref": "../common/identifiers.schema.json#/$defs/nonNegativeIntegerString" },
+    "jclaimBaseUnits": { "$ref": "../common/identifiers.schema.json#/$defs/nonNegativeIntegerString" },
+    "firstLossBaseUnits": { "$ref": "../common/identifiers.schema.json#/$defs/nonNegativeIntegerString" },
+    "fundedAt": { "$ref": "../common/timestamp.schema.json" },
+    "repaidAt": { "$ref": "../common/timestamp.schema.json" },
+    "onchainTxHashes": { "type": "array", "items": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" }, "uniqueItems": true },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" },
+    "updatedAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

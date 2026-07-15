@@ -1,0 +1,30 @@
+{
+  "scenario": "duplicate_claim",
+  "version": 1,
+  "sandbox": true,
+  "description": "An already encumbered settlement stream rejects a duplicate claim.",
+  "source": {
+    "sellerId": "0198a5ea-7c9c-7000-8000-000000000005",
+    "claimId": "0198a5ea-7c9c-7000-8000-000000000105",
+    "marketplaceEvents": [
+      {
+        "eventId": "0198a5ea-7c9c-7000-8000-000000001005",
+        "type": "ORDER_SETTLED",
+        "occurredAt": "2026-07-15T00:04:00Z",
+        "amount": { "amountMinor": "10000", "currency": "TIDR", "scale": 2 }
+      }
+    ],
+    "adapter": { "outcome": "SUCCESS", "retryable": false, "attemptsBeforeSuccess": 1 }
+  },
+  "expected": {
+    "snapshot": {
+      "grossUnsettled": { "amountMinor": "10000", "currency": "TIDR", "scale": 2 },
+      "eligibleSettlementValue": { "amountMinor": "0", "currency": "TIDR", "scale": 2 },
+      "advanceAmount": { "amountMinor": "0", "currency": "TIDR", "scale": 2 }
+    },
+    "evaluation": { "decision": "INELIGIBLE", "jccProjected": false },
+    "stateTransitions": ["DRAFT", "REJECTED"],
+    "reasonCodes": ["POLICY_LIMIT"],
+    "errorCode": "CLAIM_ALREADY_ENCUMBERED"
+  }
+}

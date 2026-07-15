@@ -1,0 +1,30 @@
+{
+  "scenario": "stale_attestation",
+  "version": 1,
+  "sandbox": true,
+  "description": "An expired attestation blocks issue and fund transitions.",
+  "source": {
+    "sellerId": "0198a5ea-7c9c-7000-8000-000000000006",
+    "claimId": "0198a5ea-7c9c-7000-8000-000000000106",
+    "marketplaceEvents": [
+      {
+        "eventId": "0198a5ea-7c9c-7000-8000-000000001006",
+        "type": "ORDER_SETTLED",
+        "occurredAt": "2026-07-15T00:05:00Z",
+        "amount": { "amountMinor": "10000", "currency": "TIDR", "scale": 2 }
+      }
+    ],
+    "adapter": { "outcome": "SUCCESS", "retryable": false, "attemptsBeforeSuccess": 1 }
+  },
+  "expected": {
+    "snapshot": {
+      "grossUnsettled": { "amountMinor": "10000", "currency": "TIDR", "scale": 2 },
+      "eligibleSettlementValue": { "amountMinor": "8000", "currency": "TIDR", "scale": 2 },
+      "advanceAmount": { "amountMinor": "6400", "currency": "TIDR", "scale": 2 }
+    },
+    "evaluation": { "decision": "REVIEW", "jccProjected": false },
+    "stateTransitions": ["CONTROLLED", "REVIEW"],
+    "reasonCodes": ["STALE_SNAPSHOT"],
+    "errorCode": "ATTESTATION_EXPIRED"
+  }
+}

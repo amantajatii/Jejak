@@ -1,0 +1,23 @@
+{
+  "scenario": "unauthorized_actor",
+  "version": 1,
+  "sandbox": true,
+  "description": "A seller cannot execute an institutional funding action.",
+  "source": {
+    "sellerId": "0198a5ea-7c9c-7000-8000-000000000008",
+    "claimId": "0198a5ea-7c9c-7000-8000-000000000108",
+    "marketplaceEvents": [],
+    "adapter": { "outcome": "FORBIDDEN", "retryable": false, "attemptsBeforeSuccess": 0 }
+  },
+  "expected": {
+    "snapshot": {
+      "grossUnsettled": { "amountMinor": "0", "currency": "TIDR", "scale": 2 },
+      "eligibleSettlementValue": { "amountMinor": "0", "currency": "TIDR", "scale": 2 },
+      "advanceAmount": { "amountMinor": "0", "currency": "TIDR", "scale": 2 }
+    },
+    "evaluation": { "decision": "REVIEW", "jccProjected": false },
+    "stateTransitions": ["ELIGIBLE"],
+    "reasonCodes": [],
+    "errorCode": "FORBIDDEN"
+  }
+}

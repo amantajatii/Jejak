@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/enums/resolution-status.schema.json",
+  "title": "ResolutionStatus",
+  "type": "string",
+  "enum": ["OPEN", "RECOVERING", "SETTLED", "WRITTEN_OFF"]
+}

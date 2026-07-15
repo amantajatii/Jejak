@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/common/money.schema.json",
+  "title": "Money",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["amountMinor", "currency", "scale"],
+  "properties": {
+    "amountMinor": {
+      "$ref": "./identifiers.schema.json#/$defs/integerString"
+    },
+    "currency": {
+      "$ref": "./identifiers.schema.json#/$defs/currency"
+    },
+    "scale": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18
+    },
+    "issuer": {
+      "$ref": "./identifiers.schema.json#/$defs/stellarAddress"
+    }
+  }
+}

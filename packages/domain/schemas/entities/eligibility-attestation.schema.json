@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/eligibility-attestation.schema.json",
+  "title": "EligibilityAttestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "attestationKey", "claimId", "claimKey", "sellerSubjectHash", "settlementStreamId", "dataSnapshotHash", "modelId", "modelVersion", "policyVersion", "decision", "sdsBps", "grossUnsettled", "eligibleSettlementValue", "maxAdvanceAmount", "reasonCodes", "issuedAt", "expiresAt", "status", "keyId", "signature"],
+  "properties": {
+    "schema": { "const": "JEJAK_JCC_V1" },
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "attestationKey": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimKey": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "sellerSubjectHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "settlementStreamId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "dataSnapshotHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "modelId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "modelVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "policyVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "decision": { "$ref": "../enums/eligibility-decision.schema.json" },
+    "sdsBps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "grossUnsettled": { "$ref": "../common/money.schema.json" },
+    "eligibleSettlementValue": { "$ref": "../common/money.schema.json" },
+    "maxAdvanceAmount": { "$ref": "../common/money.schema.json" },
+    "reasonCodes": { "type": "array", "items": { "$ref": "../enums/reason-code.schema.json" }, "uniqueItems": true },
+    "issuedAt": { "$ref": "../common/timestamp.schema.json" },
+    "expiresAt": { "$ref": "../common/timestamp.schema.json" },
+    "status": { "$ref": "../enums/credential-status.schema.json" },
+    "keyId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "signature": { "type": "string", "contentEncoding": "base64", "minLength": 1 }
+  }
+}

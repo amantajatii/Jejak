@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/enums/actor-role.schema.json",
+  "title": "ActorRole",
+  "type": "string",
+  "enum": [
+    "SELLER", "ORIGINATOR", "ISSUER", "FACILITY", "SERVICER", "RESOLVER",
+    "ORACLE", "ADMIN", "SYSTEM"
+  ]
+}

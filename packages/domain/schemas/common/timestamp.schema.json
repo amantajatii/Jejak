@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/common/timestamp.schema.json",
+  "title": "UtcTimestamp",
+  "type": "string",
+  "format": "utc-rfc3339"
+}

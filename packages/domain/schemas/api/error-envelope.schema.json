@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/api/error-envelope.schema.json",
+  "title": "ApiError",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "requestId", "retryable"],
+      "properties": {
+        "code": { "$ref": "../enums/error-code.schema.json" },
+        "message": { "type": "string", "minLength": 1 },
+        "requestId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+        "retryable": { "type": "boolean" },
+        "details": { "type": "object", "additionalProperties": true }
+      }
+    }
+  }
+}

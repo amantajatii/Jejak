@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/financing-offer.schema.json",
+  "title": "FinancingOffer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "claimId", "originatorId", "principal", "fee", "annualizedRateBps", "advanceRateBps", "expiresAt", "termsHash", "status", "createdAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "originatorId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "principal": { "$ref": "../common/money.schema.json" },
+    "fee": { "$ref": "../common/money.schema.json" },
+    "annualizedRateBps": { "type": "integer", "minimum": 0 },
+    "advanceRateBps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "expiresAt": { "$ref": "../common/timestamp.schema.json" },
+    "termsHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "status": { "type": "string", "enum": ["DRAFT", "OFFERED", "ACCEPTED", "EXPIRED", "CANCELLED"] },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/settlement-event.schema.json",
+  "title": "SettlementEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "claimId", "externalEventId", "source", "type", "amount", "occurredAt", "receivedAt", "payloadHash", "createdAt"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "externalEventId": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "source": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "type": { "type": "string", "enum": ["PAYOUT", "REFUND", "RETURN", "CHARGEBACK", "FEE", "ADJUSTMENT"] },
+    "amount": { "$ref": "../common/money.schema.json" },
+    "occurredAt": { "$ref": "../common/timestamp.schema.json" },
+    "receivedAt": { "$ref": "../common/timestamp.schema.json" },
+    "payloadHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/events/domain-event.schema.json",
+  "title": "DomainEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "eventType", "eventVersion", "aggregateType", "aggregateId", "aggregateVersion", "tenantId", "occurredAt", "actor", "correlationId", "idempotencyKey", "data"],
+  "properties": {
+    "eventId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "eventType": { "$ref": "./event-types.schema.json" },
+    "eventVersion": { "type": "integer", "minimum": 1 },
+    "aggregateType": { "type": "string", "enum": ["CLAIM", "SELLER", "FACILITY", "ATTESTATION", "RESOLUTION"] },
+    "aggregateId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "aggregateVersion": { "type": "integer", "minimum": 1 },
+    "tenantId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "occurredAt": { "$ref": "../common/timestamp.schema.json" },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "id"],
+      "properties": {
+        "role": { "$ref": "../enums/actor-role.schema.json" },
+        "id": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    },
+    "correlationId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "causationId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "data": {}
+  }
+}

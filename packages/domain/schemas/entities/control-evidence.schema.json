@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/control-evidence.schema.json",
+  "title": "ControlEvidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "claimId", "mode", "status", "structure", "evidenceHash", "reasonCodes", "createdAt", "updatedAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "mode": { "$ref": "../enums/partner-mode.schema.json" },
+    "status": { "$ref": "../enums/control-evidence-status.schema.json" },
+    "structure": { "type": "string", "enum": ["ASSIGNMENT", "CONTROLLED_ACCOUNT", "PARTICIPATION", "OTHER"] },
+    "evidenceHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "documentSecretRef": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "verifiedBy": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "verifiedAt": { "$ref": "../common/timestamp.schema.json" },
+    "expiresAt": { "$ref": "../common/timestamp.schema.json" },
+    "reasonCodes": { "type": "array", "items": { "$ref": "../enums/reason-code.schema.json" }, "uniqueItems": true },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" },
+    "updatedAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

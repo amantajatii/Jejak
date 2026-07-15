@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/events/event-types.schema.json",
+  "title": "DomainEventType",
+  "type": "string",
+  "enum": [
+    "seller.created", "marketplace.connection.created", "marketplace.sync.completed",
+    "settlement_stream.snapshot.created", "claim.created", "claim.analysis.completed",
+    "jcc.issued", "jcc.revoked", "control.verified", "control.revoked",
+    "claim.state.changed", "claim.issued_onchain", "facility.position.funded",
+    "settlement.event.recorded", "waterfall.executed", "claim.shortfall.detected",
+    "resolution.opened", "resolution.closed", "claim.closed",
+    "partner.adapter.failed", "security.circuit_breaker.triggered"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/claim.schema.json",
+  "title": "Claim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "claimKey", "tenantId", "sellerId", "settlementStreamId", "facilityId", "state", "sourceCurrency", "grossUnsettled", "eligibleSettlementValue", "advanceAmount", "outstandingPrincipal", "stateReasonCodes", "createdAt", "updatedAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimKey": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "tenantId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "sellerId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "settlementStreamId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "facilityId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "state": { "$ref": "../enums/claim-state.schema.json" },
+    "sourceCurrency": { "$ref": "../common/identifiers.schema.json#/$defs/currency" },
+    "grossUnsettled": { "$ref": "../common/money.schema.json" },
+    "eligibleSettlementValue": { "$ref": "../common/money.schema.json" },
+    "advanceAmount": { "$ref": "../common/money.schema.json" },
+    "outstandingPrincipal": { "$ref": "../common/money.schema.json" },
+    "latestAttestationId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "controlEvidenceId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "onchainContractId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "onchainTxHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "expectedSettlementAt": { "$ref": "../common/timestamp.schema.json" },
+    "stateReasonCodes": {
+      "type": "array",
+      "items": { "$ref": "../enums/reason-code.schema.json" },
+      "uniqueItems": true
+    },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" },
+    "updatedAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

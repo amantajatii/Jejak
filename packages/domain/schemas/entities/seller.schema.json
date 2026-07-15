@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/entities/seller.schema.json",
+  "title": "Seller",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "tenantId", "publicSubjectHash", "displayName", "country", "baseCurrency", "consentVersion", "consentedAt", "createdAt", "updatedAt", "version"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "tenantId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "publicSubjectHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "displayName": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+    "baseCurrency": { "$ref": "../common/identifiers.schema.json#/$defs/currency" },
+    "consentVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "consentedAt": { "$ref": "../common/timestamp.schema.json" },
+    "createdAt": { "$ref": "../common/timestamp.schema.json" },
+    "updatedAt": { "$ref": "../common/timestamp.schema.json" },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

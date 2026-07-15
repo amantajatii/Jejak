@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/enums/reason-code.schema.json",
+  "title": "ReasonCode",
+  "type": "string",
+  "enum": [
+    "HIGH_REFUND_RATE", "HIGH_RTO_RATE", "CHARGEBACK_SPIKE", "ACCOUNT_HOLD",
+    "MISSING_PAYOUT_HISTORY", "DATA_INCONSISTENT", "CONCENTRATION_HIGH",
+    "STALE_SNAPSHOT", "CONTROL_NOT_VERIFIED", "POLICY_LIMIT", "MODEL_UNAVAILABLE",
+    "MANUAL_REVIEW_REQUIRED", "SETTLEMENT_SHORTFALL", "PARTNER_UNAVAILABLE"
+  ]
+}

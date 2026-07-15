@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/enums/eligibility-decision.schema.json",
+  "title": "EligibilityDecision",
+  "type": "string",
+  "enum": ["ELIGIBLE", "REVIEW", "INELIGIBLE"]
+}
