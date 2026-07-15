@@ -3,67 +3,46 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { OperationPanel } from "@/components/jejak/operation-panel";
 import { MenuButton, MobileNav } from "@/components/operations/WorkspaceNav";
 import { WorkspaceSidebar } from "@/components/operations/WorkspaceSidebar";
-import { finalLoss, ResolutionCase, ResolutionStatus } from "./data";
+import type { ClaimWorkspace, Money } from "@/lib/jejak/gateway";
+import { formatMoney } from "@/lib/jejak/money";
+import { useJejak } from "@/lib/jejak/provider";
 
-const nav = [
-  { label: "Resolution", href: "/resolution", icon: "▦" },
-  { label: "Portfolio", href: "/resolution/portfolio", icon: "◷" },
-  { label: "Claims", href: "/resolution/claims", icon: "⌁" },
-  { label: "Audit trail", href: "/resolution/audit", icon: "◌" },
-];
-
-const sectionHrefs = nav.slice(1).map((item) => item.href);
+const nav = [{ label: "Resolution", href: "/resolution" }, { label: "Portfolio", href: "/resolution/portfolio" }, { label: "Claims", href: "/resolution/claims" }, { label: "Audit trail", href: "/resolution/audit" }];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const pathname = usePathname();
-  const navItems = nav.map((item) => ({
-    label: item.label,
-    href: item.href,
-    icon: item.icon,
-    isActive:
-      item.href === "/resolution"
-        ? pathname === "/resolution" || (pathname.startsWith("/resolution/") && !sectionHrefs.some((href) => pathname.startsWith(href)))
-        : pathname === item.href,
-  }));
-  return <div className="app-shell"><WorkspaceSidebar brandLabel="Jejak" sandboxLabel="SANDBOX MODE" dotClassName="dot" navItems={navItems} navAriaLabel="Primary" footer={<><span className="avatar">RS</span><div><strong>Resolver Sandbox</strong><small>Authorized operator</small></div><span className="chevron">⌄</span></>} /><main className="main-content"><header className="topbar"><div className="mobile-brand">Jejak<span>.</span></div><div className="topbar-spacer" /><span className="sandbox-badge">SANDBOX · TESTNET</span><button className="icon-button" aria-label="Notifications">♢</button><span className="avatar avatar-dark">RS</span><MenuButton open={mobileNavOpen} onToggle={() => setMobileNavOpen((open) => !open)} ariaControls="resolution-mobile-nav" ariaLabel="Toggle resolution navigation" /></header><MobileNav id="resolution-mobile-nav" items={navItems} open={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} ariaLabel="Mobile resolution navigation" />{children}</main></div>;
+  const { context, session } = useJejak(); const [mobileNavOpen, setMobileNavOpen] = useState(false); const pathname = usePathname();
+  const navItems = nav.map((item) => ({ ...item, isActive: item.href === "/resolution" ? pathname === "/resolution" || /^\/resolution\/[^/]+$/.test(pathname) : pathname === item.href }));
+  return <div className="app-shell"><WorkspaceSidebar brand={<Link href="/resolution" className="brand">Jejak<span>.</span></Link>} badge={<div className="sandbox-note"><span className="dot" /> SANDBOX MODE</div>} navItems={navItems} navAriaLabel="Resolution navigation" footer={<><span className="avatar">{session?.role.slice(0, 2) ?? "--"}</span><div><strong>{session?.role === "RESOLVER" ? "Authorized resolver" : "Resolver session required"}</strong><small>Token held in memory</small></div></>} /><main className="main-content"><header className="topbar"><div className="mobile-brand">Jejak<span>.</span></div><div className="topbar-spacer" /><span className="sandbox-badge">SANDBOX · {context?.chainMode ?? "NO TRANSPORT"}</span><MenuButton open={mobileNavOpen} onToggle={() => setMobileNavOpen((open) => !open)} ariaControls="resolution-mobile-nav" ariaLabel="Toggle resolution navigation" /></header><MobileNav id="resolution-mobile-nav" items={navItems} open={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} ariaLabel="Mobile resolution navigation" />{children}</main></div>;
 }
 
-export function StatusBadge({ status }: { status: ResolutionStatus }) {
-  const labels = { OPEN: "Open", IN_REVIEW: "In review", RECOVERED: "Recovered", CLOSED: "Closed" };
-  return <span className={`status status-${status.toLowerCase()}`}><span className="status-dot" />{labels[status]}</span>;
+export function ResolutionState({ children }: { children: React.ReactNode }) {
+  const { context, workspace, loading, error, refresh } = useJejak();
+  if (loading) return <div className="section-band"><div className="workspace-skeleton" aria-label="Loading resolution workspace"><span /><span /><span /></div></div>;
+  if (error && !workspace) return <div className="empty-state" role="alert"><strong>{error.title}</strong><span>{error.detail}</span><button className="button-secondary" type="button" onClick={refresh}>Try again</button></div>;
+  if (!context) return <div className="empty-state"><strong>Reset the adverse demo</strong><span>The resolution workspace opens from its reconciled FUNDED checkpoint.</span></div>;
+  return children;
 }
 
-export function MoneyValue({ amount, currency = "IDR", negative = false }: { amount: number; currency?: string; negative?: boolean }) {
-  return <span className={negative ? "money negative" : "money"}>{negative ? "−" : ""}{currency} {new Intl.NumberFormat("en-US").format(Math.abs(amount))}</span>;
-}
-
+export function StatusBadge({ status }: { status: string }) { return <span className={`status status-${status.toLowerCase()}`}><span className="status-dot" />{status.replaceAll("_", " ")}</span>; }
+export function MoneyValue({ money, negative = false }: { money: Money; negative?: boolean }) { return <span className={negative ? "money negative" : "money"}>{formatMoney(negative && !money.amountMinor.startsWith("-") ? { ...money, amountMinor: `-${money.amountMinor}` } : money)}</span>; }
 export function DataFreshness({ children }: { children: React.ReactNode }) { return <span className="freshness"><span className="fresh-dot" />{children}</span>; }
-
 export function Metric({ label, value, tone = "" }: { label: string; value: React.ReactNode; tone?: string }) { return <div className={`metric ${tone}`}><span>{label}</span><strong>{value}</strong></div>; }
 
-export function CaseTable({ items }: { items: ResolutionCase[] }) {
-  return <div className="table-wrap"><table><thead><tr><th>Case</th><th>Status</th><th>Obligation</th><th>Settlement</th><th>Shortfall</th><th>First loss</th><th>Recovered</th><th>Age</th><th aria-label="Open case" /></tr></thead><tbody>{items.map((item) => <tr key={item.claimId}><td><Link href={`/resolution/${item.claimId}`} className="case-link"><strong>{item.claimId}</strong><span>{item.seller} · {item.marketplace}</span></Link></td><td><StatusBadge status={item.status} /></td><td><MoneyValue amount={item.obligation} /></td><td><MoneyValue amount={item.realizedSettlement} /></td><td className="negative-cell"><MoneyValue amount={item.shortfall} negative /></td><td><MoneyValue amount={item.firstLossConsumed} /></td><td><MoneyValue amount={item.recovered} /></td><td>{item.age}</td><td><Link href={`/resolution/${item.claimId}`} className="row-arrow" aria-label={`Open ${item.claimId}`}>→</Link></td></tr>)}</tbody></table></div>;
+export function CaseTable({ items }: { items: ClaimWorkspace[] }) {
+  return <div className="table-wrap"><table><thead><tr><th>Case</th><th>Status</th><th>Obligation</th><th>Settlement</th><th>First loss</th><th>Senior loss</th><th>Recovered</th><th aria-label="Open case" /></tr></thead><tbody>{items.map((item) => <tr key={item.claim.id}><td><Link href={`/resolution/${item.claim.id}`} className="case-link"><strong>{item.claim.displayId}</strong><span>{item.claim.sellerName} · {item.claim.marketplace}</span></Link></td><td><StatusBadge status={item.claim.state} /></td><td><MoneyValue money={item.claim.obligation} /></td><td>{item.latestWaterfall ? <MoneyValue money={item.latestWaterfall.settlement} /> : "Pending"}</td><td>{item.latestWaterfall ? <MoneyValue money={item.latestWaterfall.firstLossConsumed} /> : "—"}</td><td>{item.latestWaterfall ? <MoneyValue money={item.latestWaterfall.seniorLoss} negative={item.latestWaterfall.seniorLoss.amountMinor !== "0"} /> : "—"}</td><td>{item.resolutionCase ? <MoneyValue money={item.resolutionCase.recovered} /> : "—"}</td><td><Link href={`/resolution/${item.claim.id}`} className="row-arrow" aria-label={`Open ${item.claim.displayId}`}>→</Link></td></tr>)}</tbody></table></div>;
 }
 
-export function WaterfallPanel({ item }: { item: ResolutionCase }) {
-  const rows = [{ label: "Financing obligation", amount: item.obligation }, { label: "Realized settlement", amount: -item.realizedSettlement }, { label: "Recovered", amount: -item.recovered }, { label: "First-loss capacity used", amount: -item.firstLossConsumed }];
-  return <section className="panel waterfall"><div className="panel-heading"><div><span className="section-kicker">Allocation</span><h2>Cash & loss waterfall</h2></div><span className="info">i</span></div>{rows.map((row) => <div className="waterfall-row" key={row.label}><span>{row.label}</span><MoneyValue amount={row.amount} negative={row.amount < 0} /></div>)}<div className="waterfall-total"><span>Final loss</span><strong><MoneyValue amount={finalLoss(item)} negative={finalLoss(item) > 0} /></strong></div></section>;
+export function WaterfallPanel({ item }: { item: ClaimWorkspace }) {
+  const waterfall = item.latestWaterfall;
+  return <section className="panel waterfall"><div className="panel-heading"><div><span className="section-kicker">Allocation</span><h2>Cash & loss waterfall</h2></div></div>{waterfall ? <><div className="waterfall-row"><span>Settlement</span><MoneyValue money={waterfall.settlement} /></div><div className="waterfall-row"><span>Servicing fee</span><MoneyValue money={waterfall.servicingFee} /></div><div className="waterfall-row"><span>Principal allocation</span><MoneyValue money={waterfall.principalAllocated} /></div><div className="waterfall-row"><span>Financing fee</span><MoneyValue money={waterfall.financingFee} /></div><div className="waterfall-row"><span>First loss consumed</span><MoneyValue money={waterfall.firstLossConsumed} /></div><div className="waterfall-total"><span>Senior final loss</span><strong><MoneyValue money={waterfall.seniorLoss} negative={waterfall.seniorLoss.amountMinor !== "0"} /></strong></div></> : <div className="empty-inline"><strong>No waterfall yet</strong><span>Record and reconcile settlement first.</span></div>}</section>;
 }
 
-export function EvidenceList({ item }: { item: ResolutionCase }) {
-  return <section className="panel"><div className="panel-heading"><div><span className="section-kicker">Audit ready</span><h2>Evidence <span className="count">{item.evidence.length}</span></h2></div><button className="button-secondary">＋ Add evidence</button></div>{item.evidence.length ? <div className="evidence-list">{item.evidence.map((evidence) => <div className="evidence-row" key={evidence.name}><span className="file-icon">▤</span><div><strong>{evidence.name}</strong><span>{evidence.type} · {evidence.added}</span></div><code>{evidence.hash ?? "Awaiting hash"}</code><button className="more" aria-label={`More actions for ${evidence.name}`}>···</button></div>)}</div> : <div className="empty-inline"><strong>No evidence uploaded yet</strong><span>Upload a settlement, adjustment, or control reference before closing.</span></div>}</section>;
-}
+export function ClaimTimeline({ item }: { item: ClaimWorkspace }) { return <section className="panel timeline-panel"><div className="panel-heading"><div><span className="section-kicker">Trace</span><h2>Event timeline</h2></div></div><ol className="timeline">{item.timeline.map((event) => <li key={event.id} className={event.state === "SHORTFALL" || event.state === "CLOSED_WITH_LOSS" ? "risk" : "neutral"}><span className="timeline-marker">{event.state.includes("LOSS") || event.state === "SHORTFALL" ? "!" : "•"}</span><div><strong>{event.label}</strong><span>{event.actor} · {new Date(event.occurredAt).toLocaleString("en-GB")} · {event.detail}</span></div></li>)}</ol></section>; }
 
-export function ClaimTimeline({ item }: { item: ResolutionCase }) {
-  return <section className="panel timeline-panel"><div className="panel-heading"><div><span className="section-kicker">Trace</span><h2>Event timeline</h2></div><Link href="#timeline" className="text-link">View all</Link></div><ol className="timeline">{item.timeline.map((event) => <li key={`${event.label}-${event.date}`} className={event.tone ?? "neutral"}><span className="timeline-marker">{event.tone === "risk" ? "!" : event.tone === "success" ? "✓" : "·"}</span><div><strong>{event.label}</strong><span>{event.date} · {event.detail}</span></div></li>)}</ol></section>;
-}
-
-export function ActionPanel({ item }: { item: ResolutionCase }) {
-  const [mode, setMode] = useState<"idle" | "pending" | "success" | "error">("idle");
-  const [action, setAction] = useState("Open resolution");
-  const run = (label: string) => { setAction(label); setMode("pending"); window.setTimeout(() => setMode("success"), 450); };
-  return <section className="action-panel"><div><span className="section-kicker">Authorized actions</span><h2>Move this case forward</h2><p>Actions are simulated locally until the resolution API is connected.</p></div>{mode === "success" ? <div className="action-result success-result"><strong>Action recorded</strong><span>{action} is ready to reconcile with the backend.</span><button className="button-secondary" onClick={() => setMode("idle")}>Close message</button></div> : <div className="action-buttons"><button className="button-primary" disabled={!item.canAct || mode === "pending"} onClick={() => run("Open resolution")}>{mode === "pending" ? "Saving…" : "Open resolution"}</button><button className="button-secondary" disabled={!item.canAct || mode === "pending"} onClick={() => run("Record recovery")}>Record recovery</button><button className="button-secondary danger-action" disabled={!item.canAct || mode === "pending"} onClick={() => run("Close with final loss")}>Close with final loss</button></div>}</section>;
+export function ResolutionActions({ item }: { item: ClaimWorkspace }) {
+  const action = item.claim.allowedActions.find((candidate) => candidate === "REFUND_SPIKE" || candidate === "RECORD_SETTLEMENT" || candidate === "RUN_WATERFALL" || candidate.includes("RESOLUTION") || candidate === "RECORD_RECOVERY");
+  return action ? <OperationPanel action={action} /> : <section className="action-panel"><span className="section-kicker">Authorized actions</span><h2>{item.claim.state.replaceAll("_", " ")}</h2><p>No resolution mutation is available from this authoritative state.</p></section>;
 }

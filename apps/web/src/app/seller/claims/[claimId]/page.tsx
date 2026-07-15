@@ -1,10 +1,2 @@
-import { ClaimTimeline, PageHeading, StateBanner, StatusBadge, formatMoney } from "@/components/seller/seller-ui";
-import { getClaimTimeline, getSellerSnapshot, type Scenario } from "@/lib/seller/seller-data";
-
-export default async function ClaimPage({ params, searchParams }: { params: Promise<{ claimId: string }>; searchParams: Promise<{ scenario?: string }> }) {
-  const [{ claimId }, query] = await Promise.all([params, searchParams]);
-  const scenario: Scenario = query.scenario === "shortfall" || claimId === "shortfall" ? "shortfall" : "happy";
-  const [events, snapshot] = await Promise.all([getClaimTimeline(scenario), getSellerSnapshot(scenario)]);
-  const terminal = events.at(-1)!;
-  return <div className="seller-page"><PageHeading title="Claim journey" description={`Claim ${claimId === "shortfall" ? "JJK-2026-0142" : "JJK-2026-0138"} · ${snapshot.marketplace}`} action={<StatusBadge tone={scenario === "shortfall" ? "risk" : "success"}>{terminal.status.replaceAll("_", " ")}</StatusBadge>} />{scenario === "shortfall" ? <StateBanner tone="risk" title="Claim closed with a loss">The first-loss reserve was applied. No additional payment or action is required from the seller.</StateBanner> : <StateBanner tone="success" title="Claim closed">The obligation was repaid and the remaining {formatMoney(snapshot.residual)} payout was sent to the seller.</StateBanner>}<section className="claim-layout"><div className="seller-timeline-panel"><div className="section-title-row"><div><h2>Claim activity</h2><p>Stellar transaction details appear only when a real transaction hash is available.</p></div></div><ClaimTimeline events={events} /></div><aside className="claim-summary"><h2>Summary</h2><dl><div><dt>Funds received</dt><dd>{formatMoney(snapshot.advance)}</dd></div><div><dt>Total obligation</dt><dd>{formatMoney(snapshot.obligation)}</dd></div><div><dt>Scheduled payout</dt><dd>{snapshot.payoutDate}</dd></div><div><dt>JCC status</dt><dd>Verified · Sandbox</dd></div></dl><p className="plain-note">Stellar details are supporting evidence, not something the seller needs to manage.</p></aside></section></div>;
-}
+import { SellerClaim } from "@/features/seller/SellerExperience";
+export default function ClaimPage() { return <SellerClaim />; }

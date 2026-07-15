@@ -4,6 +4,13 @@
   background: #1b1b1b;
 }
 
+.workspace-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow-y: auto;
+}
+
 .institution-shell .sidebar,
 .app-shell .sidebar {
   width: 230px;
@@ -139,10 +146,15 @@
 .institution-shell .panel,
 .app-shell .panel,
 .app-shell .shortfall-alert,
-.app-shell .search {
+.app-shell .search,
+.app-shell table {
   border: 0;
   border-radius: 16px;
   box-shadow: 0 10px 24px rgb(23 19 13 / 10%);
+}
+
+.app-shell table {
+  overflow: hidden;
 }
 
 .institution-shell .status-monitor,
@@ -394,4 +406,23 @@
     margin-inline: 18px;
     padding-inline: 0;
   }
+}
+
+.app-shell .timeline-marker {
+  border-color: #e6e3df;
+  color: #1b1b1b;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.app-shell .timeline li.risk .timeline-marker {
+  border-color: #ff4b2b;
+  background: #ff4b2b;
+  color: #fff;
+}
+
+.app-shell .timeline li.success .timeline-marker {
+  border-color: #1b1b1b;
+  background: #1b1b1b;
+  color: #fff;
 }
