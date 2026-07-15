@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { MenuButton, MobileNav } from "@/components/operations/WorkspaceNav";
 import { WorkspaceSidebar } from "@/components/operations/WorkspaceSidebar";
-import type { Scenario } from "@/lib/seller/seller-data";
+import { useJejak } from "@/lib/jejak/provider";
 
 const navigation = [
   ["Overview", "/seller/dashboard"],
@@ -20,11 +20,9 @@ export function SellerShell({ children }: { children: React.ReactNode }) {
   const [accountMenuVisible, setAccountMenuVisible] = useState(false);
   const accountMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
-  const params = useSearchParams();
-  const scenario: Scenario = params.get("scenario") === "shortfall" ? "shortfall" : "happy";
-  const withScenario = (href: string, nextScenario = scenario) => `${href}?scenario=${nextScenario}`;
+  const { context } = useJejak();
   const isNavigationActive = (href: string) => pathname.startsWith(href.replace(/\/(active|claim-001)$/, ""));
-  const navItems = navigation.map(([label, href]) => ({ label, href: withScenario(href), isActive: isNavigationActive(href) }));
+  const navItems = navigation.map(([label, href]) => ({ label, href, isActive: isNavigationActive(href) }));
   function openAccountMenu() {
     if (accountMenuTimer.current) clearTimeout(accountMenuTimer.current);
     setAccountMenuVisible(true);
@@ -44,14 +42,11 @@ export function SellerShell({ children }: { children: React.ReactNode }) {
         navItems={navItems}
         navAriaLabel="Seller navigation"
         navClassName="seller-primary-nav"
-        footer={<><div className="scenario-picker" aria-label="Choose a demo scenario">
-          <span>Demo scenario</span>
-          <div>
-            <Link className={scenario === "happy" ? "selected" : ""} href={withScenario(pathname, "happy")}>Normal</Link>
-            <Link className={scenario === "shortfall" ? "selected" : ""} href={withScenario(pathname, "shortfall")}>Shortfall</Link>
-          </div>
+        footer={<><div className="scenario-picker" aria-label="Current demo scenario">
+          <span>Authoritative scenario</span>
+          <strong>{context?.scenario ?? "Not reset"}</strong>
         </div>
-        <div className="profile-row">{accountMenuVisible && <div className={`profile-menu${accountMenuOpen ? "" : " is-closing"}`} id="seller-account-menu" role="menu"><Link href={withScenario("/seller/onboarding")} role="menuitem" onClick={closeAccountMenu}>Seller setup</Link><button type="button" role="menuitem" onClick={closeAccountMenu}>Close menu</button></div>}<button className="profile-trigger" type="button" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}><span className="avatar">DP</span><span><strong>Dinda</strong><small>Seller</small></span></button><button className="profile-menu-button" type="button" aria-label="Open account menu" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}>•••</button></div></>}
+        <div className="profile-row">{accountMenuVisible && <div className={`profile-menu${accountMenuOpen ? "" : " is-closing"}`} id="seller-account-menu" role="menu"><Link href="/seller/onboarding" role="menuitem" onClick={closeAccountMenu}>Seller setup</Link><button type="button" role="menuitem" onClick={closeAccountMenu}>Close menu</button></div>}<button className="profile-trigger" type="button" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}><span className="avatar">DP</span><span><strong>Dinda</strong><small>Seller</small></span></button><button className="profile-menu-button" type="button" aria-label="Open account menu" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}>•••</button></div></>}
         footerClassName="seller-sidebar-bottom"
       />
       <div className="seller-main">
