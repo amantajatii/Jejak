@@ -20,7 +20,7 @@ const [
   { createDatabase },
   { createEvidenceStorage, loadEvidenceModuleConfig },
   { createEvidenceStorageReadinessProbe, isReadinessCapableEvidenceStorage },
-  { createDeferredProbe, createPostgresReadinessProbe },
+  { createDeferredProbe, createPostgresReadinessProbe, createRiskServiceReadinessProbe },
   { createRuntimeRouteDependencies },
 ] = await Promise.all([
   import("./app.js"),
@@ -57,7 +57,7 @@ const app = await buildApp({
   ...(routeDependencies ?? {}),
   readinessProbes: [
     createPostgresReadinessProbe(config.databaseUrl),
-    createDeferredProbe("risk_service"),
+    createRiskServiceReadinessProbe(config.riskServiceUrl),
     createDeferredProbe("stellar_rpc"),
     createEvidenceStorageReadinessProbe(
       isReadinessCapableEvidenceStorage(evidenceStorage) ? evidenceStorage : undefined,

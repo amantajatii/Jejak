@@ -10,6 +10,39 @@ export type FetchLike = (
   init: RequestInit,
 ) => Promise<Pick<Response, "ok" | "status" | "headers" | "text">>;
 
+export type RiskAttestationRequest = {
+  request: RiskEvaluationRequest;
+  evaluation: RiskEvaluationResponse;
+  attestationId: string;
+  issuedAt: string;
+  expiresAt: string;
+};
+
+export type RiskAttestationResponse = {
+  id: string;
+  attestationKey: string;
+  claimId: string;
+  claimKey: string;
+  sellerSubjectHash: string;
+  settlementStreamId: string;
+  dataSnapshotHash: string;
+  modelId: string;
+  modelVersion: string;
+  policyVersion: string;
+  decision: "ELIGIBLE" | "REVIEW" | "INELIGIBLE";
+  sdsBps: number;
+  grossUnsettled: RiskEvaluationRequest["grossUnsettled"];
+  eligibleSettlementValue: RiskEvaluationResponse["eligibleSettlementValue"];
+  maxAdvanceAmount: RiskEvaluationResponse["maxAdvanceAmount"];
+  reasonCodes: string[];
+  issuedAt: string;
+  keyId: string;
+  signature: string;
+  status: "ACTIVE" | "SUPERSEDED" | "REVOKED" | "EXPIRED";
+  expiresAt: string;
+  [key: string]: unknown;
+};
+
 export class HttpRiskEvaluationClient implements RiskEvaluationClient {
   readonly #baseUrl: string;
   readonly #workloadToken: string;
@@ -38,7 +71,7 @@ export class HttpRiskEvaluationClient implements RiskEvaluationClient {
       const response = await this.#fetch(`${this.#baseUrl}/internal/v1/evaluations`, {
         method: "POST",
         headers: {
-          authorization: `Bearer ${this.#workloadToken}`,
+          ...(this.#workloadToken === "" ? {} : { authorization: `Bearer ${this.#workloadToken}` }),
           "content-type": "application/json",
           "x-request-id": request.requestId,
         },
@@ -78,6 +111,39 @@ export class HttpRiskEvaluationClient implements RiskEvaluationClient {
       );
     } finally {
       clearTimeout(timeout);
+    }
+  }
+}
+
+export class HttpRiskAttestationClient {
+  readonly #baseUrl: string;
+  readonly #workloadToken: string;
+  readonly #fetch: FetchLike;
+
+  constructor(input: { baseUrl: string; workloadToken?: string; fetch?: FetchLike }) {
+    this.#baseUrl = input.baseUrl.replace(/\/$/, "");
+    this.#workloadToken = input.workloadToken ?? "";
+    this.#fetch = input.fetch ?? fetch;
+  }
+
+  async attest(input: RiskAttestationRequest): Promise<RiskAttestationResponse> {
+    const response = await this.#fetch(`${this.#baseUrl}/internal/v1/attestations`, {
+      method: "POST",
+      headers: {
+        ...(this.#workloadToken === "" ? {} : { authorization: `Bearer ${this.#workloadToken}` }),
+        "content-type": "application/json",
+        "x-request-id": input.request.requestId,
+      },
+      body: JSON.stringify(input),
+    });
+    const body = await response.text();
+    if (!response.ok) {
+      throw new DomainError("PARTNER_REJECTED", `RISK attestation failed with status ${response.status}.`);
+    }
+    try {
+      return JSON.parse(body) as RiskAttestationResponse;
+    } catch {
+      throw new DomainError("PARTNER_REJECTED", "RISK attestation response is not valid JSON.");
     }
   }
 }

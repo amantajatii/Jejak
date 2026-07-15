@@ -12,6 +12,11 @@ export type RiskWorkerResult =
   | { status: "BUSY" | "COMPLETED" | "NOT_FOUND" }
   | { status: "SUCCEEDED"; evaluation: TrustedRiskEvaluation };
 
+export function responseForAttestation(evaluation: TrustedRiskEvaluation) {
+  const { effectiveDecision, effectiveReasonCodes, ...response } = evaluation;
+  return { ...response, decision: effectiveDecision, reasonCodes: effectiveReasonCodes };
+}
+
 function errorClass(error: unknown): { classification: string; retryable: boolean } {
   if (error instanceof DomainError) {
     return { classification: error.code, retryable: error.retryable };

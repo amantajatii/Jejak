@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DeterministicRiskStub } from "../src/modules/risk/adapters/deterministic-stub.js";
 import {
   evaluateWithRetry,
+  HttpRiskAttestationClient,
   HttpRiskEvaluationClient,
 } from "../src/modules/risk/adapters/http-client.js";
 import {
@@ -10,6 +11,7 @@ import {
   validateRiskEvaluation,
 } from "../src/modules/risk/domain/evaluation.js";
 import { orchestrateRiskEvaluation } from "../src/modules/risk/application/orchestrate-evaluation.js";
+import { responseForAttestation } from "../src/modules/risk/application/risk-evaluation-worker.js";
 
 const gross = { amountMinor: "10000", currency: "TIDR", scale: 2 };
 
@@ -91,6 +93,47 @@ describe("RISK evaluation validation", () => {
       expect.objectContaining({ claimExpectedVersion: 2 }),
     );
   });
+
+  it("persists the signed attestation together with the trusted evaluation", async () => {
+    const evaluationRequest = request();
+    const response = await new DeterministicRiskStub().evaluate(evaluationRequest);
+    const commit = vi.fn().mockResolvedValue(undefined);
+    await orchestrateRiskEvaluation({
+      request: evaluationRequest,
+      client: { evaluate: async () => response },
+      committer: { commit },
+      claimExpectedVersion: 2,
+      blocksAutomation: false,
+      maxAttempts: 1,
+      sleep: async () => undefined,
+      attest: async () => ({
+        id: "0198a5ea-7c9c-7000-8000-000000000201",
+        attestationKey: "d".repeat(64), claimId: evaluationRequest.claimId,
+        claimKey: evaluationRequest.claimKey, sellerSubjectHash: evaluationRequest.sellerSubjectHash,
+        settlementStreamId: evaluationRequest.settlementStreamId, dataSnapshotHash: evaluationRequest.dataSnapshotHash,
+        modelId: response.modelId, modelVersion: response.modelVersion, policyVersion: response.policyVersion,
+        decision: response.decision, sdsBps: response.sdsBps, grossUnsettled: gross,
+        eligibleSettlementValue: response.eligibleSettlementValue, maxAdvanceAmount: response.maxAdvanceAmount,
+        reasonCodes: response.reasonCodes, issuedAt: "2026-07-15T00:00:00Z", expiresAt: "2026-07-16T00:00:00Z",
+        keyId: "sandbox-key", signature: "signature", status: "ACTIVE",
+      }),
+    });
+    expect(commit).toHaveBeenCalledWith(expect.objectContaining({
+      attestation: expect.objectContaining({ id: "0198a5ea-7c9c-7000-8000-000000000201" }),
+    }));
+  });
+
+  it("builds a JCC payload from the effective REVIEW decision when automation is blocked", async () => {
+    const evaluationRequest = request();
+    const response = await new DeterministicRiskStub().evaluate(evaluationRequest);
+    const trusted = await orchestrateRiskEvaluation({
+      request: evaluationRequest, client: { evaluate: async () => response }, committer: { commit: async () => undefined },
+      claimExpectedVersion: 2, blocksAutomation: true, maxAttempts: 1, sleep: async () => undefined,
+    });
+    expect(responseForAttestation(trusted)).toMatchObject({
+      decision: "REVIEW", reasonCodes: expect.arrayContaining(["MANUAL_REVIEW_REQUIRED"]),
+    });
+  });
 });
 
 describe("RISK HTTP client", () => {
@@ -131,5 +174,19 @@ describe("RISK HTTP client", () => {
       code: "PARTNER_REJECTED",
       retryable: false,
     });
+  });
+
+  it("does not send an empty bearer token to the attestation endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, headers: new Headers(),
+      text: async () => JSON.stringify({ id: "attestation", attestationKey: "key", keyId: "key", signature: "sig", status: "ACTIVE", expiresAt: "2026-07-16T00:00:00Z" }),
+    });
+    const client = new HttpRiskAttestationClient({ baseUrl: "http://risk.internal", fetch: fetchMock });
+    await client.attest({
+      request: request(), evaluation: await new DeterministicRiskStub().evaluate(request()),
+      attestationId: "0198a5ea-7c9c-7000-8000-000000000201",
+      issuedAt: "2026-07-15T00:00:00Z", expiresAt: "2026-07-16T00:00:00Z",
+    });
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).not.toHaveProperty("authorization");
   });
 });

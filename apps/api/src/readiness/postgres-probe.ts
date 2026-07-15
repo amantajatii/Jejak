@@ -43,3 +43,29 @@ export function createDeferredProbe(name: string): ReadinessProbe {
     },
   };
 }
+
+export function createRiskServiceReadinessProbe(riskServiceUrl?: string): ReadinessProbe {
+  return {
+    name: "risk_service",
+    required: riskServiceUrl !== undefined,
+    async check() {
+      if (riskServiceUrl === undefined) {
+        return { message: "RISK_SERVICE_URL is not configured.", status: "not_configured" };
+      }
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2_000);
+      try {
+        const response = await fetch(`${riskServiceUrl.replace(/\/$/, "")}/health`, {
+          signal: controller.signal,
+        });
+        return response.ok
+          ? { status: "healthy" }
+          : { message: "Risk service health probe returned a non-success status.", status: "unhealthy" };
+      } catch {
+        return { message: "Risk service health probe failed.", status: "unhealthy" };
+      } finally {
+        clearTimeout(timeout);
+      }
+    },
+  };
+}

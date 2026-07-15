@@ -24,6 +24,8 @@ const environmentSchema = z.object({
   OTEL_SERVICE_NAME: z.string().min(1).default("jejak-api"),
   PARTNER_MODE: z.enum(["SANDBOX", "PRODUCTION"]).default("SANDBOX"),
   PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
+  RISK_SERVICE_URL: z.preprocess(blankToUndefined, z.string().url().optional()),
+  RISK_SERVICE_TOKEN: z.preprocess(blankToUndefined, z.string().min(1).optional()),
   SUPABASE_JWKS_URL: z.preprocess(blankToUndefined, z.string().url().optional()),
   SUPABASE_JWT_ISSUER: z.preprocess(blankToUndefined, z.string().url().optional()),
   SUPABASE_PUBLISHABLE_KEY: z.preprocess(blankToUndefined, z.string().min(1).optional()),
@@ -49,6 +51,8 @@ export type AppConfig = {
   otelServiceName: string;
   partnerMode: z.infer<typeof environmentSchema>["PARTNER_MODE"];
   port: number;
+  riskServiceToken?: string;
+  riskServiceUrl?: string;
   supabaseJwksUrl?: string;
   supabaseJwtIssuer?: string;
   supabasePublishableKey?: string;
@@ -78,6 +82,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     otelServiceName: parsed.OTEL_SERVICE_NAME,
     partnerMode: parsed.PARTNER_MODE,
     port: parsed.PORT,
+    ...(parsed.RISK_SERVICE_TOKEN === undefined ? {} : { riskServiceToken: parsed.RISK_SERVICE_TOKEN }),
+    ...(parsed.RISK_SERVICE_URL === undefined ? {} : { riskServiceUrl: parsed.RISK_SERVICE_URL }),
     ...(parsed.SUPABASE_JWKS_URL === undefined
       ? {}
       : { supabaseJwksUrl: parsed.SUPABASE_JWKS_URL }),
