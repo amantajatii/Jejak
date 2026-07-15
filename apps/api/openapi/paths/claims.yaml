@@ -48,6 +48,23 @@ claimById:
       "401": { $ref: ../components/responses.yaml#/Unauthorized }
       "403": { $ref: ../components/responses.yaml#/Forbidden }
       "404": { $ref: ../components/responses.yaml#/NotFound }
+workspace:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
+  get:
+    operationId: getClaimWorkspace
+    summary: Read one checkpointed claim workspace
+    tags: [Claims]
+    x-jejak-roles: [SELLER, ORIGINATOR, ISSUER, FACILITY, SERVICER, RESOLVER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/ClaimWorkspaceOk }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
 analyze:
   parameters:
     - { $ref: ../components/parameters.yaml#/TenantId }

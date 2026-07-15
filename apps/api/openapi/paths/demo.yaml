@@ -1,0 +1,76 @@
+reset:
+  post:
+    operationId: resetDemo
+    summary: Reset a deterministic sandbox demo scenario
+    tags: [Demo]
+    x-jejak-demo-only: true
+    x-jejak-roles: [SYSTEM]
+    security: []
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/ResetDemo }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/DemoContextOk }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+      "503": { $ref: ../components/responses.yaml#/Unavailable }
+sessions:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
+  post:
+    operationId: createDemoSession
+    summary: Issue a short-lived credential for one seeded demo actor
+    tags: [Demo]
+    x-jejak-demo-only: true
+    x-jejak-roles: [SYSTEM]
+    security: []
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/CreateDemoSession }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/DemoSessionCreated }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+      "503": { $ref: ../components/responses.yaml#/Unavailable }
+context:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
+  get:
+    operationId: getDemoContext
+    summary: Restore the active sandbox scenario and canonical identifiers
+    tags: [Demo]
+    x-jejak-demo-only: true
+    x-jejak-roles: [SYSTEM]
+    security: []
+    parameters:
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/DemoContextOk }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "503": { $ref: ../components/responses.yaml#/Unavailable }
+refundSpike:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
+  post:
+    operationId: injectDemoRefundSpike
+    summary: Persist the canonical sandbox refund-spike event and request reevaluation
+    tags: [Demo]
+    x-jejak-demo-only: true
+    x-jejak-roles: [ORIGINATOR, SYSTEM]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/InjectRefundSpike }
+    responses:
+      "202": { $ref: ../components/responses.yaml#/Accepted }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }

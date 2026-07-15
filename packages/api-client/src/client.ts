@@ -5,6 +5,7 @@ import type { paths } from "./generated/schema.js";
 export interface JejakClientOptions {
   baseUrl: string;
   getAccessToken: () => Promise<string | null>;
+  getTenantId?: () => Promise<string | null>;
   fetch?: typeof globalThis.fetch;
 }
 
@@ -37,6 +38,10 @@ export function createJejakClient(options: JejakClientOptions) {
       const token = await options.getAccessToken();
       if (token !== null && token.length > 0) {
         request.headers.set("Authorization", `Bearer ${token}`);
+      }
+      const tenantId = await options.getTenantId?.();
+      if (tenantId !== undefined && tenantId !== null && tenantId.length > 0) {
+        request.headers.set("X-Jejak-Tenant-Id", tenantId);
       }
       return request;
     },

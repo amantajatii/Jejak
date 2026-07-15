@@ -34,6 +34,38 @@ describe("generated Jejak API client", () => {
     expect(authorization).toEqual(["Bearer token-one", "Bearer token-two"]);
   });
 
+  it("asks for the selected tenant on every request without changing token behavior", async () => {
+    const getTenantId = vi
+      .fn<() => Promise<string | null>>()
+      .mockResolvedValueOnce("0198a5ea-7c9c-7000-8000-000000000011")
+      .mockResolvedValueOnce("0198a5ea-7c9c-7000-8000-000000000012");
+    const tenants: Array<string | null> = [];
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+      const request = input instanceof Request ? input : new Request(input);
+      tenants.push(request.headers.get("X-Jejak-Tenant-Id"));
+      return new Response(JSON.stringify({ data: { status: "ok" }, meta: {
+        requestId: "0198a5ea-7c9c-7000-8000-000000000001",
+        timestamp: "2026-07-15T00:00:00Z",
+        sandbox: true,
+      } }), { status: 200, headers: { "content-type": "application/json" } });
+    });
+    const client = createJejakClient({
+      baseUrl: "https://api.invalid",
+      fetch,
+      getAccessToken: async () => null,
+      getTenantId,
+    });
+
+    await client.GET("/health");
+    await client.GET("/health");
+
+    expect(getTenantId).toHaveBeenCalledTimes(2);
+    expect(tenants).toEqual([
+      "0198a5ea-7c9c-7000-8000-000000000011",
+      "0198a5ea-7c9c-7000-8000-000000000012",
+    ]);
+  });
+
   it("builds explicit idempotency, correlation, and concurrency headers", () => {
     expect(
       commandHeaders({
@@ -50,9 +82,15 @@ describe("generated Jejak API client", () => {
 
   it("keeps Money amounts as strings and operation IDs type-safe", () => {
     type Money = components["schemas"]["Money"];
+    type Workspace = components["schemas"]["ClaimWorkspace"];
+    type DemoSession = components["schemas"]["DemoSessionResult"];
     const amount: Money["amountMinor"] = "6400";
-    const operationId: keyof operations = "createClaim";
+    const operationIds: Array<keyof operations> = ["createClaim", "createDemoSession", "getClaimWorkspace"];
+    const workspaceState: Workspace["claim"]["state"] = "CLOSED_WITH_LOSS";
+    const sessionTokenType: DemoSession["tokenType"] = "Bearer";
     expect(amount).toBe("6400");
-    expect(operationId).toBe("createClaim");
+    expect(operationIds).toEqual(["createClaim", "createDemoSession", "getClaimWorkspace"]);
+    expect(workspaceState).toBe("CLOSED_WITH_LOSS");
+    expect(sessionTokenType).toBe("Bearer");
   });
 });

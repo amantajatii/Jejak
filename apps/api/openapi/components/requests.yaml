@@ -1,3 +1,21 @@
+ResetDemo:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/ResetDemo
+CreateDemoSession:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/integration/demo-session-request.schema.json
+InjectRefundSpike:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/InjectRefundSpike
 CreateSeller:
   required: true
   content:

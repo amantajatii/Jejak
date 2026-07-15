@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/integration/demo-session-request.schema.json",
+  "title": "DemoSessionRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["role"],
+  "properties": {
+    "role": { "$ref": "../enums/actor-role.schema.json" }
+  }
+}

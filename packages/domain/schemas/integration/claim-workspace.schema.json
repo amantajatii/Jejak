@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/integration/claim-workspace.schema.json",
+  "title": "ClaimWorkspace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["checkpoint", "chainMode", "sandbox", "claim", "latestAttestation", "latestOffer", "controlEvidence", "facilityPosition", "latestWaterfall", "resolutionCase", "pendingOperation", "timeline", "stellarReferences", "allowedActions"],
+  "properties": {
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "asOf"],
+      "properties": {
+        "version": { "type": "integer", "minimum": 1 },
+        "asOf": { "$ref": "../common/timestamp.schema.json" }
+      }
+    },
+    "chainMode": { "type": "string", "enum": ["TESTNET", "DETERMINISTIC"] },
+    "sandbox": { "type": "boolean" },
+    "claim": { "$ref": "../entities/claim.schema.json" },
+    "latestAttestation": { "anyOf": [{ "$ref": "../entities/eligibility-attestation.schema.json" }, { "type": "null" }] },
+    "latestOffer": { "anyOf": [{ "$ref": "../entities/financing-offer.schema.json" }, { "type": "null" }] },
+    "controlEvidence": { "anyOf": [{ "$ref": "../entities/control-evidence.schema.json" }, { "type": "null" }] },
+    "facilityPosition": { "anyOf": [{ "$ref": "../entities/facility-position.schema.json" }, { "type": "null" }] },
+    "latestWaterfall": { "anyOf": [{ "$ref": "../entities/waterfall-result.schema.json" }, { "type": "null" }] },
+    "resolutionCase": { "anyOf": [{ "$ref": "../entities/resolution-case.schema.json" }, { "type": "null" }] },
+    "pendingOperation": { "anyOf": [{ "$ref": "./pending-operation.schema.json" }, { "type": "null" }] },
+    "timeline": { "type": "array", "items": { "$ref": "./timeline-item.schema.json" } },
+    "stellarReferences": { "type": "array", "items": { "$ref": "./safe-stellar-reference.schema.json" } },
+    "allowedActions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["ANALYZE", "CREATE_OFFER", "ACCEPT_OFFER", "SUBMIT_CONTROL_EVIDENCE", "DECIDE_CONTROL", "ISSUE", "FUND", "RECORD_SETTLEMENT", "RECONCILE", "EXECUTE_WATERFALL", "PAUSE", "OPEN_RESOLUTION", "RECORD_RECOVERY", "CLOSE_RESOLUTION"]
+      }
+    }
+  }
+}

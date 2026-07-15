@@ -1,3 +1,57 @@
+DemoContextOk:
+  description: Current deterministic demo context.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/RequestId
+    X-Jejak-Sandbox:
+      $ref: ./headers.yaml#/Sandbox
+  content:
+    application/json:
+      schema:
+        type: object
+        additionalProperties: false
+        required: [data, meta]
+        properties:
+          data:
+            $ref: ../../../../packages/domain/schemas/integration/demo-context.schema.json
+          meta:
+            $ref: ../../../../packages/domain/schemas/api/success-envelope.schema.json#/properties/meta
+DemoSessionCreated:
+  description: One-time short-lived demo credential.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/RequestId
+    X-Jejak-Sandbox:
+      $ref: ./headers.yaml#/Sandbox
+  content:
+    application/json:
+      schema:
+        type: object
+        additionalProperties: false
+        required: [data, meta]
+        properties:
+          data:
+            $ref: ../../../../packages/domain/schemas/integration/demo-session-result.schema.json
+          meta:
+            $ref: ../../../../packages/domain/schemas/api/success-envelope.schema.json#/properties/meta
+ClaimWorkspaceOk:
+  description: One checkpointed, tenant-authorized claim workspace.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/RequestId
+    X-Jejak-Sandbox:
+      $ref: ./headers.yaml#/Sandbox
+  content:
+    application/json:
+      schema:
+        type: object
+        additionalProperties: false
+        required: [data, meta]
+        properties:
+          data:
+            $ref: ../../../../packages/domain/schemas/integration/claim-workspace.schema.json
+          meta:
+            $ref: ../../../../packages/domain/schemas/api/success-envelope.schema.json#/properties/meta
 Ok:
   description: Successful operation.
   headers:

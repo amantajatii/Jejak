@@ -5,6 +5,15 @@
   "type": "object",
   "additionalProperties": false,
   "$defs": {
+    "ResetDemo": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scenario"],
+      "properties": { "scenario": { "type": "string", "enum": ["HAPPY", "ADVERSE"] } }
+    },
+    "InjectRefundSpike": {
+      "type": "object", "additionalProperties": false,
+      "properties": {}
+    },
     "CreateInstitutionalInvitation": {
       "type": "object", "additionalProperties": false,
       "required": ["email", "roles"],

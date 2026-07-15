@@ -34,6 +34,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/demo/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset a deterministic sandbox demo scenario */
+        post: operations["resetDemo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/demo/sessions": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a short-lived credential for one seeded demo actor */
+        post: operations["createDemoSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/demo/context": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** Restore the active sandbox scenario and canonical identifiers */
+        get: operations["getDemoContext"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/demo/claims/{id}/refund-spike": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Persist the canonical sandbox refund-spike event and request reevaluation */
+        post: operations["injectDemoRefundSpike"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sellers": {
         parameters: {
             query?: never;
@@ -190,6 +267,26 @@ export interface paths {
         };
         /** Read an authorized claim */
         get: operations["getClaim"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/claims/{id}/workspace": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one checkpointed claim workspace */
+        get: operations["getClaimWorkspace"];
         put?: never;
         post?: never;
         delete?: never;
@@ -558,6 +655,13 @@ export interface components {
         SettlementEvent: components["schemas"]["settlement-event.schema"];
         WaterfallResult: components["schemas"]["waterfall-result.schema"];
         ResolutionCase: components["schemas"]["resolution-case.schema"];
+        DemoContext: components["schemas"]["demo-context.schema"];
+        DemoSessionRequest: components["schemas"]["demo-session-request.schema"];
+        DemoSessionResult: components["schemas"]["demo-session-result.schema"];
+        ClaimWorkspace: components["schemas"]["claim-workspace.schema"];
+        PendingOperation: components["schemas"]["pending-operation.schema"];
+        TimelineItem: components["schemas"]["timeline-item.schema"];
+        SafeStellarReference: components["schemas"]["safe-stellar-reference.schema"];
         ApiSuccess: components["schemas"]["success-envelope.schema"];
         ApiError: components["schemas"]["error-envelope.schema"];
         /** Format: uuid-v7 */
@@ -594,6 +698,58 @@ export interface components {
                 };
             };
         };
+        ResetDemo: {
+            /** @enum {string} */
+            scenario: "HAPPY" | "ADVERSE";
+        };
+        /**
+         * ClaimState
+         * @enum {string}
+         */
+        "claim-state.schema": "DRAFT" | "DATA_PENDING" | "ANALYZED" | "ELIGIBLE" | "CONTROLLED" | "ISSUED" | "FUNDED" | "SETTLING" | "REPAID" | "REDEEMED" | "CLOSED" | "SHORTFALL" | "RESOLUTION" | "CLOSED_WITH_LOSS" | "REVIEW" | "REJECTED" | "FROZEN" | "SUSPENDED" | "PAUSED" | "CANCELLED";
+        /**
+         * ActorRole
+         * @enum {string}
+         */
+        "actor-role.schema": "SELLER" | "ORIGINATOR" | "ISSUER" | "FACILITY" | "SERVICER" | "RESOLVER" | "ORACLE" | "ADMIN" | "SYSTEM";
+        /** DemoContext */
+        "demo-context.schema": {
+            /** @enum {string} */
+            scenario: "HAPPY" | "ADVERSE";
+            tenantId: components["schemas"]["uuidV7"];
+            claimId: components["schemas"]["uuidV7"];
+            claimState: components["schemas"]["claim-state.schema"];
+            /** @enum {string} */
+            chainMode: "TESTNET" | "DETERMINISTIC";
+            actors: {
+                actorId: components["schemas"]["uuidV7"];
+                role: components["schemas"]["actor-role.schema"];
+                label: string;
+            }[];
+            resetAt: components["schemas"]["timestamp.schema"];
+            version: number;
+        };
+        meta: {
+            requestId: components["schemas"]["uuidV7"];
+            timestamp: components["schemas"]["timestamp.schema"];
+            sandbox: boolean;
+            nextCursor?: string;
+        };
+        /** DemoSessionRequest */
+        "demo-session-request.schema": {
+            role: components["schemas"]["actor-role.schema"];
+        };
+        /** DemoSessionResult */
+        "demo-session-result.schema": {
+            accessToken: string;
+            /** @constant */
+            tokenType: "Bearer";
+            expiresAt: components["schemas"]["timestamp.schema"];
+            actorId: components["schemas"]["uuidV7"];
+            tenantId: components["schemas"]["uuidV7"];
+            role: components["schemas"]["actor-role.schema"];
+        };
+        InjectRefundSpike: Record<string, never>;
         currency: string;
         CreateSeller: {
             displayName: string;
@@ -625,11 +781,6 @@ export interface components {
             storageObjectKey: string;
             contentHash: components["schemas"]["sha256Hex"];
         };
-        /**
-         * ClaimState
-         * @enum {string}
-         */
-        "claim-state.schema": "DRAFT" | "DATA_PENDING" | "ANALYZED" | "ELIGIBLE" | "CONTROLLED" | "ISSUED" | "FUNDED" | "SETTLING" | "REPAID" | "REDEEMED" | "CLOSED" | "SHORTFALL" | "RESOLUTION" | "CLOSED_WITH_LOSS" | "REVIEW" | "REJECTED" | "FROZEN" | "SUSPENDED" | "PAUSED" | "CANCELLED";
         integerString: string;
         /** Format: stellar-address */
         stellarAddress: string;
@@ -646,6 +797,227 @@ export interface components {
             facilityId: components["schemas"]["uuidV7"];
             requestedAdvance: components["schemas"]["money.schema"];
         };
+        /**
+         * ReasonCode
+         * @enum {string}
+         */
+        "reason-code.schema": "HIGH_REFUND_RATE" | "HIGH_RTO_RATE" | "CHARGEBACK_SPIKE" | "ACCOUNT_HOLD" | "MISSING_PAYOUT_HISTORY" | "DATA_INCONSISTENT" | "CONCENTRATION_HIGH" | "STALE_SNAPSHOT" | "CONTROL_NOT_VERIFIED" | "POLICY_LIMIT" | "MODEL_UNAVAILABLE" | "MANUAL_REVIEW_REQUIRED" | "SETTLEMENT_SHORTFALL" | "PARTNER_UNAVAILABLE";
+        /** Claim */
+        "claim.schema": {
+            id: components["schemas"]["uuidV7"];
+            claimKey: components["schemas"]["sha256Hex"];
+            tenantId: components["schemas"]["uuidV7"];
+            sellerId: components["schemas"]["uuidV7"];
+            settlementStreamId: components["schemas"]["uuidV7"];
+            facilityId: components["schemas"]["uuidV7"];
+            state: components["schemas"]["claim-state.schema"];
+            sourceCurrency: components["schemas"]["currency"];
+            grossUnsettled: components["schemas"]["money.schema"];
+            eligibleSettlementValue: components["schemas"]["money.schema"];
+            advanceAmount: components["schemas"]["money.schema"];
+            outstandingPrincipal: components["schemas"]["money.schema"];
+            latestAttestationId?: components["schemas"]["uuidV7"];
+            controlEvidenceId?: components["schemas"]["uuidV7"];
+            onchainContractId?: string;
+            onchainTxHash?: components["schemas"]["sha256Hex"];
+            expectedSettlementAt?: components["schemas"]["timestamp.schema"];
+            stateReasonCodes: components["schemas"]["reason-code.schema"][];
+            createdAt: components["schemas"]["timestamp.schema"];
+            updatedAt: components["schemas"]["timestamp.schema"];
+            version: number;
+        };
+        /**
+         * EligibilityDecision
+         * @enum {string}
+         */
+        "eligibility-decision.schema": "ELIGIBLE" | "REVIEW" | "INELIGIBLE";
+        /**
+         * CredentialStatus
+         * @enum {string}
+         */
+        "credential-status.schema": "ACTIVE" | "SUPERSEDED" | "REVOKED" | "EXPIRED";
+        /** EligibilityAttestation */
+        "eligibility-attestation.schema": {
+            /** @constant */
+            schema: "JEJAK_JCC_V1";
+            id: components["schemas"]["uuidV7"];
+            attestationKey: components["schemas"]["sha256Hex"];
+            claimId: components["schemas"]["uuidV7"];
+            claimKey: components["schemas"]["sha256Hex"];
+            sellerSubjectHash: components["schemas"]["sha256Hex"];
+            settlementStreamId: components["schemas"]["uuidV7"];
+            dataSnapshotHash: components["schemas"]["sha256Hex"];
+            modelId: string;
+            modelVersion: string;
+            policyVersion: string;
+            decision: components["schemas"]["eligibility-decision.schema"];
+            sdsBps: number;
+            grossUnsettled: components["schemas"]["money.schema"];
+            eligibleSettlementValue: components["schemas"]["money.schema"];
+            maxAdvanceAmount: components["schemas"]["money.schema"];
+            reasonCodes: components["schemas"]["reason-code.schema"][];
+            issuedAt: components["schemas"]["timestamp.schema"];
+            expiresAt: components["schemas"]["timestamp.schema"];
+            status: components["schemas"]["credential-status.schema"];
+            keyId: string;
+            signature: string;
+        };
+        /** FinancingOffer */
+        "financing-offer.schema": {
+            id: components["schemas"]["uuidV7"];
+            claimId: components["schemas"]["uuidV7"];
+            originatorId: components["schemas"]["uuidV7"];
+            principal: components["schemas"]["money.schema"];
+            fee: components["schemas"]["money.schema"];
+            annualizedRateBps: number;
+            advanceRateBps: number;
+            expiresAt: components["schemas"]["timestamp.schema"];
+            termsHash: components["schemas"]["sha256Hex"];
+            /** @enum {string} */
+            status: "DRAFT" | "OFFERED" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
+            createdAt: components["schemas"]["timestamp.schema"];
+            version: number;
+        };
+        /**
+         * ControlEvidenceStatus
+         * @enum {string}
+         */
+        "control-evidence-status.schema": "PENDING" | "VERIFIED" | "REJECTED" | "REVOKED";
+        /** ControlEvidence */
+        "control-evidence.schema": {
+            id: components["schemas"]["uuidV7"];
+            claimId: components["schemas"]["uuidV7"];
+            mode: components["schemas"]["partner-mode.schema"];
+            status: components["schemas"]["control-evidence-status.schema"];
+            /** @enum {string} */
+            structure: "ASSIGNMENT" | "CONTROLLED_ACCOUNT" | "PARTICIPATION" | "OTHER";
+            evidenceHash: components["schemas"]["sha256Hex"];
+            documentSecretRef?: string;
+            verifiedBy?: components["schemas"]["uuidV7"];
+            verifiedAt?: components["schemas"]["timestamp.schema"];
+            expiresAt?: components["schemas"]["timestamp.schema"];
+            reasonCodes: components["schemas"]["reason-code.schema"][];
+            createdAt: components["schemas"]["timestamp.schema"];
+            updatedAt: components["schemas"]["timestamp.schema"];
+            version: number;
+        };
+        nonNegativeIntegerString: string;
+        /** FacilityPosition */
+        "facility-position.schema": {
+            id: components["schemas"]["uuidV7"];
+            facilityId: components["schemas"]["uuidV7"];
+            claimId: components["schemas"]["uuidV7"];
+            jclaimAssetCode: components["schemas"]["currency"];
+            jclaimIssuer: components["schemas"]["stellarAddress"];
+            fundingAssetCode: components["schemas"]["currency"];
+            fundingAssetIssuer: components["schemas"]["stellarAddress"];
+            principalBaseUnits: components["schemas"]["nonNegativeIntegerString"];
+            jclaimBaseUnits: components["schemas"]["nonNegativeIntegerString"];
+            firstLossBaseUnits: components["schemas"]["nonNegativeIntegerString"];
+            fundedAt?: components["schemas"]["timestamp.schema"];
+            repaidAt?: components["schemas"]["timestamp.schema"];
+            onchainTxHashes: components["schemas"]["sha256Hex"][];
+            createdAt: components["schemas"]["timestamp.schema"];
+            updatedAt: components["schemas"]["timestamp.schema"];
+            version: number;
+        };
+        /** WaterfallResult */
+        "waterfall-result.schema": {
+            id: components["schemas"]["uuidV7"];
+            claimId: components["schemas"]["uuidV7"];
+            runNumber: number;
+            inputSettlement: components["schemas"]["money.schema"];
+            principalPaid: components["schemas"]["money.schema"];
+            feesPaid: components["schemas"]["money.schema"];
+            firstLossApplied: components["schemas"]["money.schema"];
+            seniorLoss: components["schemas"]["money.schema"];
+            sellerResidual: components["schemas"]["money.schema"];
+            resultHash: components["schemas"]["sha256Hex"];
+            onchainTxHash?: components["schemas"]["sha256Hex"];
+            executedAt: components["schemas"]["timestamp.schema"];
+        };
+        /**
+         * ResolutionStatus
+         * @enum {string}
+         */
+        "resolution-status.schema": "OPEN" | "RECOVERING" | "SETTLED" | "WRITTEN_OFF";
+        /** ResolutionCase */
+        "resolution-case.schema": {
+            id: components["schemas"]["uuidV7"];
+            claimId: components["schemas"]["uuidV7"];
+            status: components["schemas"]["resolution-status.schema"];
+            resolverAddress: components["schemas"]["stellarAddress"];
+            openedReasonCodes: components["schemas"]["reason-code.schema"][];
+            recoveryExpected: components["schemas"]["money.schema"];
+            recoveryRealized: components["schemas"]["money.schema"];
+            finalLoss: components["schemas"]["money.schema"];
+            evidenceHashes: components["schemas"]["sha256Hex"][];
+            openedAt: components["schemas"]["timestamp.schema"];
+            closedAt?: components["schemas"]["timestamp.schema"];
+            version: number;
+        };
+        /** PendingOperation */
+        "pending-operation.schema": {
+            id: components["schemas"]["uuidV7"];
+            /** @enum {string} */
+            kind: "RISK_EVALUATION" | "JCC_REGISTRATION" | "CONTROL_VERIFICATION" | "ASSET_ISSUANCE" | "FACILITY_FUNDING" | "SETTLEMENT_RECONCILIATION" | "WATERFALL" | "REDEMPTION" | "RESOLUTION";
+            /** @enum {string} */
+            status: "QUEUED" | "PROCESSING" | "AWAITING_PARTNER" | "AWAITING_CHAIN_RECONCILIATION" | "RETRYABLE_FAILURE" | "TERMINAL_FAILURE" | "MANUAL_REVIEW";
+            retryable: boolean;
+            reasonCodes: components["schemas"]["reason-code.schema"][];
+            submittedAt: components["schemas"]["timestamp.schema"];
+            updatedAt: components["schemas"]["timestamp.schema"];
+        };
+        /** TimelineItem */
+        "timeline-item.schema": {
+            id: components["schemas"]["uuidV7"];
+            eventType: string;
+            label: string;
+            actorRole: components["schemas"]["actor-role.schema"];
+            claimState?: components["schemas"]["claim-state.schema"];
+            reasonCodes: components["schemas"]["reason-code.schema"][];
+            stellarReferenceId?: string;
+            occurredAt: components["schemas"]["timestamp.schema"];
+        };
+        /** SafeStellarReference */
+        "safe-stellar-reference.schema": {
+            id: string;
+            /** @enum {string} */
+            kind: "TRANSACTION" | "CONTRACT" | "EVENT";
+            label: string;
+            /** @enum {string} */
+            network: "TESTNET" | "DETERMINISTIC";
+            /** @enum {string} */
+            status: "SUBMITTED" | "INDEXED" | "RECONCILED" | "MISMATCH";
+            transactionHash?: components["schemas"]["sha256Hex"];
+            contractId?: string;
+            eventId?: string;
+            ledgerSequence?: number;
+            /** Format: uri */
+            explorerUrl?: string;
+            sandbox: boolean;
+        } & (unknown & unknown & unknown);
+        /** ClaimWorkspace */
+        "claim-workspace.schema": {
+            checkpoint: {
+                version: number;
+                asOf: components["schemas"]["timestamp.schema"];
+            };
+            /** @enum {string} */
+            chainMode: "TESTNET" | "DETERMINISTIC";
+            sandbox: boolean;
+            claim: components["schemas"]["claim.schema"];
+            latestAttestation: components["schemas"]["eligibility-attestation.schema"] | null;
+            latestOffer: components["schemas"]["financing-offer.schema"] | null;
+            controlEvidence: components["schemas"]["control-evidence.schema"] | null;
+            facilityPosition: components["schemas"]["facility-position.schema"] | null;
+            latestWaterfall: components["schemas"]["waterfall-result.schema"] | null;
+            resolutionCase: components["schemas"]["resolution-case.schema"] | null;
+            pendingOperation: components["schemas"]["pending-operation.schema"] | null;
+            timeline: components["schemas"]["timeline-item.schema"][];
+            stellarReferences: components["schemas"]["safe-stellar-reference.schema"][];
+            allowedActions: ("ANALYZE" | "CREATE_OFFER" | "ACCEPT_OFFER" | "SUBMIT_CONTROL_EVIDENCE" | "DECIDE_CONTROL" | "ISSUE" | "FUND" | "RECORD_SETTLEMENT" | "RECONCILE" | "EXECUTE_WATERFALL" | "PAUSE" | "OPEN_RESOLUTION" | "RECORD_RECOVERY" | "CLOSE_RESOLUTION")[];
+        };
         AnalyzeClaim: {
             snapshotCutoffAt: components["schemas"]["timestamp.schema"];
         };
@@ -654,11 +1026,6 @@ export interface components {
             /** @enum {string} */
             evidenceType: "ASSIGNMENT_NOTICE" | "ACCOUNT_CONTROL" | "MARKETPLACE_ACKNOWLEDGEMENT";
         };
-        /**
-         * ReasonCode
-         * @enum {string}
-         */
-        "reason-code.schema": "HIGH_REFUND_RATE" | "HIGH_RTO_RATE" | "CHARGEBACK_SPIKE" | "ACCOUNT_HOLD" | "MISSING_PAYOUT_HISTORY" | "DATA_INCONSISTENT" | "CONCENTRATION_HIGH" | "STALE_SNAPSHOT" | "CONTROL_NOT_VERIFIED" | "POLICY_LIMIT" | "MODEL_UNAVAILABLE" | "MANUAL_REVIEW_REQUIRED" | "SETTLEMENT_SHORTFALL" | "PARTNER_UNAVAILABLE";
         ControlDecision: {
             /** @enum {string} */
             decision: "VERIFY" | "REJECT" | "REVOKE";
@@ -753,46 +1120,6 @@ export interface components {
             updatedAt: components["schemas"]["timestamp.schema"];
             version: number;
         };
-        /** Claim */
-        "claim.schema": {
-            id: components["schemas"]["uuidV7"];
-            claimKey: components["schemas"]["sha256Hex"];
-            tenantId: components["schemas"]["uuidV7"];
-            sellerId: components["schemas"]["uuidV7"];
-            settlementStreamId: components["schemas"]["uuidV7"];
-            facilityId: components["schemas"]["uuidV7"];
-            state: components["schemas"]["claim-state.schema"];
-            sourceCurrency: components["schemas"]["currency"];
-            grossUnsettled: components["schemas"]["money.schema"];
-            eligibleSettlementValue: components["schemas"]["money.schema"];
-            advanceAmount: components["schemas"]["money.schema"];
-            outstandingPrincipal: components["schemas"]["money.schema"];
-            latestAttestationId?: components["schemas"]["uuidV7"];
-            controlEvidenceId?: components["schemas"]["uuidV7"];
-            onchainContractId?: string;
-            onchainTxHash?: components["schemas"]["sha256Hex"];
-            expectedSettlementAt?: components["schemas"]["timestamp.schema"];
-            stateReasonCodes: components["schemas"]["reason-code.schema"][];
-            createdAt: components["schemas"]["timestamp.schema"];
-            updatedAt: components["schemas"]["timestamp.schema"];
-            version: number;
-        };
-        /** FinancingOffer */
-        "financing-offer.schema": {
-            id: components["schemas"]["uuidV7"];
-            claimId: components["schemas"]["uuidV7"];
-            originatorId: components["schemas"]["uuidV7"];
-            principal: components["schemas"]["money.schema"];
-            fee: components["schemas"]["money.schema"];
-            annualizedRateBps: number;
-            advanceRateBps: number;
-            expiresAt: components["schemas"]["timestamp.schema"];
-            termsHash: components["schemas"]["sha256Hex"];
-            /** @enum {string} */
-            status: "DRAFT" | "OFFERED" | "ACCEPTED" | "EXPIRED" | "CANCELLED";
-            createdAt: components["schemas"]["timestamp.schema"];
-            version: number;
-        };
         /** SettlementEvent */
         "settlement-event.schema": {
             id: components["schemas"]["uuidV7"];
@@ -806,41 +1133,6 @@ export interface components {
             receivedAt: components["schemas"]["timestamp.schema"];
             payloadHash: components["schemas"]["sha256Hex"];
             createdAt: components["schemas"]["timestamp.schema"];
-        };
-        /** WaterfallResult */
-        "waterfall-result.schema": {
-            id: components["schemas"]["uuidV7"];
-            claimId: components["schemas"]["uuidV7"];
-            runNumber: number;
-            inputSettlement: components["schemas"]["money.schema"];
-            principalPaid: components["schemas"]["money.schema"];
-            feesPaid: components["schemas"]["money.schema"];
-            firstLossApplied: components["schemas"]["money.schema"];
-            seniorLoss: components["schemas"]["money.schema"];
-            sellerResidual: components["schemas"]["money.schema"];
-            resultHash: components["schemas"]["sha256Hex"];
-            onchainTxHash?: components["schemas"]["sha256Hex"];
-            executedAt: components["schemas"]["timestamp.schema"];
-        };
-        /**
-         * ResolutionStatus
-         * @enum {string}
-         */
-        "resolution-status.schema": "OPEN" | "RECOVERING" | "SETTLED" | "WRITTEN_OFF";
-        /** ResolutionCase */
-        "resolution-case.schema": {
-            id: components["schemas"]["uuidV7"];
-            claimId: components["schemas"]["uuidV7"];
-            status: components["schemas"]["resolution-status.schema"];
-            resolverAddress: components["schemas"]["stellarAddress"];
-            openedReasonCodes: components["schemas"]["reason-code.schema"][];
-            recoveryExpected: components["schemas"]["money.schema"];
-            recoveryRealized: components["schemas"]["money.schema"];
-            finalLoss: components["schemas"]["money.schema"];
-            evidenceHashes: components["schemas"]["sha256Hex"][];
-            openedAt: components["schemas"]["timestamp.schema"];
-            closedAt?: components["schemas"]["timestamp.schema"];
-            version: number;
         };
     };
     responses: {
@@ -882,37 +1174,45 @@ export interface components {
                 "application/json": components["schemas"]["error-envelope.schema"];
             };
         };
-        /** @description Resource created. */
-        Created: {
+        /** @description Current deterministic demo context. */
+        DemoContextOk: {
             headers: {
                 "X-Request-Id": components["headers"]["RequestId"];
                 "X-Jejak-Sandbox": components["headers"]["Sandbox"];
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["success-envelope.schema"];
-            };
-        };
-        /** @description Authentication is required or invalid. */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["error-envelope.schema"];
-            };
-        };
-        /** @description The authenticated actor lacks the required tenant, role, or object permission. */
-        Forbidden: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["error-envelope.schema"];
+                "application/json": {
+                    data: components["schemas"]["demo-context.schema"];
+                    meta: components["schemas"]["meta"];
+                };
             };
         };
         /** @description Idempotency, encumbrance, or state conflict. */
         Conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["error-envelope.schema"];
+            };
+        };
+        /** @description One-time short-lived demo credential. */
+        DemoSessionCreated: {
+            headers: {
+                "X-Request-Id": components["headers"]["RequestId"];
+                "X-Jejak-Sandbox": components["headers"]["Sandbox"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["demo-session-result.schema"];
+                    meta: components["schemas"]["meta"];
+                };
+            };
+        };
+        /** @description The authenticated actor lacks the required tenant, role, or object permission. */
+        Forbidden: {
             headers: {
                 [name: string]: unknown;
             };
@@ -940,6 +1240,15 @@ export interface components {
                 "application/json": components["schemas"]["success-envelope.schema"];
             };
         };
+        /** @description Authentication is required or invalid. */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["error-envelope.schema"];
+            };
+        };
         /** @description Aggregate version or domain precondition did not match. */
         PreconditionFailed: {
             headers: {
@@ -949,22 +1258,62 @@ export interface components {
                 "application/json": components["schemas"]["error-envelope.schema"];
             };
         };
+        /** @description Resource created. */
+        Created: {
+            headers: {
+                "X-Request-Id": components["headers"]["RequestId"];
+                "X-Jejak-Sandbox": components["headers"]["Sandbox"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["success-envelope.schema"];
+            };
+        };
+        /** @description One checkpointed, tenant-authorized claim workspace. */
+        ClaimWorkspaceOk: {
+            headers: {
+                "X-Request-Id": components["headers"]["RequestId"];
+                "X-Jejak-Sandbox": components["headers"]["Sandbox"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["claim-workspace.schema"];
+                    meta: components["schemas"]["meta"];
+                };
+            };
+        };
     };
     parameters: {
-        /** @description Explicit active tenant selected by the authenticated actor. */
-        TenantId: string;
         /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
         IdempotencyKey: string;
         CorrelationId: string;
-        SellerId: string;
+        /** @description Explicit active tenant selected by the authenticated actor. */
+        TenantId: string;
         ResourceId: string;
         /** @description Decimal aggregate version expected by the caller. */
         IfMatch: number;
+        SellerId: string;
         Cursor: string;
         Limit: number;
         ClaimState: components["schemas"]["claim-state.schema"];
     };
     requestBodies: {
+        ResetDemo: {
+            content: {
+                "application/json": components["schemas"]["ResetDemo"];
+            };
+        };
+        CreateDemoSession: {
+            content: {
+                "application/json": components["schemas"]["demo-session-request.schema"];
+            };
+        };
+        InjectRefundSpike: {
+            content: {
+                "application/json": components["schemas"]["InjectRefundSpike"];
+            };
+        };
         CreateSeller: {
             content: {
                 "application/json": components["schemas"]["CreateSeller"];
@@ -1102,6 +1451,93 @@ export interface operations {
             200: components["responses"]["Ok"];
             400: components["responses"]["BadRequest"];
             503: components["responses"]["Unavailable"];
+        };
+    };
+    resetDemo: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["ResetDemo"];
+        responses: {
+            200: components["responses"]["DemoContextOk"];
+            400: components["responses"]["BadRequest"];
+            409: components["responses"]["Conflict"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    createDemoSession: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["CreateDemoSession"];
+        responses: {
+            201: components["responses"]["DemoSessionCreated"];
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    getDemoContext: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["DemoContextOk"];
+            404: components["responses"]["NotFound"];
+            503: components["responses"]["Unavailable"];
+        };
+    };
+    injectDemoRefundSpike: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Decimal aggregate version expected by the caller. */
+                "If-Match": components["parameters"]["IfMatch"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["InjectRefundSpike"];
+        responses: {
+            202: components["responses"]["Accepted"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            412: components["responses"]["PreconditionFailed"];
         };
     };
     createSeller: {
@@ -1302,6 +1738,28 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["Ok"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getClaimWorkspace: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["ClaimWorkspaceOk"];
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];

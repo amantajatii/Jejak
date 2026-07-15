@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/integration/safe-stellar-reference.schema.json",
+  "title": "SafeStellarReference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "label", "network", "status", "sandbox"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" },
+    "kind": { "type": "string", "enum": ["TRANSACTION", "CONTRACT", "EVENT"] },
+    "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "network": { "type": "string", "enum": ["TESTNET", "DETERMINISTIC"] },
+    "status": { "type": "string", "enum": ["SUBMITTED", "INDEXED", "RECONCILED", "MISMATCH"] },
+    "transactionHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "contractId": { "type": "string", "pattern": "^C[A-Z2-7]{55}$" },
+    "eventId": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,160}$" },
+    "ledgerSequence": { "type": "integer", "minimum": 1 },
+    "explorerUrl": { "type": "string", "format": "uri", "pattern": "^https://" },
+    "sandbox": { "type": "boolean" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "TRANSACTION" } }, "required": ["kind"] },
+      "then": { "properties": { "transactionHash": true }, "required": ["transactionHash"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "CONTRACT" } }, "required": ["kind"] },
+      "then": { "properties": { "contractId": true }, "required": ["contractId"] }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "EVENT" } }, "required": ["kind"] },
+      "then": { "properties": { "eventId": true }, "required": ["eventId"] }
+    }
+  ]
+}

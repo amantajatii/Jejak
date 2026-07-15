@@ -28,11 +28,21 @@ tags:
     description: Tenant-scoped append-only audit search.
   - name: Invitations
     description: Secure institutional membership provisioning.
+  - name: Demo
+    description: Explicit sandbox-only scenario reset, context, and identity operations.
 paths:
   /health:
     $ref: ./paths/health.yaml#/health
   /ready:
     $ref: ./paths/health.yaml#/ready
+  /v1/demo/reset:
+    $ref: ./paths/demo.yaml#/reset
+  /v1/demo/sessions:
+    $ref: ./paths/demo.yaml#/sessions
+  /v1/demo/context:
+    $ref: ./paths/demo.yaml#/context
+  /v1/demo/claims/{id}/refund-spike:
+    $ref: ./paths/demo.yaml#/refundSpike
   /v1/sellers:
     $ref: ./paths/sellers.yaml#/sellers
   /v1/sellers/{sellerId}:
@@ -49,6 +59,8 @@ paths:
     $ref: ./paths/claims.yaml#/claims
   /v1/claims/{id}:
     $ref: ./paths/claims.yaml#/claimById
+  /v1/claims/{id}/workspace:
+    $ref: ./paths/claims.yaml#/workspace
   /v1/claims/{id}/analyze:
     $ref: ./paths/claims.yaml#/analyze
   /v1/claims/{id}/control-evidence:
@@ -106,6 +118,20 @@ components:
       $ref: ../../../packages/domain/schemas/entities/waterfall-result.schema.json
     ResolutionCase:
       $ref: ../../../packages/domain/schemas/entities/resolution-case.schema.json
+    DemoContext:
+      $ref: ../../../packages/domain/schemas/integration/demo-context.schema.json
+    DemoSessionRequest:
+      $ref: ../../../packages/domain/schemas/integration/demo-session-request.schema.json
+    DemoSessionResult:
+      $ref: ../../../packages/domain/schemas/integration/demo-session-result.schema.json
+    ClaimWorkspace:
+      $ref: ../../../packages/domain/schemas/integration/claim-workspace.schema.json
+    PendingOperation:
+      $ref: ../../../packages/domain/schemas/integration/pending-operation.schema.json
+    TimelineItem:
+      $ref: ../../../packages/domain/schemas/integration/timeline-item.schema.json
+    SafeStellarReference:
+      $ref: ../../../packages/domain/schemas/integration/safe-stellar-reference.schema.json
     ApiSuccess:
       $ref: ../../../packages/domain/schemas/api/success-envelope.schema.json
     ApiError:

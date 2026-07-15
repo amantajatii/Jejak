@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/integration/timeline-item.schema.json",
+  "title": "TimelineItem",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "eventType", "label", "actorRole", "occurredAt", "reasonCodes"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "eventType": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{1,127}$" },
+    "label": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "actorRole": { "$ref": "../enums/actor-role.schema.json" },
+    "claimState": { "$ref": "../enums/claim-state.schema.json" },
+    "reasonCodes": {
+      "type": "array",
+      "items": { "$ref": "../enums/reason-code.schema.json" },
+      "uniqueItems": true
+    },
+    "stellarReferenceId": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" },
+    "occurredAt": { "$ref": "../common/timestamp.schema.json" }
+  }
+}

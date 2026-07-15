@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/integration/pending-operation.schema.json",
+  "title": "PendingOperation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "status", "retryable", "reasonCodes", "submittedAt", "updatedAt"],
+  "properties": {
+    "id": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "kind": {
+      "type": "string",
+      "enum": ["RISK_EVALUATION", "JCC_REGISTRATION", "CONTROL_VERIFICATION", "ASSET_ISSUANCE", "FACILITY_FUNDING", "SETTLEMENT_RECONCILIATION", "WATERFALL", "REDEMPTION", "RESOLUTION"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["QUEUED", "PROCESSING", "AWAITING_PARTNER", "AWAITING_CHAIN_RECONCILIATION", "RETRYABLE_FAILURE", "TERMINAL_FAILURE", "MANUAL_REVIEW"]
+    },
+    "retryable": { "type": "boolean" },
+    "reasonCodes": {
+      "type": "array",
+      "items": { "$ref": "../enums/reason-code.schema.json" },
+      "uniqueItems": true
+    },
+    "submittedAt": { "$ref": "../common/timestamp.schema.json" },
+    "updatedAt": { "$ref": "../common/timestamp.schema.json" }
+  }
+}

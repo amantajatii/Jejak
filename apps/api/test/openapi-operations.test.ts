@@ -22,6 +22,10 @@ const document = JSON.parse(
 };
 
 const expectedOperations = new Map([
+  ["POST /v1/demo/reset", "resetDemo"],
+  ["POST /v1/demo/sessions", "createDemoSession"],
+  ["GET /v1/demo/context", "getDemoContext"],
+  ["POST /v1/demo/claims/{id}/refund-spike", "injectDemoRefundSpike"],
   ["POST /v1/sellers", "createSeller"],
   ["GET /v1/sellers/{sellerId}", "getSeller"],
   ["POST /v1/marketplace-connections", "createMarketplaceConnection"],
@@ -30,6 +34,7 @@ const expectedOperations = new Map([
   ["GET /v1/ingestions/{id}", "getIngestion"],
   ["POST /v1/claims", "createClaim"],
   ["GET /v1/claims/{id}", "getClaim"],
+  ["GET /v1/claims/{id}/workspace", "getClaimWorkspace"],
   ["GET /v1/claims", "listClaims"],
   ["POST /v1/claims/{id}/analyze", "analyzeClaim"],
   ["POST /v1/claims/{id}/control-evidence", "submitControlEvidence"],
@@ -80,6 +85,8 @@ describe("frozen Section 18 operation surface", () => {
 
   it("requires optimistic concurrency on versioned commands", () => {
     const unversioned = new Set([
+      "POST /v1/demo/reset",
+      "POST /v1/demo/sessions",
       "POST /v1/sellers",
       "POST /v1/marketplace-connections",
       "POST /v1/ingestions/csv",
@@ -107,6 +114,7 @@ describe("frozen Section 18 operation surface", () => {
 
   it("requires explicit tenant context on tenant-bound operations", () => {
     const exceptions = new Set([
+      "POST /v1/demo/reset",
       "POST /v1/institutional-invitations/preview",
       "POST /v1/institutional-invitations/accept",
     ]);
