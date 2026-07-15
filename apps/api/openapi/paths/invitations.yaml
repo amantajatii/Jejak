@@ -1,0 +1,68 @@
+invitations:
+  post:
+    operationId: createInstitutionalInvitation
+    summary: Invite an institutional member into the selected tenant
+    tags: [Invitations]
+    x-jejak-roles: [ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/TenantId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/CreateInstitutionalInvitation }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/Created }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+invitationPreview:
+  post:
+    operationId: previewInstitutionalInvitation
+    summary: Preview a valid invitation without exposing its token
+    tags: [Invitations]
+    security: []
+    x-jejak-roles: [SELLER, ORIGINATOR, ISSUER, FACILITY, SERVICER, RESOLVER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/InvitationToken }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+invitationAccept:
+  post:
+    operationId: acceptInstitutionalInvitation
+    summary: Accept an invitation using the authenticated matching email
+    tags: [Invitations]
+    x-jejak-roles: [SELLER, ORIGINATOR, ISSUER, FACILITY, SERVICER, RESOLVER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/InvitationToken }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+invitationRevoke:
+  post:
+    operationId: revokeInstitutionalInvitation
+    summary: Revoke a pending institutional invitation
+    tags: [Invitations]
+    x-jejak-roles: [ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/TenantId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/RevokeInstitutionalInvitation }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }

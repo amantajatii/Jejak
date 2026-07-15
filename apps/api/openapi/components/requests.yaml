@@ -4,6 +4,24 @@ CreateSeller:
     application/json:
       schema:
         $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateSeller
+CreateInstitutionalInvitation:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateInstitutionalInvitation
+InvitationToken:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/InvitationToken
+RevokeInstitutionalInvitation:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/RevokeInstitutionalInvitation
 CreateMarketplaceConnection:
   required: true
   content:

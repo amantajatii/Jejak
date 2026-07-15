@@ -53,6 +53,10 @@
     {
       "name": "Audit",
       "description": "Tenant-scoped append-only audit search."
+    },
+    {
+      "name": "Invitations",
+      "description": "Secure institutional membership provisioning."
     }
   ],
   "paths": {
@@ -99,6 +103,11 @@
       }
     },
     "/v1/sellers": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "createSeller",
         "summary": "Create a seller and record consent",
@@ -140,6 +149,11 @@
       }
     },
     "/v1/sellers/{sellerId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "get": {
         "operationId": "getSeller",
         "summary": "Read a seller profile",
@@ -178,6 +192,11 @@
       }
     },
     "/v1/marketplace-connections": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "createMarketplaceConnection",
         "summary": "Create a sandbox or production marketplace connector",
@@ -218,6 +237,11 @@
       }
     },
     "/v1/marketplace-connections/{id}/sync": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "syncMarketplaceConnection",
         "summary": "Enqueue marketplace ingestion",
@@ -268,6 +292,11 @@
       }
     },
     "/v1/ingestions/csv": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "createCsvIngestion",
         "summary": "Submit a previously authorized CSV object for ingestion",
@@ -310,6 +339,11 @@
       }
     },
     "/v1/ingestions/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "get": {
         "operationId": "getIngestion",
         "summary": "Read ingestion status and quality report",
@@ -350,6 +384,11 @@
       }
     },
     "/v1/claims": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "createClaim",
         "summary": "Create a claim from an unencumbered settlement stream",
@@ -435,6 +474,11 @@
       }
     },
     "/v1/claims/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "get": {
         "operationId": "getClaim",
         "summary": "Read an authorized claim",
@@ -478,6 +522,11 @@
       }
     },
     "/v1/claims/{id}/analyze": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "analyzeClaim",
         "summary": "Freeze a decision snapshot and request evaluation",
@@ -528,6 +577,11 @@
       }
     },
     "/v1/claims/{id}/control-evidence": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "submitControlEvidence",
         "summary": "Submit control evidence metadata and hash",
@@ -577,6 +631,11 @@
       }
     },
     "/v1/claims/{id}/control-decision": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "decideControlEvidence",
         "summary": "Verify, reject, or revoke claim control",
@@ -627,6 +686,11 @@
       }
     },
     "/v1/claims/{id}/offers": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "createFinancingOffer",
         "summary": "Create a financing offer",
@@ -676,6 +740,11 @@
       }
     },
     "/v1/offers/{id}/accept": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "acceptFinancingOffer",
         "summary": "Accept the exact hashed financing terms",
@@ -725,6 +794,11 @@
       }
     },
     "/v1/claims/{id}/issue": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "issueClaim",
         "summary": "Authorize on-chain issuance",
@@ -774,6 +848,11 @@
       }
     },
     "/v1/claims/{id}/fund": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "fundClaim",
         "summary": "Fund an accepted facility position",
@@ -823,6 +902,11 @@
       }
     },
     "/v1/settlement-events": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "createSettlementEvent",
         "summary": "Ingest a verified settlement event",
@@ -864,6 +948,11 @@
       }
     },
     "/v1/claims/{id}/reconcile": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "reconcileClaim",
         "summary": "Calculate realized claim position",
@@ -914,6 +1003,11 @@
       }
     },
     "/v1/claims/{id}/waterfall": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "executeClaimWaterfall",
         "summary": "Execute a guarded settlement waterfall",
@@ -963,6 +1057,11 @@
       }
     },
     "/v1/claims/{id}/resolution": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "resolveClaim",
         "summary": "Open, update, or close an authorized resolution",
@@ -1012,6 +1111,11 @@
       }
     },
     "/v1/claims/{id}/pause": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "post": {
         "operationId": "pauseClaim",
         "summary": "Trigger a claim-level circuit breaker",
@@ -1061,6 +1165,11 @@
       }
     },
     "/v1/portfolio/summary": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "get": {
         "operationId": "getPortfolioSummary",
         "summary": "Read tenant-scoped exposure and performance",
@@ -1093,6 +1202,11 @@
       }
     },
     "/v1/audit-events": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
       "get": {
         "operationId": "listAuditEvents",
         "summary": "Search the append-only tenant audit log",
@@ -1125,6 +1239,188 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/institutional-invitations": {
+      "post": {
+        "operationId": "createInstitutionalInvitation",
+        "summary": "Invite an institutional member into the selected tenant",
+        "tags": [
+          "Invitations"
+        ],
+        "x-jejak-roles": [
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateInstitutionalInvitation"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/v1/institutional-invitations/preview": {
+      "post": {
+        "operationId": "previewInstitutionalInvitation",
+        "summary": "Preview a valid invitation without exposing its token",
+        "tags": [
+          "Invitations"
+        ],
+        "security": [],
+        "x-jejak-roles": [
+          "SELLER",
+          "ORIGINATOR",
+          "ISSUER",
+          "FACILITY",
+          "SERVICER",
+          "RESOLVER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/InvitationToken"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/institutional-invitations/accept": {
+      "post": {
+        "operationId": "acceptInstitutionalInvitation",
+        "summary": "Accept an invitation using the authenticated matching email",
+        "tags": [
+          "Invitations"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ORIGINATOR",
+          "ISSUER",
+          "FACILITY",
+          "SERVICER",
+          "RESOLVER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/InvitationToken"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/v1/institutional-invitations/{id}/revoke": {
+      "post": {
+        "operationId": "revokeInstitutionalInvitation",
+        "summary": "Revoke a pending institutional invitation",
+        "tags": [
+          "Invitations"
+        ],
+        "x-jejak-roles": [
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/TenantId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/RevokeInstitutionalInvitation"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
           }
         }
       }
@@ -1245,6 +1541,9 @@
           "SETTLEMENT_DUPLICATE",
           "WATERFALL_INVARIANT_FAILED",
           "CIRCUIT_BREAKER_ACTIVE",
+          "INVITATION_INVALID",
+          "INVITATION_EXPIRED",
+          "INVITATION_REVOKED",
           "INTERNAL_ERROR"
         ]
       },
@@ -1763,6 +2062,64 @@
               "$ref": "#/components/schemas/reason-code.schema"
             },
             "uniqueItems": true
+          }
+        }
+      },
+      "CreateInstitutionalInvitation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "roles"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320
+          },
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "ORIGINATOR",
+                "ISSUER",
+                "FACILITY",
+                "SERVICER",
+                "RESOLVER",
+                "ADMIN"
+              ]
+            }
+          }
+        }
+      },
+      "InvitationToken": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 43,
+            "maxLength": 512
+          }
+        }
+      },
+      "RevokeInstitutionalInvitation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
           }
         }
       },
@@ -2419,6 +2776,16 @@
       }
     },
     "parameters": {
+      "TenantId": {
+        "name": "X-Jejak-Tenant-Id",
+        "in": "header",
+        "required": true,
+        "description": "Explicit active tenant selected by the authenticated actor.",
+        "schema": {
+          "type": "string",
+          "format": "uuid-v7"
+        }
+      },
       "IdempotencyKey": {
         "name": "Idempotency-Key",
         "in": "header",
@@ -2663,6 +3030,36 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/PauseClaim"
+            }
+          }
+        }
+      },
+      "CreateInstitutionalInvitation": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateInstitutionalInvitation"
+            }
+          }
+        }
+      },
+      "InvitationToken": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/InvitationToken"
+            }
+          }
+        }
+      },
+      "RevokeInstitutionalInvitation": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RevokeInstitutionalInvitation"
             }
           }
         }

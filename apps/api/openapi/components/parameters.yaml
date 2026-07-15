@@ -5,6 +5,14 @@ ResourceId:
   schema:
     type: string
     format: uuid-v7
+TenantId:
+  name: X-Jejak-Tenant-Id
+  in: header
+  required: true
+  description: Explicit active tenant selected by the authenticated actor.
+  schema:
+    type: string
+    format: uuid-v7
 SellerId:
   name: sellerId
   in: path

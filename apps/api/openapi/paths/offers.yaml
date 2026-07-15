@@ -1,4 +1,6 @@
 claimOffers:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: createFinancingOffer
     summary: Create a financing offer
@@ -18,6 +20,8 @@ claimOffers:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 acceptOffer:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: acceptFinancingOffer
     summary: Accept the exact hashed financing terms

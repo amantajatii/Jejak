@@ -1,4 +1,6 @@
 auditEvents:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   get:
     operationId: listAuditEvents
     summary: Search the append-only tenant audit log

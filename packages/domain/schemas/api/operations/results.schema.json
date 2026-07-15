@@ -5,6 +5,27 @@
   "type": "object",
   "additionalProperties": false,
   "$defs": {
+    "InstitutionalInvitation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "tenantId", "roles", "status", "expiresAt"],
+      "properties": {
+        "id": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "tenantId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "roles": { "type": "array", "items": { "$ref": "../../enums/actor-role.schema.json" }, "uniqueItems": true },
+        "status": { "enum": ["PENDING", "ACCEPTED", "REVOKED", "EXPIRED"] },
+        "expiresAt": { "$ref": "../../common/timestamp.schema.json" }
+      }
+    },
+    "InstitutionalInvitationPreview": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tenantId", "tenantDisplayName", "roles", "expiresAt"],
+      "properties": {
+        "tenantId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "tenantDisplayName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "roles": { "type": "array", "items": { "$ref": "../../enums/actor-role.schema.json" }, "uniqueItems": true },
+        "expiresAt": { "$ref": "../../common/timestamp.schema.json" }
+      }
+    },
     "AcceptedJob": {
       "type": "object", "additionalProperties": false,
       "required": ["jobId", "status"],

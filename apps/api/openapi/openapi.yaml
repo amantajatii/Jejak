@@ -26,6 +26,8 @@ tags:
     description: Institutional exposure read models.
   - name: Audit
     description: Tenant-scoped append-only audit search.
+  - name: Invitations
+    description: Secure institutional membership provisioning.
 paths:
   /health:
     $ref: ./paths/health.yaml#/health
@@ -75,6 +77,14 @@ paths:
     $ref: ./paths/portfolio.yaml#/summary
   /v1/audit-events:
     $ref: ./paths/audit.yaml#/auditEvents
+  /v1/institutional-invitations:
+    $ref: ./paths/invitations.yaml#/invitations
+  /v1/institutional-invitations/preview:
+    $ref: ./paths/invitations.yaml#/invitationPreview
+  /v1/institutional-invitations/accept:
+    $ref: ./paths/invitations.yaml#/invitationAccept
+  /v1/institutional-invitations/{id}/revoke:
+    $ref: ./paths/invitations.yaml#/invitationRevoke
 components:
   securitySchemes:
     bearerAuth:

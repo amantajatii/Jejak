@@ -1,4 +1,6 @@
 settlementEvents:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: createSettlementEvent
     summary: Ingest a verified settlement event
@@ -15,6 +17,8 @@ settlementEvents:
       "403": { $ref: ../components/responses.yaml#/Forbidden }
       "409": { $ref: ../components/responses.yaml#/Conflict }
 reconcile:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: reconcileClaim
     summary: Calculate realized claim position
@@ -34,6 +38,8 @@ reconcile:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 waterfall:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: executeClaimWaterfall
     summary: Execute a guarded settlement waterfall
@@ -53,6 +59,8 @@ waterfall:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 resolution:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: resolveClaim
     summary: Open, update, or close an authorized resolution
@@ -72,6 +80,8 @@ resolution:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 pause:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: pauseClaim
     summary: Trigger a claim-level circuit breaker

@@ -1,4 +1,6 @@
 summary:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   get:
     operationId: getPortfolioSummary
     summary: Read tenant-scoped exposure and performance

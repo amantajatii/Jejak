@@ -14,7 +14,12 @@ interface Operation {
 const apiRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const document = JSON.parse(
   readFileSync(path.join(apiRoot, "openapi", "openapi.json"), "utf8"),
-) as { paths: Record<string, Record<string, Operation>> };
+) as {
+  paths: Record<
+    string,
+    Record<string, Operation> & { parameters?: Array<{ $ref?: string }> }
+  >;
+};
 
 const expectedOperations = new Map([
   ["POST /v1/sellers", "createSeller"],
@@ -40,6 +45,10 @@ const expectedOperations = new Map([
   ["POST /v1/claims/{id}/pause", "pauseClaim"],
   ["GET /v1/portfolio/summary", "getPortfolioSummary"],
   ["GET /v1/audit-events", "listAuditEvents"],
+  ["POST /v1/institutional-invitations", "createInstitutionalInvitation"],
+  ["POST /v1/institutional-invitations/preview", "previewInstitutionalInvitation"],
+  ["POST /v1/institutional-invitations/accept", "acceptInstitutionalInvitation"],
+  ["POST /v1/institutional-invitations/{id}/revoke", "revokeInstitutionalInvitation"],
 ]);
 
 function operation(method: string, route: string) {
@@ -76,6 +85,9 @@ describe("frozen Section 18 operation surface", () => {
       "POST /v1/ingestions/csv",
       "POST /v1/claims",
       "POST /v1/settlement-events",
+      "POST /v1/institutional-invitations",
+      "POST /v1/institutional-invitations/preview",
+      "POST /v1/institutional-invitations/accept",
     ]);
     for (const [key] of expectedOperations) {
       if (!key.startsWith("POST ") || unversioned.has(key)) continue;
@@ -90,6 +102,24 @@ describe("frozen Section 18 operation surface", () => {
       const refs = operation("GET", route)?.parameters?.map((parameter) => parameter.$ref) ?? [];
       expect(refs.some((ref) => ref?.endsWith("/Cursor")), route).toBe(true);
       expect(refs.some((ref) => ref?.endsWith("/Limit")), route).toBe(true);
+    }
+  });
+
+  it("requires explicit tenant context on tenant-bound operations", () => {
+    const exceptions = new Set([
+      "POST /v1/institutional-invitations/preview",
+      "POST /v1/institutional-invitations/accept",
+    ]);
+    for (const [key] of expectedOperations) {
+      if (exceptions.has(key)) continue;
+      const [, route] = key.split(" ", 2) as [string, string];
+      const pathRefs = document.paths[route]?.parameters?.map((parameter) => parameter.$ref) ?? [];
+      const [method] = key.split(" ", 1) as [string];
+      const operationRefs = operation(method, route)?.parameters?.map((parameter) => parameter.$ref) ?? [];
+      expect(
+        [...pathRefs, ...operationRefs].some((ref) => ref?.endsWith("/TenantId")),
+        key,
+      ).toBe(true);
     }
   });
 

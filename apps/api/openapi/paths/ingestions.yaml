@@ -1,4 +1,6 @@
 csvIngestion:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: createCsvIngestion
     summary: Submit a previously authorized CSV object for ingestion
@@ -16,6 +18,8 @@ csvIngestion:
       "403": { $ref: ../components/responses.yaml#/Forbidden }
       "409": { $ref: ../components/responses.yaml#/Conflict }
 ingestionById:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   get:
     operationId: getIngestion
     summary: Read ingestion status and quality report

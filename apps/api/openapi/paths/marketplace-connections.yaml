@@ -1,4 +1,6 @@
 connections:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: createMarketplaceConnection
     summary: Create a sandbox or production marketplace connector
@@ -15,6 +17,8 @@ connections:
       "403": { $ref: ../components/responses.yaml#/Forbidden }
       "409": { $ref: ../components/responses.yaml#/Conflict }
 connectionSync:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: syncMarketplaceConnection
     summary: Enqueue marketplace ingestion

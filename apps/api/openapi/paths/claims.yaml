@@ -1,4 +1,6 @@
 claims:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: createClaim
     summary: Create a claim from an unencumbered settlement stream
@@ -30,6 +32,8 @@ claims:
       "401": { $ref: ../components/responses.yaml#/Unauthorized }
       "403": { $ref: ../components/responses.yaml#/Forbidden }
 claimById:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   get:
     operationId: getClaim
     summary: Read an authorized claim
@@ -45,6 +49,8 @@ claimById:
       "403": { $ref: ../components/responses.yaml#/Forbidden }
       "404": { $ref: ../components/responses.yaml#/NotFound }
 analyze:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: analyzeClaim
     summary: Freeze a decision snapshot and request evaluation
@@ -64,6 +70,8 @@ analyze:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 controlEvidence:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: submitControlEvidence
     summary: Submit control evidence metadata and hash
@@ -83,6 +91,8 @@ controlEvidence:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 controlDecision:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: decideControlEvidence
     summary: Verify, reject, or revoke claim control
@@ -102,6 +112,8 @@ controlDecision:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 issue:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: issueClaim
     summary: Authorize on-chain issuance
@@ -121,6 +133,8 @@ issue:
       "404": { $ref: ../components/responses.yaml#/NotFound }
       "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
 fund:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: fundClaim
     summary: Fund an accepted facility position

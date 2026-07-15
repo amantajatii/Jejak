@@ -1,4 +1,6 @@
 sellers:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   post:
     operationId: createSeller
     summary: Create a seller and record consent
@@ -15,6 +17,8 @@ sellers:
       "403": { $ref: ../components/responses.yaml#/Forbidden }
       "409": { $ref: ../components/responses.yaml#/Conflict }
 sellerById:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
   get:
     operationId: getSeller
     summary: Read a seller profile

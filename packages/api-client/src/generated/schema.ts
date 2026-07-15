@@ -37,7 +37,10 @@ export interface paths {
     "/v1/sellers": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -54,7 +57,10 @@ export interface paths {
     "/v1/sellers/{sellerId}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -71,7 +77,10 @@ export interface paths {
     "/v1/marketplace-connections": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -88,7 +97,10 @@ export interface paths {
     "/v1/marketplace-connections/{id}/sync": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -105,7 +117,10 @@ export interface paths {
     "/v1/ingestions/csv": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -125,7 +140,10 @@ export interface paths {
     "/v1/ingestions/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -142,7 +160,10 @@ export interface paths {
     "/v1/claims": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -160,7 +181,10 @@ export interface paths {
     "/v1/claims/{id}": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -177,7 +201,10 @@ export interface paths {
     "/v1/claims/{id}/analyze": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -194,7 +221,10 @@ export interface paths {
     "/v1/claims/{id}/control-evidence": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -211,7 +241,10 @@ export interface paths {
     "/v1/claims/{id}/control-decision": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -228,7 +261,10 @@ export interface paths {
     "/v1/claims/{id}/offers": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -245,7 +281,10 @@ export interface paths {
     "/v1/offers/{id}/accept": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -262,7 +301,10 @@ export interface paths {
     "/v1/claims/{id}/issue": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -279,7 +321,10 @@ export interface paths {
     "/v1/claims/{id}/fund": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -296,7 +341,10 @@ export interface paths {
     "/v1/settlement-events": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -313,7 +361,10 @@ export interface paths {
     "/v1/claims/{id}/reconcile": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -330,7 +381,10 @@ export interface paths {
     "/v1/claims/{id}/waterfall": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -347,7 +401,10 @@ export interface paths {
     "/v1/claims/{id}/resolution": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -364,7 +421,10 @@ export interface paths {
     "/v1/claims/{id}/pause": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -381,7 +441,10 @@ export interface paths {
     "/v1/portfolio/summary": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -398,7 +461,10 @@ export interface paths {
     "/v1/audit-events": {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -406,6 +472,74 @@ export interface paths {
         get: operations["listAuditEvents"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/institutional-invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite an institutional member into the selected tenant */
+        post: operations["createInstitutionalInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/institutional-invitations/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview a valid invitation without exposing its token */
+        post: operations["previewInstitutionalInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/institutional-invitations/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept an invitation using the authenticated matching email */
+        post: operations["acceptInstitutionalInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/institutional-invitations/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke a pending institutional invitation */
+        post: operations["revokeInstitutionalInvitation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -447,7 +581,7 @@ export interface components {
          * ErrorCode
          * @enum {string}
          */
-        "error-code.schema": "AUTH_REQUIRED" | "FORBIDDEN" | "NOT_FOUND" | "VALIDATION_FAILED" | "VERSION_CONFLICT" | "IDEMPOTENCY_CONFLICT" | "INVALID_STATE_TRANSITION" | "ATTESTATION_MISSING" | "ATTESTATION_EXPIRED" | "ATTESTATION_REVOKED" | "CONTROL_NOT_VERIFIED" | "CLAIM_ALREADY_ENCUMBERED" | "INSUFFICIENT_FACILITY_LIQUIDITY" | "HOLDER_NOT_AUTHORIZED" | "ASSET_OPERATION_FAILED" | "PARTNER_TIMEOUT" | "PARTNER_REJECTED" | "SETTLEMENT_DUPLICATE" | "WATERFALL_INVARIANT_FAILED" | "CIRCUIT_BREAKER_ACTIVE" | "INTERNAL_ERROR";
+        "error-code.schema": "AUTH_REQUIRED" | "FORBIDDEN" | "NOT_FOUND" | "VALIDATION_FAILED" | "VERSION_CONFLICT" | "IDEMPOTENCY_CONFLICT" | "INVALID_STATE_TRANSITION" | "ATTESTATION_MISSING" | "ATTESTATION_EXPIRED" | "ATTESTATION_REVOKED" | "CONTROL_NOT_VERIFIED" | "CLAIM_ALREADY_ENCUMBERED" | "INSUFFICIENT_FACILITY_LIQUIDITY" | "HOLDER_NOT_AUTHORIZED" | "ASSET_OPERATION_FAILED" | "PARTNER_TIMEOUT" | "PARTNER_REJECTED" | "SETTLEMENT_DUPLICATE" | "WATERFALL_INVARIANT_FAILED" | "CIRCUIT_BREAKER_ACTIVE" | "INVITATION_INVALID" | "INVITATION_EXPIRED" | "INVITATION_REVOKED" | "INTERNAL_ERROR";
         /** ApiError */
         "error-envelope.schema": {
             error: {
@@ -573,6 +707,17 @@ export interface components {
         };
         PauseClaim: {
             reasonCodes: components["schemas"]["reason-code.schema"][];
+        };
+        CreateInstitutionalInvitation: {
+            /** Format: email */
+            email: string;
+            roles: ("ORIGINATOR" | "ISSUER" | "FACILITY" | "SERVICER" | "RESOLVER" | "ADMIN")[];
+        };
+        InvitationToken: {
+            token: string;
+        };
+        RevokeInstitutionalInvitation: {
+            reason: string;
         };
         /** Seller */
         "seller.schema": {
@@ -802,6 +947,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Explicit active tenant selected by the authenticated actor. */
+        TenantId: string;
         /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
         IdempotencyKey: string;
         CorrelationId: string;
@@ -899,6 +1046,21 @@ export interface components {
                 "application/json": components["schemas"]["PauseClaim"];
             };
         };
+        CreateInstitutionalInvitation: {
+            content: {
+                "application/json": components["schemas"]["CreateInstitutionalInvitation"];
+            };
+        };
+        InvitationToken: {
+            content: {
+                "application/json": components["schemas"]["InvitationToken"];
+            };
+        };
+        RevokeInstitutionalInvitation: {
+            content: {
+                "application/json": components["schemas"]["RevokeInstitutionalInvitation"];
+            };
+        };
     };
     headers: {
         /** @description UUIDv7 request identifier used for support and tracing. */
@@ -942,6 +1104,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
@@ -961,7 +1125,9 @@ export interface operations {
     getSeller: {
         parameters: {
             query?: never;
-            header?: {
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
             };
             path: {
@@ -982,6 +1148,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
@@ -1002,6 +1170,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1027,6 +1197,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
@@ -1046,7 +1218,9 @@ export interface operations {
     getIngestion: {
         parameters: {
             query?: never;
-            header?: {
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
             };
             path: {
@@ -1070,7 +1244,9 @@ export interface operations {
                 limit?: components["parameters"]["Limit"];
                 state?: components["parameters"]["ClaimState"];
             };
-            header?: {
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
             };
             path?: never;
@@ -1088,6 +1264,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
@@ -1107,7 +1285,9 @@ export interface operations {
     getClaim: {
         parameters: {
             query?: never;
-            header?: {
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
             };
             path: {
@@ -1128,6 +1308,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1153,6 +1335,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1178,6 +1362,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1203,6 +1389,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1228,6 +1416,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1253,6 +1443,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1278,6 +1470,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1303,6 +1497,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
@@ -1323,6 +1519,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1348,6 +1546,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1373,6 +1573,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1398,6 +1600,8 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
                 "Idempotency-Key": components["parameters"]["IdempotencyKey"];
                 /** @description Decimal aggregate version expected by the caller. */
@@ -1422,7 +1626,9 @@ export interface operations {
     getPortfolioSummary: {
         parameters: {
             query?: never;
-            header?: {
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
             };
             path?: never;
@@ -1442,7 +1648,9 @@ export interface operations {
                 cursor?: components["parameters"]["Cursor"];
                 limit?: components["parameters"]["Limit"];
             };
-            header?: {
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
                 "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
             };
             path?: never;
@@ -1454,6 +1662,93 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    createInstitutionalInvitation: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["CreateInstitutionalInvitation"];
+        responses: {
+            201: components["responses"]["Created"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    previewInstitutionalInvitation: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["InvitationToken"];
+        responses: {
+            200: components["responses"]["Ok"];
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    acceptInstitutionalInvitation: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["InvitationToken"];
+        responses: {
+            200: components["responses"]["Ok"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    revokeInstitutionalInvitation: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Decimal aggregate version expected by the caller. */
+                "If-Match": components["parameters"]["IfMatch"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["RevokeInstitutionalInvitation"];
+        responses: {
+            200: components["responses"]["Ok"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            412: components["responses"]["PreconditionFailed"];
         };
     };
 }
