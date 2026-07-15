@@ -47,7 +47,7 @@
 }
 
 .workspace-primary-nav {
-  --active-nav: 0;
+  --active-nav-offset: 0px;
   position: relative;
   display: grid;
   gap: 4px;
@@ -61,18 +61,18 @@
   height: 40px;
   border-radius: 9px;
   background: #faf9f5;
-  transform: translateY(calc(var(--active-nav) * 44px));
+  transform: translateY(var(--active-nav-offset));
   transition: transform .24s cubic-bezier(.2, .8, .2, 1);
 }
 
 .workspace-primary-nav .nav-link {
-  position: relative;
-  z-index: 1;
   height: 40px;
   padding-block: 0;
   border-radius: 9px;
   background: transparent !important;
   color: #bdbaba;
+  position: relative;
+  z-index: 1;
   transition: color .18s ease, background-color .18s ease;
 }
 

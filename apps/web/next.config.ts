@@ -11,7 +11,7 @@ if (existsSync(rootEnvPath)) {
 }
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["@jejak/api-client"],
 };
 
 export default nextConfig;

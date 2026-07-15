@@ -14,7 +14,8 @@ const nav = [{ label: "Resolution", href: "/resolution" }, { label: "Portfolio",
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { context, session } = useJejak(); const [mobileNavOpen, setMobileNavOpen] = useState(false); const pathname = usePathname();
-  const navItems = nav.map((item) => ({ ...item, isActive: item.href === "/resolution" ? pathname === "/resolution" || /^\/resolution\/[^/]+$/.test(pathname) : pathname === item.href }));
+  const hasSectionMatch = nav.slice(1).some((item) => pathname === item.href);
+  const navItems = nav.map((item) => ({ ...item, isActive: item.href === "/resolution" ? pathname === "/resolution" || (!hasSectionMatch && /^\/resolution\/[^/]+$/.test(pathname)) : pathname === item.href }));
   return <div className="app-shell"><WorkspaceSidebar brand={<Link href="/resolution" className="brand">Jejak<span>.</span></Link>} badge={<div className="sandbox-note"><span className="dot" /> SANDBOX MODE</div>} navItems={navItems} navAriaLabel="Resolution navigation" footer={<><span className="avatar">{session?.role.slice(0, 2) ?? "--"}</span><div><strong>{session?.role === "RESOLVER" ? "Authorized resolver" : "Resolver session required"}</strong><small>Token held in memory</small></div></>} /><main className="main-content"><header className="topbar"><div className="mobile-brand">Jejak<span>.</span></div><div className="topbar-spacer" /><span className="sandbox-badge">SANDBOX · {context?.chainMode ?? "NO TRANSPORT"}</span><MenuButton open={mobileNavOpen} onToggle={() => setMobileNavOpen((open) => !open)} ariaControls="resolution-mobile-nav" ariaLabel="Toggle resolution navigation" /></header><MobileNav id="resolution-mobile-nav" items={navItems} open={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} ariaLabel="Mobile resolution navigation" />{children}</main></div>;
 }
 
