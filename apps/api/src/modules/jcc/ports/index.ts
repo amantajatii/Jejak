@@ -105,8 +105,17 @@ export interface JccRepository {
 
 export type ChainSubmissionDecision =
   | { kind: "NEW"; operationId: string; submissionId: string }
+  | { kind: "RECOVERY_REQUIRED"; operationId: string; submissionId: string }
   | { kind: "REPLAY"; operationId: string; submission: RegistrySubmission; reconciled: boolean }
   | { kind: "CONFLICT" };
+
+export interface RegistrySubmissionRecovery {
+  find(input: {
+    attestationKey: string;
+    envelopeHash: string;
+    submissionId: string;
+  }): Promise<RegistrySubmission | null>;
+}
 
 export interface JccSubmissionJournal {
   begin(input: {
@@ -121,5 +130,10 @@ export interface JccSubmissionJournal {
   }): Promise<ChainSubmissionDecision>;
   markSubmitted(input: RegistrySubmission & { operationId: string; tenantId: string }): Promise<void>;
   markReconciled(input: { operationId: string; submissionId: string; tenantId: string }): Promise<void>;
-  markFailed(input: { operationId: string; safeErrorClass: string; tenantId: string }): Promise<void>;
+  markFailed(input: {
+    operationId: string;
+    retryable: boolean;
+    safeErrorClass: string;
+    tenantId: string;
+  }): Promise<void>;
 }

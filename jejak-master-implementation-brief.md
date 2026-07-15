@@ -357,16 +357,16 @@ Jejak is not:
 
 ### 5.1 What is already occupied
 
-| Comparator | Existing capability | Consequence for Jejak |
-|---|---|---|
-| Storfund | Marketplace data, dynamic advances, refund buffers, factoring, collection workflows | Early payout and data-driven underwriting are not novel |
-| Payability | Early payouts for major marketplaces | Seller early payout is not a new category |
-| Dowsure | Cross-border e-commerce data, scoring, monitoring, account control | Intelligence and control alone are not a moat |
-| Sivo | Tokenized receivables and stablecoin-funded marketplace payout exposure | Tokenized marketplace receivables are occupied |
-| Invoicemate and PayFi projects | Invoice/receivable tokenization on Stellar | “First receivable on Stellar” must never be claimed |
-| CredoLab/GBG | Financier-agnostic alternative risk scoring | “Neutral seller score” must never be claimed |
-| Blend | Generic lending primitive | It does not provide claim data, legal control, servicing, or recovery |
-| Ascend-style infrastructure | Permissioned RWA facilities and recovery primitives | Potential infrastructure partner and adjacent competitor |
+| Comparator                     | Existing capability                                                                 | Consequence for Jejak                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Storfund                       | Marketplace data, dynamic advances, refund buffers, factoring, collection workflows | Early payout and data-driven underwriting are not novel               |
+| Payability                     | Early payouts for major marketplaces                                                | Seller early payout is not a new category                             |
+| Dowsure                        | Cross-border e-commerce data, scoring, monitoring, account control                  | Intelligence and control alone are not a moat                         |
+| Sivo                           | Tokenized receivables and stablecoin-funded marketplace payout exposure             | Tokenized marketplace receivables are occupied                        |
+| Invoicemate and PayFi projects | Invoice/receivable tokenization on Stellar                                          | “First receivable on Stellar” must never be claimed                   |
+| CredoLab/GBG                   | Financier-agnostic alternative risk scoring                                         | “Neutral seller score” must never be claimed                          |
+| Blend                          | Generic lending primitive                                                           | It does not provide claim data, legal control, servicing, or recovery |
+| Ascend-style infrastructure    | Permissioned RWA facilities and recovery primitives                                 | Potential infrastructure partner and adjacent competitor              |
 
 ### 5.2 Defensible wedge
 
@@ -454,17 +454,17 @@ active financed ESV = non-closed eligible principal
 
 ### 7.2 Evidence gates
 
-| Gate | Pass condition | Current status |
-|---|---|---|
-| APAC materiality | A financier accepts the eligible portfolio denominator as material | UNPROVEN |
-| Data access | 12–24 months order-to-payout data can be reconciled | UNPROVEN |
-| Model uplift | 5–10% more safe capital at equal tail risk, or lower tail loss at equal capital | UNPROVEN |
-| Assignment | Legal memo plus platform consent/control structure | RED FLAG / UNPROVEN |
-| Controlled payout | One real payout cannot be rerouted unilaterally | UNPROVEN |
-| Originator demand | Paid pilot or use-case-specific LOI | UNPROVEN |
-| Issuer/redeemer | LOI, terms, and explicit redemption obligation | UNPROVEN |
-| Local cash-out | One reconciled USDC-to-local-bank transaction | UNPROVEN |
-| Recovery | Resolver, backup servicer, waterfall, and funded first loss | UNPROVEN |
+| Gate              | Pass condition                                                                  | Current status      |
+| ----------------- | ------------------------------------------------------------------------------- | ------------------- |
+| APAC materiality  | A financier accepts the eligible portfolio denominator as material              | UNPROVEN            |
+| Data access       | 12–24 months order-to-payout data can be reconciled                             | UNPROVEN            |
+| Model uplift      | 5–10% more safe capital at equal tail risk, or lower tail loss at equal capital | UNPROVEN            |
+| Assignment        | Legal memo plus platform consent/control structure                              | RED FLAG / UNPROVEN |
+| Controlled payout | One real payout cannot be rerouted unilaterally                                 | UNPROVEN            |
+| Originator demand | Paid pilot or use-case-specific LOI                                             | UNPROVEN            |
+| Issuer/redeemer   | LOI, terms, and explicit redemption obligation                                  | UNPROVEN            |
+| Local cash-out    | One reconciled USDC-to-local-bank transaction                                   | UNPROVEN            |
+| Recovery          | Resolver, backup servicer, waterfall, and funded first loss                     | UNPROVEN            |
 
 ### 7.3 Kill or pivot criteria
 
@@ -474,14 +474,14 @@ Pivot away from institutional claim funding when portfolio data, legal control, 
 
 Current evidence-adjusted assessment:
 
-| Criterion | Score | Reason |
-|---|---:|---|
-| Real-world impact | 4.2/5 | Real category; specific denominator and demand unproven |
-| Technical execution on Stellar | 4.1/5 | Real restricted-asset and servicing work; partners sandboxed |
-| UX/usability | 3.6/5 | Seller flow can be simple; KYC/cash-out/dispute remain heavy |
-| Innovation | 2.4/5 | Several adjacent incumbents narrow novelty |
-| Feasibility | 2.2/5 | Assignment, issuer, cash-out, and recovery remain unproven |
-| **Evidence-adjusted total** | **71.7/100** | Strong prototype thesis; not winner-grade without external evidence |
+| Criterion                      |        Score | Reason                                                              |
+| ------------------------------ | -----------: | ------------------------------------------------------------------- |
+| Real-world impact              |        4.2/5 | Real category; specific denominator and demand unproven             |
+| Technical execution on Stellar |        4.1/5 | Real restricted-asset and servicing work; partners sandboxed        |
+| UX/usability                   |        3.6/5 | Seller flow can be simple; KYC/cash-out/dispute remain heavy        |
+| Innovation                     |        2.4/5 | Several adjacent incumbents narrow novelty                          |
+| Feasibility                    |        2.2/5 | Assignment, issuer, cash-out, and recovery remain unproven          |
+| **Evidence-adjusted total**    | **71.7/100** | Strong prototype thesis; not winner-grade without external evidence |
 
 Evidence most likely to raise the score: real portfolio tape, baseline backtest, originator LOI, legal/control memo, issuer term sheet, reconciled local payout, authorized recovery design, and pilot repayment.
 
@@ -750,15 +750,15 @@ Off-chain encrypted or access-controlled:
 
 ### 13.3 Threats and required mitigations
 
-| Boundary | Threats | Required controls |
-|---|---|---|
-| Data | forged report, duplicate order, missing event, leakage, stale snapshot | source hash, reconciliation, uniqueness, decision-time cutoff, freshness, audit |
-| Risk | manipulated feature, overfit model, compromised signing key | baseline comparison, out-of-time tests, key rotation, signed model metadata, circuit breaker |
-| API | broken access control, replay, webhook forgery, duplicate jobs | RBAC, object-level authorization, nonce/idempotency, signatures, outbox |
-| Contract | unauthorized issue, invalid transition, arithmetic error, double financing | `require_auth`, role separation, checked math, unique claim key, invariant tests, pause |
-| Asset | wrong authorization, issuer-key compromise, improper clawback | issuer flags, HSM/multisig abstraction, approval policy, runbook, audit |
-| Partner | anchor timeout, issuer outage, marketplace reroute, originator insolvency | adapters, timeout/retry, reconciliation, control evidence, backup/stop funding |
-| Operations | stale contract storage, RPC outage, secret exposure | TTL policy, indexer recovery, provider abstraction, secret scanning, health alerts |
+| Boundary   | Threats                                                                    | Required controls                                                                            |
+| ---------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Data       | forged report, duplicate order, missing event, leakage, stale snapshot     | source hash, reconciliation, uniqueness, decision-time cutoff, freshness, audit              |
+| Risk       | manipulated feature, overfit model, compromised signing key                | baseline comparison, out-of-time tests, key rotation, signed model metadata, circuit breaker |
+| API        | broken access control, replay, webhook forgery, duplicate jobs             | RBAC, object-level authorization, nonce/idempotency, signatures, outbox                      |
+| Contract   | unauthorized issue, invalid transition, arithmetic error, double financing | `require_auth`, role separation, checked math, unique claim key, invariant tests, pause      |
+| Asset      | wrong authorization, issuer-key compromise, improper clawback              | issuer flags, HSM/multisig abstraction, approval policy, runbook, audit                      |
+| Partner    | anchor timeout, issuer outage, marketplace reroute, originator insolvency  | adapters, timeout/retry, reconciliation, control evidence, backup/stop funding               |
+| Operations | stale contract storage, RPC outage, secret exposure                        | TTL policy, indexer recovery, provider abstraction, secret scanning, health alerts           |
 
 ---
 
@@ -825,10 +825,10 @@ Use compatible current stable versions and commit lockfiles. Do not independentl
 
 ```ts
 type Money = {
-  amountMinor: string;   // signed base-10 integer string in JSON
-  currency: string;      // ISO-4217 or Stellar asset code
-  scale: number;         // decimal places of amountMinor
-  issuer?: string;       // required for non-native Stellar assets
+  amountMinor: string; // signed base-10 integer string in JSON
+  currency: string; // ISO-4217 or Stellar asset code
+  scale: number; // decimal places of amountMinor
+  issuer?: string; // required for non-native Stellar assets
 };
 ```
 
@@ -861,20 +861,42 @@ Rules:
 
 ```ts
 type ClaimState =
-  | "DRAFT" | "DATA_PENDING" | "ANALYZED" | "ELIGIBLE"
-  | "CONTROLLED" | "ISSUED" | "FUNDED" | "SETTLING"
-  | "REPAID" | "REDEEMED" | "CLOSED"
-  | "SHORTFALL" | "RESOLUTION" | "CLOSED_WITH_LOSS"
-  | "REVIEW" | "REJECTED" | "FROZEN" | "SUSPENDED"
-  | "PAUSED" | "CANCELLED";
+  | "DRAFT"
+  | "DATA_PENDING"
+  | "ANALYZED"
+  | "ELIGIBLE"
+  | "CONTROLLED"
+  | "ISSUED"
+  | "FUNDED"
+  | "SETTLING"
+  | "REPAID"
+  | "REDEEMED"
+  | "CLOSED"
+  | "SHORTFALL"
+  | "RESOLUTION"
+  | "CLOSED_WITH_LOSS"
+  | "REVIEW"
+  | "REJECTED"
+  | "FROZEN"
+  | "SUSPENDED"
+  | "PAUSED"
+  | "CANCELLED";
 
 type EligibilityDecision = "ELIGIBLE" | "REVIEW" | "INELIGIBLE";
 type CredentialStatus = "ACTIVE" | "SUPERSEDED" | "REVOKED" | "EXPIRED";
 type ControlEvidenceStatus = "PENDING" | "VERIFIED" | "REJECTED" | "REVOKED";
 type PartnerMode = "SANDBOX" | "PRODUCTION";
 type ResolutionStatus = "OPEN" | "RECOVERING" | "SETTLED" | "WRITTEN_OFF";
-type ActorRole = "SELLER" | "ORIGINATOR" | "ISSUER" | "FACILITY"
-  | "SERVICER" | "RESOLVER" | "ORACLE" | "ADMIN" | "SYSTEM";
+type ActorRole =
+  | "SELLER"
+  | "ORIGINATOR"
+  | "ISSUER"
+  | "FACILITY"
+  | "SERVICER"
+  | "RESOLVER"
+  | "ORACLE"
+  | "ADMIN"
+  | "SYSTEM";
 ```
 
 Reason codes are uppercase stable strings. Initial values:
@@ -1127,31 +1149,31 @@ The BE agent publishes `apps/api/openapi/openapi.json`. The FE and RISK agents c
 
 ### 18.1 Public application API
 
-| Method | Path | Role | Purpose |
-|---|---|---|---|
-| POST | `/v1/sellers` | SELLER/ADMIN | create seller and consent record |
-| GET | `/v1/sellers/:sellerId` | SELLER/ADMIN | read seller profile |
-| POST | `/v1/marketplace-connections` | SELLER | create sandbox/production connector |
-| POST | `/v1/marketplace-connections/:id/sync` | SELLER/SYSTEM | enqueue ingestion |
-| POST | `/v1/ingestions/csv` | SELLER/ADMIN | upload sandbox/report file |
-| GET | `/v1/ingestions/:id` | authorized | ingestion status and quality |
-| POST | `/v1/claims` | ORIGINATOR/ADMIN | create claim from stream |
-| GET | `/v1/claims/:id` | authorized | claim detail |
-| GET | `/v1/claims` | authorized | filtered claim list |
-| POST | `/v1/claims/:id/analyze` | ORIGINATOR/SYSTEM | create decision snapshot and request evaluation |
-| POST | `/v1/claims/:id/control-evidence` | ORIGINATOR | submit evidence metadata/hash |
-| POST | `/v1/claims/:id/control-decision` | ORIGINATOR/ADMIN | verify/reject/revoke control |
-| POST | `/v1/claims/:id/offers` | ORIGINATOR | create financing offer |
-| POST | `/v1/offers/:id/accept` | SELLER | accept terms |
-| POST | `/v1/claims/:id/issue` | ISSUER | authorize on-chain issuance |
-| POST | `/v1/claims/:id/fund` | FACILITY | fund accepted position |
-| POST | `/v1/settlement-events` | SERVICER/SYSTEM | ingest verified settlement event |
-| POST | `/v1/claims/:id/reconcile` | SERVICER/SYSTEM | calculate realized position |
-| POST | `/v1/claims/:id/waterfall` | SERVICER | execute guarded waterfall |
-| POST | `/v1/claims/:id/resolution` | RESOLVER | open/update authorized resolution |
-| POST | `/v1/claims/:id/pause` | authorized admin | circuit breaker |
-| GET | `/v1/portfolio/summary` | FACILITY/ORIGINATOR | exposure and performance |
-| GET | `/v1/audit-events` | authorized auditor | append-only audit search |
+| Method | Path                                   | Role                | Purpose                                         |
+| ------ | -------------------------------------- | ------------------- | ----------------------------------------------- |
+| POST   | `/v1/sellers`                          | SELLER/ADMIN        | create seller and consent record                |
+| GET    | `/v1/sellers/:sellerId`                | SELLER/ADMIN        | read seller profile                             |
+| POST   | `/v1/marketplace-connections`          | SELLER              | create sandbox/production connector             |
+| POST   | `/v1/marketplace-connections/:id/sync` | SELLER/SYSTEM       | enqueue ingestion                               |
+| POST   | `/v1/ingestions/csv`                   | SELLER/ADMIN        | upload sandbox/report file                      |
+| GET    | `/v1/ingestions/:id`                   | authorized          | ingestion status and quality                    |
+| POST   | `/v1/claims`                           | ORIGINATOR/ADMIN    | create claim from stream                        |
+| GET    | `/v1/claims/:id`                       | authorized          | claim detail                                    |
+| GET    | `/v1/claims`                           | authorized          | filtered claim list                             |
+| POST   | `/v1/claims/:id/analyze`               | ORIGINATOR/SYSTEM   | create decision snapshot and request evaluation |
+| POST   | `/v1/claims/:id/control-evidence`      | ORIGINATOR          | submit evidence metadata/hash                   |
+| POST   | `/v1/claims/:id/control-decision`      | ORIGINATOR/ADMIN    | verify/reject/revoke control                    |
+| POST   | `/v1/claims/:id/offers`                | ORIGINATOR          | create financing offer                          |
+| POST   | `/v1/offers/:id/accept`                | SELLER              | accept terms                                    |
+| POST   | `/v1/claims/:id/issue`                 | ISSUER              | authorize on-chain issuance                     |
+| POST   | `/v1/claims/:id/fund`                  | FACILITY            | fund accepted position                          |
+| POST   | `/v1/settlement-events`                | SERVICER/SYSTEM     | ingest verified settlement event                |
+| POST   | `/v1/claims/:id/reconcile`             | SERVICER/SYSTEM     | calculate realized position                     |
+| POST   | `/v1/claims/:id/waterfall`             | SERVICER            | execute guarded waterfall                       |
+| POST   | `/v1/claims/:id/resolution`            | RESOLVER            | open/update authorized resolution               |
+| POST   | `/v1/claims/:id/pause`                 | authorized admin    | circuit breaker                                 |
+| GET    | `/v1/portfolio/summary`                | FACILITY/ORIGINATOR | exposure and performance                        |
+| GET    | `/v1/audit-events`                     | authorized auditor  | append-only audit search                        |
 
 ### 18.2 Required response envelope
 
@@ -1526,23 +1548,23 @@ No fixture contains real PII or production credentials.
 **Consumes:** OpenAPI client, domain schemas/fixtures, Stellar client.  
 **Must not own:** handwritten API/domain duplicates, contract ABI, backend migrations.
 
-| ID | Priority | Task | Dependencies | Acceptance |
-|---|---|---|---|---|
-| FE-00 | MUST | Scaffold Next.js app, UI package, lint/test | Wave 0 root scaffold | app runs in workspace; no conflicting root config |
-| FE-01 | MUST | Auth/session and role-aware shell | BE auth contract | unauthorized routes blocked; sandbox identity visible |
-| FE-02 | MUST | Seller onboarding/consent | Seller API/schema | consent version shown and persisted |
-| FE-03 | MUST | Marketplace connection and CSV import | connection/ingestion APIs | progress, quality errors, retry states rendered |
-| FE-04 | MUST | Seller dashboard | claims/list APIs | gross, ESV, offer, fees, state, reason codes visible |
-| FE-05 | MUST | Claim detail/timeline | ClaimState/event schemas | every primary and side state has explicit UX |
-| FE-06 | MUST | Offer acceptance | offer API | terms hash, amount, fee, expiry confirmed before action |
-| FE-07 | MUST | Institutional portfolio | portfolio API | exposure, freshness, shortfall, sandbox mode visible |
-| FE-08 | MUST | Control/issuer/facility action panels | role APIs | actions require confirmation; revised state reconciled |
-| FE-09 | MUST | Resolution console | resolution API | evidence hashes, recoveries, final loss visible |
-| FE-10 | MUST | Transaction UX | stellar client/orchestrator | pending/success/failure/retry and explorer link |
-| FE-11 | MUST | Happy and adverse E2E | integrated services | Playwright passes deterministic scenarios |
-| FE-12 | MUST | Accessibility/responsiveness | complete flows | keyboard, labels, contrast, desktop/mobile smoke |
-| FE-13 | SHOULD | Explainability view | risk reason metadata | reasons understandable without exposing sensitive features |
-| FE-14 | LATER | Production anchor embedded flow | real partner | excluded until partner exists |
+| ID    | Priority | Task                                        | Dependencies                | Acceptance                                                 |
+| ----- | -------- | ------------------------------------------- | --------------------------- | ---------------------------------------------------------- |
+| FE-00 | MUST     | Scaffold Next.js app, UI package, lint/test | Wave 0 root scaffold        | app runs in workspace; no conflicting root config          |
+| FE-01 | MUST     | Auth/session and role-aware shell           | BE auth contract            | unauthorized routes blocked; sandbox identity visible      |
+| FE-02 | MUST     | Seller onboarding/consent                   | Seller API/schema           | consent version shown and persisted                        |
+| FE-03 | MUST     | Marketplace connection and CSV import       | connection/ingestion APIs   | progress, quality errors, retry states rendered            |
+| FE-04 | MUST     | Seller dashboard                            | claims/list APIs            | gross, ESV, offer, fees, state, reason codes visible       |
+| FE-05 | MUST     | Claim detail/timeline                       | ClaimState/event schemas    | every primary and side state has explicit UX               |
+| FE-06 | MUST     | Offer acceptance                            | offer API                   | terms hash, amount, fee, expiry confirmed before action    |
+| FE-07 | MUST     | Institutional portfolio                     | portfolio API               | exposure, freshness, shortfall, sandbox mode visible       |
+| FE-08 | MUST     | Control/issuer/facility action panels       | role APIs                   | actions require confirmation; revised state reconciled     |
+| FE-09 | MUST     | Resolution console                          | resolution API              | evidence hashes, recoveries, final loss visible            |
+| FE-10 | MUST     | Transaction UX                              | stellar client/orchestrator | pending/success/failure/retry and explorer link            |
+| FE-11 | MUST     | Happy and adverse E2E                       | integrated services         | Playwright passes deterministic scenarios                  |
+| FE-12 | MUST     | Accessibility/responsiveness                | complete flows              | keyboard, labels, contrast, desktop/mobile smoke           |
+| FE-13 | SHOULD   | Explainability view                         | risk reason metadata        | reasons understandable without exposing sensitive features |
+| FE-14 | LATER    | Production anchor embedded flow             | real partner                | excluded until partner exists                              |
 
 FE rules:
 
@@ -1558,29 +1580,29 @@ FE rules:
 **Coordinates:** Phase 0 freeze and generated artifacts.  
 **Must not own:** risk model internals or Soroban contract behavior.
 
-| ID | Priority | Task | Dependencies | Acceptance |
-|---|---|---|---|---|
-| BE-00 | MUST | Create monorepo/root scaffold | none | all four apps/packages can install/build independently |
-| BE-01 | MUST | Publish JSON Schema and OpenAPI | joint Wave 0 | validation/generation tests pass in TS and Python |
-| BE-02 | MUST | PostgreSQL/Drizzle schema and migrations | entities frozen | fresh DB migrates up/down safely |
-| BE-03 | MUST | Auth, tenant isolation, RBAC | role model | object-level authorization tests pass |
-| BE-04 | MUST | Audit, idempotency, outbox | events/error contract | duplicate requests/events are safe |
-| BE-05 | MUST | Marketplace sandbox + CSV ingestion | fixtures | raw hash, normalized events, data-quality report persisted |
-| BE-06 | MUST | Reconciliation ledger/snapshot | ingestion | immutable decision-time snapshot created |
-| BE-07 | MUST | Claim/offer lifecycle APIs | schemas/state machine | invalid transitions/version conflicts rejected |
-| BE-08 | MUST | Risk-service client/orchestration | risk OpenAPI | snapshot hash and response verified; failures safe |
-| BE-09 | MUST | JCC persistence/registry orchestration | RISK signer + SC binding | signature/hash and chain result reconciled |
-| BE-10 | MUST | Originator/control adapter | control schema | sandbox evidence deterministic; no raw document on-chain |
-| BE-11 | MUST | Issuer and SEP-8-shaped adapter | SC/asset config | sandbox approve/reject/pending/action flows testable |
-| BE-12 | MUST | Facility/funding orchestrator | SC binding | saga resumes safely after RPC failure |
-| BE-13 | MUST | Anchor adapter and payout receipt | Money/partner contract | sandbox conversion receipt reconciled and labeled |
-| BE-14 | MUST | Settlement ingestion/waterfall | settlement events + SC | duplicates safe; shortfall opens correct path |
-| BE-15 | MUST | Chain event indexer/reconciliation | SC events | reindex from checkpoint; detects mismatches |
-| BE-16 | MUST | Portfolio and audit query APIs | lifecycle data | institutional dashboard queries performant/tested |
-| BE-17 | MUST | Docker Compose, CI, OTEL, health | all services | fresh clone starts; health and traces available |
-| BE-18 | MUST | Integration/failure tests | all workstreams | happy/adverse/replay/timeout cases pass |
-| BE-19 | SHOULD | Object storage adapter for encrypted evidence | secret manager | local MinIO/sandbox and production interface |
-| BE-20 | LATER | Real partner implementations | partner credentials | not claimed in hackathon baseline |
+| ID    | Priority | Task                                          | Dependencies             | Acceptance                                                 |
+| ----- | -------- | --------------------------------------------- | ------------------------ | ---------------------------------------------------------- |
+| BE-00 | MUST     | Create monorepo/root scaffold                 | none                     | all four apps/packages can install/build independently     |
+| BE-01 | MUST     | Publish JSON Schema and OpenAPI               | joint Wave 0             | validation/generation tests pass in TS and Python          |
+| BE-02 | MUST     | PostgreSQL/Drizzle schema and migrations      | entities frozen          | fresh DB migrates up/down safely                           |
+| BE-03 | MUST     | Auth, tenant isolation, RBAC                  | role model               | object-level authorization tests pass                      |
+| BE-04 | MUST     | Audit, idempotency, outbox                    | events/error contract    | duplicate requests/events are safe                         |
+| BE-05 | MUST     | Marketplace sandbox + CSV ingestion           | fixtures                 | raw hash, normalized events, data-quality report persisted |
+| BE-06 | MUST     | Reconciliation ledger/snapshot                | ingestion                | immutable decision-time snapshot created                   |
+| BE-07 | MUST     | Claim/offer lifecycle APIs                    | schemas/state machine    | invalid transitions/version conflicts rejected             |
+| BE-08 | MUST     | Risk-service client/orchestration             | risk OpenAPI             | snapshot hash and response verified; failures safe         |
+| BE-09 | MUST     | JCC persistence/registry orchestration        | RISK signer + SC binding | signature/hash and chain result reconciled                 |
+| BE-10 | MUST     | Originator/control adapter                    | control schema           | sandbox evidence deterministic; no raw document on-chain   |
+| BE-11 | MUST     | Issuer and SEP-8-shaped adapter               | SC/asset config          | sandbox approve/reject/pending/action flows testable       |
+| BE-12 | MUST     | Facility/funding orchestrator                 | SC binding               | saga resumes safely after RPC failure                      |
+| BE-13 | MUST     | Anchor adapter and payout receipt             | Money/partner contract   | sandbox conversion receipt reconciled and labeled          |
+| BE-14 | MUST     | Settlement ingestion/waterfall                | settlement events + SC   | duplicates safe; shortfall opens correct path              |
+| BE-15 | MUST     | Chain event indexer/reconciliation            | SC events                | reindex from checkpoint; detects mismatches                |
+| BE-16 | MUST     | Portfolio and audit query APIs                | lifecycle data           | institutional dashboard queries performant/tested          |
+| BE-17 | MUST     | Docker Compose, CI, OTEL, health              | all services             | fresh clone starts; health and traces available            |
+| BE-18 | MUST     | Integration/failure tests                     | all workstreams          | happy/adverse/replay/timeout cases pass                    |
+| BE-19 | SHOULD   | Object storage adapter for encrypted evidence | secret manager           | local MinIO/sandbox and production interface               |
+| BE-20 | LATER    | Real partner implementations                  | partner credentials      | not claimed in hackathon baseline                          |
 
 BE integration-steward rules:
 
@@ -1597,25 +1619,25 @@ BE integration-steward rules:
 **Consumes:** domain enums/fixtures and asset configuration.  
 **Must not own:** business/legal proof or off-chain PII.
 
-| ID | Priority | Task | Dependencies | Acceptance |
-|---|---|---|---|---|
-| SC-00 | MUST | Rust/Soroban workspace and binding generation | Wave 0 root | contracts build/test; client generation reproducible |
-| SC-01 | MUST | Shared auth, role, error, TTL/event modules | frozen ABI | unit tests cover auth and expiry |
-| SC-02 | MUST | `JejakEligibilityRegistry` | JCC types | register/revoke/expiry/oracle tests pass |
-| SC-03 | MUST | `JejakClaimLifecycle` | registry | state and unique-claim invariants pass |
-| SC-04 | MUST | `JejakAssetController` + SAC | sandbox asset | authorization/issue/redeem/freeze/clawback tests |
-| SC-05 | MUST | `JejakFacility` | funding asset + lifecycle | funding limits and position accounting tested |
-| SC-06 | MUST | `JejakServicingWaterfall` | facility | conservation and nonnegative-allocation properties pass |
-| SC-07 | MUST | `JejakResolutionManager` | lifecycle | only authorized resolution and terminal close |
-| SC-08 | MUST | Double-financing protection | claim key | duplicate claim/issue/fund attempts rejected |
-| SC-09 | MUST | Pause/recovery governance | all contracts | pause blocks required actions; safe resume path |
-| SC-10 | MUST | Contract events and indexer fixtures | BE consumer | event schema compatibility test passes |
-| SC-11 | MUST | Deployment scripts/manifests | Testnet identities | repeatable deploy; addresses exported machine-readably |
-| SC-12 | MUST | Testnet asset/SAC setup | issuer flags | sandbox label and issuer policy documented |
-| SC-13 | MUST | Integration and invariant suite | shared fixtures | happy/adverse/replay/stale/overflow tests pass |
-| SC-14 | MUST | Security review/runbook | complete contracts | roles, keys, upgrade/TTL, incident actions documented |
-| SC-15 | SHOULD | SEP-8 sandbox approval-server test vectors | BE adapter | approve/revise/pending/action/reject vectors supplied |
-| SC-16 | LATER | Blend adapter | eligible pool/operator | separate adapter, not core contract dependency |
+| ID    | Priority | Task                                          | Dependencies              | Acceptance                                              |
+| ----- | -------- | --------------------------------------------- | ------------------------- | ------------------------------------------------------- |
+| SC-00 | MUST     | Rust/Soroban workspace and binding generation | Wave 0 root               | contracts build/test; client generation reproducible    |
+| SC-01 | MUST     | Shared auth, role, error, TTL/event modules   | frozen ABI                | unit tests cover auth and expiry                        |
+| SC-02 | MUST     | `JejakEligibilityRegistry`                    | JCC types                 | register/revoke/expiry/oracle tests pass                |
+| SC-03 | MUST     | `JejakClaimLifecycle`                         | registry                  | state and unique-claim invariants pass                  |
+| SC-04 | MUST     | `JejakAssetController` + SAC                  | sandbox asset             | authorization/issue/redeem/freeze/clawback tests        |
+| SC-05 | MUST     | `JejakFacility`                               | funding asset + lifecycle | funding limits and position accounting tested           |
+| SC-06 | MUST     | `JejakServicingWaterfall`                     | facility                  | conservation and nonnegative-allocation properties pass |
+| SC-07 | MUST     | `JejakResolutionManager`                      | lifecycle                 | only authorized resolution and terminal close           |
+| SC-08 | MUST     | Double-financing protection                   | claim key                 | duplicate claim/issue/fund attempts rejected            |
+| SC-09 | MUST     | Pause/recovery governance                     | all contracts             | pause blocks required actions; safe resume path         |
+| SC-10 | MUST     | Contract events and indexer fixtures          | BE consumer               | event schema compatibility test passes                  |
+| SC-11 | MUST     | Deployment scripts/manifests                  | Testnet identities        | repeatable deploy; addresses exported machine-readably  |
+| SC-12 | MUST     | Testnet asset/SAC setup                       | issuer flags              | sandbox label and issuer policy documented              |
+| SC-13 | MUST     | Integration and invariant suite               | shared fixtures           | happy/adverse/replay/stale/overflow tests pass          |
+| SC-14 | MUST     | Security review/runbook                       | complete contracts        | roles, keys, upgrade/TTL, incident actions documented   |
+| SC-15 | SHOULD   | SEP-8 sandbox approval-server test vectors    | BE adapter                | approve/revise/pending/action/reject vectors supplied   |
+| SC-16 | LATER    | Blend adapter                                 | eligible pool/operator    | separate adapter, not core contract dependency          |
 
 Required invariants:
 
@@ -1635,24 +1657,24 @@ Required invariants:
 **Consumes:** frozen dataset/evaluation contracts and fixtures.  
 **Must not own:** financing approval, legal decision, or claim-state orchestration.
 
-| ID | Priority | Task | Dependencies | Acceptance |
-|---|---|---|---|---|
-| RISK-00 | MUST | FastAPI service scaffold and contract validation | Wave 0 schema | OpenAPI/JSON validation and health tests pass |
-| RISK-01 | MUST | Decision-time dataset contract | ingestion fields | feature availability/cutoff documented and enforced |
-| RISK-02 | MUST | Reconciliation quality checks | settlement stream | duplicate/missing/inconsistent cases return reasons |
-| RISK-03 | MUST | Ground-truth builder | realized events | reproducible target with leakage tests |
-| RISK-04 | MUST | Fixed haircut baseline | fixture data | deterministic metrics and predictions |
-| RISK-05 | MUST | Rule-based incumbent baseline | policy config | refund/tenure/status rules versioned |
-| RISK-06 | MUST | SDS/ESV candidate model | dataset | bounded/calibrated output and reason codes |
-| RISK-07 | MUST | Out-of-time and grouped evaluation | model/baselines | no future leakage; calibration/tail metrics reported |
-| RISK-08 | MUST | Capital-uplift evaluation | predictions | compares capital at equal tail risk, not only AUC |
-| RISK-09 | MUST | Signed JCC service | key config | canonical signature, expiry, rotation/revocation tests |
-| RISK-10 | MUST | Deterministic sandbox model | fixtures | same input/version gives same result |
-| RISK-11 | MUST | Failure and missing-data behavior | API | REVIEW on unsafe input; no fabricated values |
-| RISK-12 | MUST | Model metadata/drift endpoints | service | model/data versions and sandbox flag visible |
-| RISK-13 | MUST | BE integration tests | internal API | snapshot mismatch/stale/retry cases pass |
-| RISK-14 | SHOULD | Feature explanations | candidate model | stable reason codes; no sensitive raw features leaked |
-| RISK-15 | LATER | Production model claim | real portfolio | prohibited until validation gates pass |
+| ID      | Priority | Task                                             | Dependencies      | Acceptance                                             |
+| ------- | -------- | ------------------------------------------------ | ----------------- | ------------------------------------------------------ |
+| RISK-00 | MUST     | FastAPI service scaffold and contract validation | Wave 0 schema     | OpenAPI/JSON validation and health tests pass          |
+| RISK-01 | MUST     | Decision-time dataset contract                   | ingestion fields  | feature availability/cutoff documented and enforced    |
+| RISK-02 | MUST     | Reconciliation quality checks                    | settlement stream | duplicate/missing/inconsistent cases return reasons    |
+| RISK-03 | MUST     | Ground-truth builder                             | realized events   | reproducible target with leakage tests                 |
+| RISK-04 | MUST     | Fixed haircut baseline                           | fixture data      | deterministic metrics and predictions                  |
+| RISK-05 | MUST     | Rule-based incumbent baseline                    | policy config     | refund/tenure/status rules versioned                   |
+| RISK-06 | MUST     | SDS/ESV candidate model                          | dataset           | bounded/calibrated output and reason codes             |
+| RISK-07 | MUST     | Out-of-time and grouped evaluation               | model/baselines   | no future leakage; calibration/tail metrics reported   |
+| RISK-08 | MUST     | Capital-uplift evaluation                        | predictions       | compares capital at equal tail risk, not only AUC      |
+| RISK-09 | MUST     | Signed JCC service                               | key config        | canonical signature, expiry, rotation/revocation tests |
+| RISK-10 | MUST     | Deterministic sandbox model                      | fixtures          | same input/version gives same result                   |
+| RISK-11 | MUST     | Failure and missing-data behavior                | API               | REVIEW on unsafe input; no fabricated values           |
+| RISK-12 | MUST     | Model metadata/drift endpoints                   | service           | model/data versions and sandbox flag visible           |
+| RISK-13 | MUST     | BE integration tests                             | internal API      | snapshot mismatch/stale/retry cases pass               |
+| RISK-14 | SHOULD   | Feature explanations                             | candidate model   | stable reason codes; no sensitive raw features leaked  |
+| RISK-15 | LATER    | Production model claim                           | real portfolio    | prohibited until validation gates pass                 |
 
 Minimum model evaluation:
 
@@ -1674,20 +1696,20 @@ The service outputs an eligibility recommendation, never a legal or lending appr
 
 ## 28. File Ownership and Merge Boundaries
 
-| Path | Owner | Consumers |
-|---|---|---|
-| `apps/web/**` | FE | all via demo |
-| `packages/ui/**` | FE | web |
-| `apps/api/**` | BE | FE, RISK, SC integration |
-| `packages/domain/**` | BE steward, jointly frozen | all |
-| `packages/api-client/**` | generated by BE | FE |
-| `contracts/soroban/**` | SC | BE |
-| `packages/stellar-client/**` | generated by SC | BE, FE where allowed |
-| `apps/risk-service/**` | RISK | BE |
-| root workspace/infrastructure | BE | all |
-| role-specific CI workflow | respective role | BE coordinates root CI |
-| `tests/e2e/**` | FE primary, all contribute | all |
-| `tests/integration/**` | BE primary, all contribute | all |
+| Path                          | Owner                      | Consumers                |
+| ----------------------------- | -------------------------- | ------------------------ |
+| `apps/web/**`                 | FE                         | all via demo             |
+| `packages/ui/**`              | FE                         | web                      |
+| `apps/api/**`                 | BE                         | FE, RISK, SC integration |
+| `packages/domain/**`          | BE steward, jointly frozen | all                      |
+| `packages/api-client/**`      | generated by BE            | FE                       |
+| `contracts/soroban/**`        | SC                         | BE                       |
+| `packages/stellar-client/**`  | generated by SC            | BE, FE where allowed     |
+| `apps/risk-service/**`        | RISK                       | BE                       |
+| root workspace/infrastructure | BE                         | all                      |
+| role-specific CI workflow     | respective role            | BE coordinates root CI   |
+| `tests/e2e/**`                | FE primary, all contribute | all                      |
+| `tests/integration/**`        | BE primary, all contribute | all                      |
 
 Agents work on branches `agent/fe`, `agent/be`, `agent/sc`, and `agent/risk`. They avoid editing another owner's paths. Generated outputs may be committed only by their owning generator.
 
@@ -1795,16 +1817,16 @@ Contract toolchain prerequisites and Testnet deploy command are documented separ
 
 ## 31. Test Matrix
 
-| Layer | Required tests |
-|---|---|
-| Domain | schema, enum, Money, hash/signature vectors, fixture validation |
-| FE | component, state UX, money formatting, authorization visibility, accessibility |
-| API | validation, RBAC, tenant isolation, idempotency, concurrency, outbox, adapters |
-| Risk | leakage, baseline, calibration, bounds, stale/missing data, signature vectors |
-| Contract | unit, auth, state, invariant, replay, overflow, TTL, event compatibility |
-| Integration | API↔risk, API↔chain, indexer reconciliation, anchor/issuer failure |
-| E2E | happy, refund spike, shortfall, duplicate, stale attestation, unauthorized action |
-| Operations | clean start, migration, seed reset, RPC outage, retry, backup/reindex |
+| Layer       | Required tests                                                                    |
+| ----------- | --------------------------------------------------------------------------------- |
+| Domain      | schema, enum, Money, hash/signature vectors, fixture validation                   |
+| FE          | component, state UX, money formatting, authorization visibility, accessibility    |
+| API         | validation, RBAC, tenant isolation, idempotency, concurrency, outbox, adapters    |
+| Risk        | leakage, baseline, calibration, bounds, stale/missing data, signature vectors     |
+| Contract    | unit, auth, state, invariant, replay, overflow, TTL, event compatibility          |
+| Integration | API↔risk, API↔chain, indexer reconciliation, anchor/issuer failure                |
+| E2E         | happy, refund spike, shortfall, duplicate, stale attestation, unauthorized action |
+| Operations  | clean start, migration, seed reset, RPC outage, retry, backup/reindex             |
 
 Required failure injections:
 
@@ -2003,3 +2025,10 @@ reconciled data and model evidence
 ```
 
 The implementation succeeds when it shows this order in working code, makes sandbox boundaries impossible to miss, and gives four parallel agents contracts precise enough to integrate without inventing incompatible systems.
+
+problem (beserta validasinya yaitu menyertakan kutipan dari sumber yang valid di internet)
+tambahkan placeholder untuk image yang memvisualisasikan masalah terkait
+riset kompetitor dan keunggulannya
+dibuat jadi bisnis dan teknikalnya di slide akhir
+minta saran untuk tambahin data data potensi bisnis (hal yang bisa mbuat juri stellar merasa bahwa ide kita membawa banyak keuntungan ke mereka)
+dibuat agar lebih mudah dipahami (tetap visual heavy tetapi pastikan agar visual tersebut dapat dipahami oleh juri (kalau misal mau ditambaahkan penjelasan paragraph tidak apa apa))

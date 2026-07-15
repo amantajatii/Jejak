@@ -1,15 +1,15 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 
-import { authorize, AuthorizationError } from "../../auth/authorization.js";
-import { bearerToken, type SupabaseJwtVerifier } from "../../auth/jwt-verifier.js";
+import { authorize, AuthorizationError, type ResourceAssignment } from "../../auth/authorization.js";
+import { bearerToken, type IdentityVerifier } from "../../auth/jwt-verifier.js";
 import type { ActiveMembership } from "../../auth/membership-repository.js";
 import { parseTenantId } from "../../auth/tenant.js";
 import type { ActorRole, AuthorizationContext } from "../../auth/types.js";
 import { successEnvelope } from "../../lib/envelopes.js";
 import type { MoneyValue } from "../shared/money.js";
 import type { SettlementService } from "./application/settlement-service.js";
-import type { SettlementContext } from "./ports/settlement.js";
+import type { SettlementContext, SettlementReconciliationPort } from "./ports/settlement.js";
 
 const uuidV7 = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 const stellarAddress = z.string().regex(/^[GCM][A-Z2-7]{55}$/);
@@ -20,6 +20,7 @@ const money = z.object({
   scale: z.number().int().min(0).max(18),
 }).strict();
 const idempotencyKey = z.string().min(16).max(255);
+const expectedVersion = z.coerce.number().int().min(1);
 const claimParams = z.object({ id: uuidV7 }).strict();
 const settlementBody = z.object({
   amount: money,
@@ -36,35 +37,64 @@ const waterfallBody = z.object({
   servicingFeeDue: money,
   settlementEventId: uuidV7,
 }).strict();
+const reconcileBody = z.object({ through: z.iso.datetime() }).strict();
+
+type RequestAuthorization = {
+  assignments: ResourceAssignment[];
+  membership: ActiveMembership;
+};
 
 export type SettlementRouteDependencies = {
+  findAssignments(input: {
+    actorId: string;
+    membershipId: string;
+    requestId: string;
+    tenantId: string;
+  }): Promise<ResourceAssignment[]>;
   findMembership(input: { authSubject: string; requestId: string; tenantId: string }): Promise<ActiveMembership | undefined>;
+  reconciliation: SettlementReconciliationPort;
+  /** Runtime deployment mode; supplied by composition, never inferred from a request. */
+  sandbox: boolean;
   service: SettlementService;
-  verifier: Pick<SupabaseJwtVerifier, "verify">;
+  verifier: IdentityVerifier;
 };
 
 export async function registerSettlementRoutes(app: FastifyInstance, dependencies: SettlementRouteDependencies): Promise<void> {
   app.post("/v1/settlement-events", async (request, reply) => {
-    const authorization = await institutionalContext(request, dependencies, ["SERVICER", "SYSTEM"]);
-    const context = commandContext(request, authorization);
     const body = settlementBody.parse(request.body);
+    const authorization = await assignedClaimContext(request, dependencies, body.claimId, ["SERVICER", "SYSTEM"]);
+    const context = commandContext(request, authorization);
     const event = await dependencies.service.ingest(context, { ...body, amount: moneyValue(body.amount) });
-    return reply.code(201).send(successEnvelope(event, { requestId: request.id, sandbox: true }));
+    return sendSuccess(reply, request, event, dependencies.sandbox, 201);
+  });
+
+  app.post("/v1/claims/:id/reconcile", async (request, reply) => {
+    const params = claimParams.parse(request.params);
+    const authorization = await assignedClaimContext(request, dependencies, params.id, ["SERVICER", "SYSTEM"]);
+    const body = reconcileBody.parse(request.body);
+    const result = await dependencies.reconciliation.reconcile({
+      claimId: params.id,
+      context: commandContext(request, authorization),
+      expectedVersion: expectedVersion.parse(request.headers["if-match"]),
+      through: body.through,
+    });
+    return sendSuccess(reply, request, result, dependencies.sandbox);
   });
 
   app.post("/v1/claims/:id/waterfall", async (request, reply) => {
-    const authorization = await institutionalContext(request, dependencies, ["SERVICER"]);
-    const context = commandContext(request, authorization);
     const params = claimParams.parse(request.params);
+    const authorization = await assignedClaimContext(request, dependencies, params.id, ["SERVICER"]);
+    const context = commandContext(request, authorization);
     const body = waterfallBody.parse(request.body);
+    const ifMatch = expectedVersion.parse(request.headers["if-match"]);
     const run = await dependencies.service.executeWaterfall(context, {
       ...body,
       claimId: params.id,
+      expectedVersion: ifMatch,
       financingFeeDue: moneyValue(body.financingFeeDue),
       servicingFeeDue: moneyValue(body.servicingFeeDue),
     });
-    const statusCode = ["PENDING_RECONCILIATION", "SUBMITTING", "SUBMITTING_AMBIGUOUS"].includes(run.status) ? 202 : 200;
-    return reply.code(statusCode).send(successEnvelope(run, { requestId: request.id, sandbox: true }));
+    return sendSuccess(reply, request, run, dependencies.sandbox);
   });
 }
 
@@ -89,14 +119,33 @@ function commandContext(request: FastifyRequest, authorization: AuthorizationCon
   };
 }
 
-async function institutionalContext(
+function sendSuccess<T>(reply: { code(statusCode: number): { send(payload: unknown): unknown }; header(name: string, value: string): unknown }, request: FastifyRequest, data: T, sandbox: boolean, statusCode = 200) {
+  reply.header("X-Request-Id", request.id);
+  reply.header("X-Jejak-Sandbox", String(sandbox));
+  return reply.code(statusCode).send(successEnvelope(data, { requestId: request.id, sandbox }));
+}
+
+async function assignedClaimContext(
   request: FastifyRequest,
   dependencies: SettlementRouteDependencies,
+  claimId: string,
   requiredRoles: readonly ActorRole[],
 ): Promise<AuthorizationContext> {
   const identity = await dependencies.verifier.verify(bearerToken(request.headers.authorization));
   const tenantId = parseTenantId(request.headers["x-jejak-tenant-id"]);
   const membership = await dependencies.findMembership({ authSubject: identity.subject, requestId: request.id, tenantId });
   if (membership === undefined) throw new AuthorizationError();
-  return authorize({ ...membership, requiredRoles });
+  const assignments = await dependencies.findAssignments({
+    actorId: membership.actorId,
+    membershipId: membership.membershipId,
+    requestId: request.id,
+    tenantId,
+  });
+  const requestAuthorization: RequestAuthorization = { assignments, membership };
+  return authorize({
+    ...requestAuthorization.membership,
+    assignments: requestAuthorization.assignments,
+    requiredRoles,
+    resource: { capability: "MANAGE", resourceId: claimId, resourceType: "CLAIM" },
+  });
 }

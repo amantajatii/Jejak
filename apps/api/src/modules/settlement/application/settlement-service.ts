@@ -47,7 +47,12 @@ export class SettlementService {
       settlement: loaded.event.amount,
       settlementEventId: loaded.event.id,
     });
-    let run = await this.dependencies.journal.prepareWaterfall({ allocation, context, position: loaded.position });
+    let run = await this.dependencies.journal.prepareWaterfall({
+      allocation,
+      context,
+      expectedVersion: input.expectedVersion,
+      position: loaded.position,
+    });
     if (run.status === "PENDING_RECONCILIATION" || run.status === "RECONCILED" || run.status === "FAILED_PROTOCOL") return run;
 
     const recovered = await this.dependencies.canonicalEvents.findByResultHash({

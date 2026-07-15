@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 
-import { ClaimLifecycle, Facility, ResolutionManager, ServicingWaterfall } from "@jejak/stellar-client";
+import { AssetController, ClaimLifecycle, Facility, ResolutionManager, ServicingWaterfall } from "@jejak/stellar-client";
 import type { contract } from "@stellar/stellar-sdk";
 
 import type { ContractRegistry } from "../domain/events.js";
@@ -24,6 +24,7 @@ export class ChainStateProtocolError extends Error {
 }
 
 export class GeneratedStellarStateReader implements StellarStateReaderPort {
+  readonly #asset: AssetController.Client;
   readonly #claim: ClaimLifecycle.Client;
   readonly #facility: Facility.Client;
   readonly #resolution: ResolutionManager.Client;
@@ -35,10 +36,19 @@ export class GeneratedStellarStateReader implements StellarStateReaderPort {
       publicKey: options.publicKey,
       rpcUrl: options.rpcUrl,
     };
+    this.#asset = new AssetController.Client({ ...common, contractId: options.contracts.asset_controller });
     this.#claim = new ClaimLifecycle.Client({ ...common, contractId: options.contracts.claim_lifecycle });
     this.#facility = new Facility.Client({ ...common, contractId: options.contracts.facility });
     this.#resolution = new ResolutionManager.Client({ ...common, contractId: options.contracts.resolution_manager });
     this.#waterfall = new ServicingWaterfall.Client({ ...common, contractId: options.contracts.servicing_waterfall });
+  }
+
+  async readAssetState(claimKey: string): Promise<ContractStateSnapshot> {
+    const key = bytes(claimKey);
+    return this.#read(async () => ({
+      claimKey,
+      issuedAmount: (await this.#asset.get_issued_for_claim({ claim_key: key })).result.toString(),
+    }));
   }
 
   async readClaimState(claimKey: string): Promise<ContractStateSnapshot> {

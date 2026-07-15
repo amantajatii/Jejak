@@ -17,6 +17,7 @@ import {
   waterfallResults,
 } from "../../../db/schema/index.js";
 import { canonicalHash } from "../../../reliability/canonical-json.js";
+import { DomainError } from "../../shared/errors.js";
 import {
   SettlementProtocolError,
   settlementPayloadHash,
@@ -48,9 +49,14 @@ export class PostgresSettlementJournal implements SettlementJournalPort, Canonic
     return this.database.transaction(async (transaction) => {
       const database = transaction as JejakDatabase;
       await this.#context(database, context);
+      const [claimRow] = await database.select({ id: claims.id }).from(claims).where(and(
+        eq(claims.tenantId, context.tenantId),
+        eq(claims.id, input.claimId),
+      )).limit(1);
+      if (claimRow === undefined) invalid("Claim was not found in the selected tenant.");
       const eventId = this.#id();
-      const claim = await this.#claimIdempotency(database, context, "createSettlementEvent", payloadHash, eventId);
-      if (claim !== undefined) return { ...settlementRecord(claim), replayed: true };
+      const replayedResponse = await this.#claimIdempotency(database, context, "createSettlementEvent", payloadHash, eventId);
+      if (replayedResponse !== undefined) return { ...settlementRecord(replayedResponse), replayed: true };
 
       const [duplicate] = await database.select().from(settlementEvents).where(and(
         eq(settlementEvents.tenantId, context.tenantId),
@@ -82,6 +88,20 @@ export class PostgresSettlementJournal implements SettlementJournalPort, Canonic
         id: eventId,
         occurredAt: new Date(input.occurredAt),
         source: input.source,
+        tenantId: context.tenantId,
+      });
+      await database.insert(operations).values({
+        context: {
+          claimId: input.claimId,
+          eventType: input.eventType,
+          payloadHash,
+          source: input.source,
+        },
+        id: this.#id(),
+        kind: "SETTLEMENT_INGESTION",
+        resourceId: eventId,
+        resourceType: "SETTLEMENT_EVENT",
+        status: "COMPLETED",
         tenantId: context.tenantId,
       });
       await this.#audit(database, context, {
@@ -133,6 +153,7 @@ export class PostgresSettlementJournal implements SettlementJournalPort, Canonic
   async prepareWaterfall(input: {
     allocation: WaterfallAllocation;
     context: SettlementContext;
+    expectedVersion: number;
     position: WaterfallPosition;
   }): Promise<WaterfallRun> {
     const payloadHash = canonicalHash({ allocation: input.allocation, claimKey: input.position.claimKey });
@@ -148,6 +169,18 @@ export class PostgresSettlementJournal implements SettlementJournalPort, Canonic
         if (existing.allocation.resultHash !== input.allocation.resultHash) throw conflict();
         await this.#completeIdempotency(database, input.context, "executeClaimWaterfall", payloadHash, existing, existing.id, 200);
         return { ...existing, replayed: true };
+      }
+
+      const [versionAdvanced] = await database.update(claims).set({
+        updatedAt: this.#now(),
+        version: sql`${claims.version} + 1`,
+      }).where(and(
+        eq(claims.tenantId, input.context.tenantId),
+        eq(claims.id, input.position.claimId),
+        eq(claims.version, input.expectedVersion),
+      )).returning({ id: claims.id });
+      if (versionAdvanced === undefined) {
+        throw new DomainError("VERSION_CONFLICT", "Claim version does not match If-Match.");
       }
 
       const [locked] = await database.select().from(chainPortfolioPositions).where(and(

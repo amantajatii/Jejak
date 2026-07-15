@@ -192,3 +192,21 @@ FOR EACH ROW EXECUTE FUNCTION jejak.reject_chain_immutable_mutation();--> statem
 CREATE TRIGGER waterfall_results_append_only
 BEFORE UPDATE OR DELETE ON jejak.waterfall_results
 FOR EACH ROW EXECUTE FUNCTION jejak.reject_chain_immutable_mutation();
+--> statement-breakpoint
+CREATE OR REPLACE FUNCTION jejak.reject_settlement_stream_immutable_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE EXCEPTION 'settlement_streams are immutable; create a successor snapshot instead' USING ERRCODE = '55000';
+END
+$$;
+--> statement-breakpoint
+REVOKE ALL ON FUNCTION jejak.reject_settlement_stream_immutable_mutation()
+  FROM PUBLIC, anon, authenticated, service_role, jejak_api, jejak_worker;
+--> statement-breakpoint
+CREATE TRIGGER settlement_streams_append_only
+BEFORE UPDATE OR DELETE ON jejak.settlement_streams
+FOR EACH ROW EXECUTE FUNCTION jejak.reject_settlement_stream_immutable_mutation();
+--> statement-breakpoint
+REVOKE UPDATE, DELETE, TRUNCATE ON jejak.settlement_streams FROM jejak_api, jejak_worker;

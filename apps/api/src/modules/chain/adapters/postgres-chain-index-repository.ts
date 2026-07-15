@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, notInArray, sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
 import type { JejakDatabase } from "../../../db/client.js";
@@ -11,6 +11,7 @@ import {
   chainReconciliationResults,
   chainSubmissions,
   claims,
+  auditEvents,
   outboxEvents,
 } from "../../../db/schema/index.js";
 import { canonicalHash } from "../../../reliability/canonical-json.js";
@@ -220,7 +221,12 @@ export class PostgresChainIndexRepository implements ChainIndexRepository, Chain
         ),
       ).innerJoin(
         chainEvents,
-        and(eq(chainEvents.tenantId, input.tenantId), eq(chainEvents.eventId, input.eventId)),
+        and(
+          eq(chainEvents.tenantId, input.tenantId),
+          eq(chainEvents.eventId, input.eventId),
+          eq(chainEvents.network, chainSubmissions.network),
+          eq(chainEvents.transactionHash, chainSubmissions.transactionHash),
+        ),
       ).where(and(
         eq(chainReconciliationExpectations.tenantId, input.tenantId),
         eq(chainReconciliationExpectations.id, input.expectationId),
@@ -311,6 +317,56 @@ export class PostgresChainIndexRepository implements ChainIndexRepository, Chain
           eq(chainSubmissions.tenantId, input.tenantId),
           eq(chainSubmissions.id, expectation.submissionId),
         ));
+      }
+      if (!input.finding.retryable && input.finding.claimKey !== undefined) {
+        const [claim] = await database.select({ id: claims.id, state: claims.state, version: claims.version }).from(claims).where(and(
+          eq(claims.tenantId, input.tenantId),
+          eq(claims.claimKey, input.finding.claimKey),
+          notInArray(claims.state, ["CLOSED", "CLOSED_WITH_LOSS", "REJECTED", "CANCELLED", "PAUSED"]),
+        )).limit(1).for("update");
+        if (claim !== undefined) {
+          const now = new Date();
+          const [paused] = await database.update(claims).set({ state: "PAUSED", updatedAt: now, version: claim.version + 1 }).where(and(
+            eq(claims.tenantId, input.tenantId),
+            eq(claims.id, claim.id),
+            eq(claims.version, claim.version),
+          )).returning({ id: claims.id });
+          if (paused !== undefined) {
+            const identity = input.finding.expectationId ?? canonicalHash(input.finding);
+            await database.insert(auditEvents).values({
+              action: "claim.chain_reconciliation_mismatch",
+              actorId: this.options.workerActorId,
+              afterVersion: claim.version + 1,
+              beforeVersion: claim.version,
+              createdAt: now,
+              id: this.#id(),
+              idempotencyKey: `chain-mismatch:${identity}`,
+              reasonCode: input.finding.kind,
+              references: { expectationId: input.finding.expectationId, retryable: false },
+              requestId: this.#id(),
+              resourceId: claim.id,
+              resourceType: "CLAIM",
+              result: "PAUSED_MISMATCH",
+              tenantId: input.tenantId,
+            });
+            await database.insert(outboxEvents).values({
+              aggregateId: claim.id,
+              aggregateType: "CLAIM",
+              aggregateVersion: claim.version + 1,
+              eventType: "claim.chain_reconciliation_mismatch",
+              eventVersion: 1,
+              id: this.#id(),
+              idempotencyKey: `chain-mismatch:${identity}`,
+              payload: {
+                claimId: claim.id,
+                claimKey: input.finding.claimKey,
+                kind: input.finding.kind,
+                state: "PAUSED",
+              },
+              tenantId: input.tenantId,
+            }).onConflictDoNothing();
+          }
+        }
       }
     });
   }

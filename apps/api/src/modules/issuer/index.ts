@@ -8,3 +8,4 @@ export * from "./domain/transaction.js";
 export * from "./domain/types.js";
 export * from "./ports/issuer-approval.js";
 export * from "./ports/issuer-journal.js";
+export * from "./routes.js";

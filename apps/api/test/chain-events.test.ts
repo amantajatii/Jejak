@@ -100,6 +100,7 @@ class MemoryRepository implements ChainIndexRepository {
 }
 
 const emptyState: StellarStateReaderPort = {
+  readAssetState: async (claimKey) => ({ claimKey, issuedAmount: "64000000" }),
   readClaimState: async (claimKey) => ({ claimKey, claimState: "REPAID", approvedPrincipalBaseUnits: "64000000" }),
   readFacilityState: async (claimKey) => ({ claimKey }),
   readResolutionState: async (claimKey) => ({ claimKey }),
@@ -195,5 +196,30 @@ describe("chain index replay and reconciliation", () => {
     const expiredRpc: StellarRpcPort = { getLatestLedger: async () => 110, getEvents: async () => ({ events: [], latestLedger: 110, oldestLedger: 50 }) };
     const expiredIndexer = new ChainEventIndexer({ contracts, network: "testnet", repository: new MemoryRepository(), rpc: expiredRpc, stateReader: emptyState }, { initialLedger: 1 });
     await expect(expiredIndexer.index({ tenantId })).rejects.toMatchObject({ code: "MISSING_EVENT", retryable: false });
+  });
+
+  it("rejects an indexed asset event when the generated live contract read disagrees", async () => {
+    const repository = new MemoryRepository();
+    const event = decodeCanonicalEvent(raw(contracts.asset_controller, ["asset", "issued", hash(1), actor], {
+      amount: 64n,
+      holder,
+    }), contracts);
+    repository.events.set(event.eventId, event);
+    repository.expectations.push({
+      claimKey: hex(1),
+      expectedAmount: "64",
+      expectedClaimState: "REPAID",
+      expectedEventType: "asset.issued",
+      id: "asset-live-mismatch",
+      submittedAt: new Date(0),
+      transactionHash: txHash,
+    });
+    const state: StellarStateReaderPort = {
+      ...emptyState,
+      readAssetState: async (claimKey) => ({ claimKey, issuedAmount: "63" }),
+    };
+    const indexer = new ChainEventIndexer({ contracts, network: "testnet", repository, rpc: rpcWith([]), stateReader: state }, { initialLedger: 1 });
+    await expect(indexer.reconcile({ tenantId })).resolves.toEqual({ mismatched: 1, pending: 0, reconciled: 0 });
+    expect(repository.findings).toContainEqual(expect.objectContaining({ kind: "AMOUNT_MISMATCH", message: expect.stringContaining("live issued amount") }));
   });
 });

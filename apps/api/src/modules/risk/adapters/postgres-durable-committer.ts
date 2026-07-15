@@ -17,6 +17,54 @@ export class PostgresDurableRiskEvaluationCommitter implements DurableRiskEvalua
     private readonly options: { nextId?: () => string; now?: () => Date } = {},
   ) {}
 
+  async findTrusted(input: Parameters<DurableRiskEvaluationCommitter["findTrusted"]>[0]) {
+    if (input.tenantId !== this.actorContext.tenantId) return null;
+    return withTenantTransaction(this.database, this.actorContext, async (database) => {
+      const [row] = await database
+        .select()
+        .from(riskEvaluations)
+        .where(and(
+          eq(riskEvaluations.tenantId, input.tenantId),
+          eq(riskEvaluations.requestId, input.operationId),
+          eq(riskEvaluations.requestHash, input.requestHash),
+        ))
+        .limit(1);
+      if (row === undefined) return null;
+      const eligibleSettlementValue = {
+        amountMinor: row.eligibleAmountMinor,
+        currency: row.eligibleCurrency,
+        scale: row.eligibleScale,
+        ...(row.eligibleIssuer === null ? {} : { issuer: row.eligibleIssuer }),
+      };
+      const maxAdvanceAmount = {
+        amountMinor: row.maxAdvanceAmountMinor,
+        currency: row.maxAdvanceCurrency,
+        scale: row.maxAdvanceScale,
+        ...(row.maxAdvanceIssuer === null ? {} : { issuer: row.maxAdvanceIssuer }),
+      };
+      return {
+        requestId: row.requestId,
+        claimId: row.claimId,
+        dataSnapshotHash: row.dataSnapshotHash,
+        policyVersion: row.policyVersion,
+        evaluationId: row.id,
+        modelId: row.modelId,
+        modelVersion: row.modelVersion,
+        decision: row.decision as "ELIGIBLE" | "REVIEW" | "INELIGIBLE",
+        effectiveDecision: row.decision as "ELIGIBLE" | "REVIEW" | "INELIGIBLE",
+        sdsBps: row.sdsBps,
+        expectedDilutionBps: row.expectedDilutionBps,
+        tailDilutionBps: row.tailDilutionBps,
+        eligibleSettlementValue,
+        maxAdvanceAmount,
+        reasonCodes: row.reasonCodes as string[],
+        effectiveReasonCodes: row.reasonCodes as string[],
+        featureSnapshotHash: row.featureSnapshotHash,
+        evaluatedAt: row.evaluatedAt.toISOString(),
+      };
+    });
+  }
+
   async commit(input: Parameters<DurableRiskEvaluationCommitter["commit"]>[0]): Promise<void> {
     if (input.tenantId !== this.actorContext.tenantId) {
       throw new Error("RISK committer tenant does not match its actor context.");
@@ -52,25 +100,21 @@ export class PostgresDurableRiskEvaluationCommitter implements DurableRiskEvalua
         if (existing.responseHash !== responseHash) {
           throw new Error("RISK request identity conflicts with a different trusted evaluation.");
         }
-        await database
-          .update(operations)
-          .set({ status: "COMPLETED", updatedAt: now() })
-          .where(and(eq(operations.tenantId, input.tenantId), eq(operations.id, input.operationId)));
         return;
       }
 
       const claimRepository = new PostgresClaimRepository(database);
       const claim = await claimRepository.findById(input.tenantId, input.evaluation.claimId);
       if (claim === null) throw new Error("Claim is unavailable for trusted RISK evaluation commit.");
-      const transition = applyRiskDecision(claim, {
-        expectedVersion: input.claimExpectedVersion,
-        decision: input.evaluation.effectiveDecision,
-        eligibleSettlementValue: input.evaluation.eligibleSettlementValue,
-        maxAdvanceAmount: input.evaluation.maxAdvanceAmount,
-        reasonCodes: input.evaluation.effectiveReasonCodes,
-        blocksAutomation: false,
-        now: now().toISOString(),
-      });
+      const transition = input.evaluation.effectiveDecision === "ELIGIBLE" ? null : applyRiskDecision(claim, {
+          expectedVersion: input.claimExpectedVersion,
+          decision: input.evaluation.effectiveDecision,
+          eligibleSettlementValue: input.evaluation.eligibleSettlementValue,
+          maxAdvanceAmount: input.evaluation.maxAdvanceAmount,
+          reasonCodes: input.evaluation.effectiveReasonCodes,
+          blocksAutomation: false,
+          now: now().toISOString(),
+        });
       await database.insert(riskEvaluations).values({
         id: input.evaluation.evaluationId,
         tenantId: input.tenantId,
@@ -83,7 +127,7 @@ export class PostgresDurableRiskEvaluationCommitter implements DurableRiskEvalua
         policyVersion: input.evaluation.policyVersion,
         modelId: input.evaluation.modelId,
         modelVersion: input.evaluation.modelVersion,
-        decision: input.evaluation.decision,
+        decision: input.evaluation.effectiveDecision,
         sdsBps: input.evaluation.sdsBps,
         expectedDilutionBps: input.evaluation.expectedDilutionBps,
         tailDilutionBps: input.evaluation.tailDilutionBps,
@@ -99,21 +143,21 @@ export class PostgresDurableRiskEvaluationCommitter implements DurableRiskEvalua
         ...(input.evaluation.maxAdvanceAmount.issuer === undefined
           ? {}
           : { maxAdvanceIssuer: input.evaluation.maxAdvanceAmount.issuer }),
-        reasonCodes: input.evaluation.reasonCodes,
+        reasonCodes: input.evaluation.effectiveReasonCodes,
         responseHash,
         evaluatedAt: new Date(input.evaluation.evaluatedAt),
       });
-      await claimRepository.update(transition.claim, input.claimExpectedVersion);
+      if (transition !== null) await claimRepository.update(transition.claim, input.claimExpectedVersion);
       await database.insert(auditEvents).values({
         id: nextId(),
         tenantId: input.tenantId,
         actorId: this.actorContext.actorId,
         requestId: this.actorContext.requestId,
-        action: "claim.analysis.completed",
+        action: transition === null ? "risk.evaluation.persisted" : "claim.analysis.completed",
         resourceType: "CLAIM",
         resourceId: claim.id,
         beforeVersion: input.claimExpectedVersion,
-        afterVersion: transition.claim.version,
+        afterVersion: transition?.claim.version ?? input.claimExpectedVersion,
         payloadHash: responseHash,
         result: "SUCCESS",
         references: {
@@ -130,8 +174,8 @@ export class PostgresDurableRiskEvaluationCommitter implements DurableRiskEvalua
           tenantId: input.tenantId,
           aggregateType: "CLAIM",
           aggregateId: claim.id,
-          aggregateVersion: transition.claim.version,
-          eventType: "claim.analysis.completed",
+          aggregateVersion: transition?.claim.version ?? input.claimExpectedVersion,
+          eventType: transition === null ? "risk.evaluation.persisted" : "claim.analysis.completed",
           eventVersion: 1,
           idempotencyKey: `risk:${input.operationId}`,
           payload: {
@@ -143,10 +187,6 @@ export class PostgresDurableRiskEvaluationCommitter implements DurableRiskEvalua
           nextAttemptAt: now(),
         })
         .onConflictDoNothing();
-      await database
-        .update(operations)
-        .set({ status: "COMPLETED", updatedAt: now() })
-        .where(and(eq(operations.tenantId, input.tenantId), eq(operations.id, input.operationId)));
       await database.insert(operationSteps).values({
         id: nextId(),
         tenantId: input.tenantId,

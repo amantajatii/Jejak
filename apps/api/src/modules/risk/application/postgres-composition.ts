@@ -5,7 +5,7 @@ import { PostgresDurableRiskEvaluationCommitter } from "../adapters/postgres-dur
 import { PostgresRiskEvaluationInputProvider } from "../adapters/postgres-input-provider.js";
 import { PostgresRiskOperationJournal } from "../adapters/postgres-operation-journal.js";
 import type { RiskEvaluationClient } from "../ports/client.js";
-import type { RiskFeatureProjector, SellerSubjectHasher } from "../ports/durable-operation.js";
+import type { RiskFeatureProjector, RiskPostEvaluationLifecycle, SellerSubjectHasher } from "../ports/durable-operation.js";
 import { RiskEvaluationWorkerService } from "./risk-evaluation-worker.js";
 
 export function createPostgresRiskEvaluationWorker(input: {
@@ -17,6 +17,7 @@ export function createPostgresRiskEvaluationWorker(input: {
   maxAttempts?: number;
   now?: () => Date;
   policyVersion: string;
+  postEvaluation?: RiskPostEvaluationLifecycle;
   sellerSubjectHasher: SellerSubjectHasher;
   sleep?: (attempt: number) => Promise<void>;
 }): RiskEvaluationWorkerService {
@@ -41,6 +42,7 @@ export function createPostgresRiskEvaluationWorker(input: {
         input.actorContext,
       ),
       journal: new PostgresRiskOperationJournal(input.database, input.actorContext, idsAndClock),
+      ...(input.postEvaluation === undefined ? {} : { postEvaluation: input.postEvaluation }),
     },
     {
       ...(input.leaseMs === undefined ? {} : { leaseMs: input.leaseMs }),

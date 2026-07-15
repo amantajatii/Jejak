@@ -24,6 +24,14 @@ const context: FundingSagaContext = {
   network: "TESTNET", offerId: "01980a12-3456-789a-8abc-def012345705",
   operationId: "fundFacility", requestId: "01980a12-3456-789a-8abc-def012345706", requestedAt: now.toISOString(),
   source: { amountMinor: "64000000", currency: "USDC", scale: 6 }, tenantId: "01980a12-3456-789a-8abc-def012345707",
+  chainIntent: {
+    acceptedTermsHash: "a".repeat(64), assetControllerContractId: "CASSETCONTROLLER_SANDBOX", claimKey: "b".repeat(64),
+    attestationEnvelopeHash: "c".repeat(64), attestationId: "01980a12-3456-789a-8abc-def012345708",
+    controlEvidenceHash: "d".repeat(64), controlEvidenceId: "01980a12-3456-789a-8abc-def012345709",
+    facilityContractId: "CFACILITY_SANDBOX", facilityHolder: "GFACILITY_HOLDER_SANDBOX", facilityId: "c".repeat(64),
+    facilityOperator: "GFACILITY_OPERATOR_SANDBOX", facilityTreasury: "GFACILITY_TREASURY_SANDBOX", firstLossAmountMinor: "0",
+    issuerOperator: "GISSUER_OPERATOR_SANDBOX", payoutReference: "sandbox-payout-ref", resultHash: "d".repeat(64), sellerPayoutAccount: "GSELLER_PAYOUT_SANDBOX",
+  },
 };
 
 function fixture(issuerScenario: IssuerSandboxScenario = "APPROVED", chainScenario: ConstructorParameters<typeof DeterministicFundingChainSandbox>[0] = "SUCCESS") {
@@ -38,26 +46,48 @@ function fixture(issuerScenario: IssuerSandboxScenario = "APPROVED", chainScenar
 }
 
 describe("BE-12 durable facility funding saga", () => {
-  it("completes separate issue, funding, and SANDBOX payout exactly once", async () => {
+  it("submits issuance once and remains pending until BE-15 reconciliation", async () => {
     const item = fixture();
     const first = await item.service.execute(context);
     const replay = await item.service.execute(context);
-    expect(first).toMatchObject({ sandbox: true, status: "COMPLETED", issuerReceipt: { approved: true, status: "APPROVED" }, anchorReceipt: { sandbox: true, status: "PAID" } });
-    expect(replay).toEqual(first);
-    expect(item.repository.outbox).toEqual([{ eventType: "facility.position.funded", sandbox: true }]);
-    expect([...item.repository.submissions.values()].map((value) => value.receipt?.action)).toEqual(["ISSUE", "FUND"]);
+    expect(first).toMatchObject({ sandbox: true, status: "WAITING_EXTERNAL", issuerReceipt: { approved: true, status: "APPROVED" } });
+    expect(replay).toMatchObject({ status: "WAITING_EXTERNAL" });
+    expect(item.repository.outbox).toEqual([]);
+    expect([...item.repository.submissions.values()].map((value) => value.receipt?.action)).toEqual(["ISSUE"]);
   });
 
-  it("supports atomic issue-and-fund and an exact deterministic chain receipt", async () => {
+  it("resumes separate funding only after BE-15 reconciles each submitted action", async () => {
+    const item = fixture();
+    await expect(item.service.execute(context)).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });
+    const issue = [...item.repository.submissions.values()][0]!.receipt!;
+    await expect(item.service.resumeAfterChainReconciliation(context, {
+      action: "ISSUE", canonicalEventId: "stellar-event-issue", ledgerSequence: 1_000_001,
+      outcome: "RECONCILED", transactionHash: issue.transactionHash,
+    })).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });
+    const fund = [...item.repository.submissions.values()][1]!.receipt!;
+    const completed = await item.service.resumeAfterChainReconciliation(context, {
+      action: "FUND", canonicalEventId: "stellar-event-fund", ledgerSequence: 1_000_002,
+      outcome: "RECONCILED", transactionHash: fund.transactionHash,
+    });
+    expect(completed).toMatchObject({ status: "COMPLETED", issuerReceipt: { status: "APPROVED" }, anchorReceipt: { status: "PAID" } });
+  });
+
+  it("fails terminally on a BE-15 reconciliation mismatch without compensating blindly", async () => {
+    const item = fixture();
+    await item.service.execute(context);
+    const issue = [...item.repository.submissions.values()][0]!.receipt!;
+    await expect(item.service.resumeAfterChainReconciliation(context, {
+      action: "ISSUE", canonicalEventId: "stellar-event-mismatch", ledgerSequence: 1_000_001,
+      outcome: "MISMATCH", transactionHash: issue.transactionHash,
+    })).rejects.toMatchObject({ code: "PARTNER_REJECTED", retryable: false });
+    await expect(new FacilityFundingCompensationService(item.repository, item.chain).execute(context)).rejects.toMatchObject({ code: "INVALID_STATE_TRANSITION" });
+  });
+
+  it("keeps atomic issue-and-fund pending until its canonical event is reconciled", async () => {
     const item = fixture();
     await item.service.execute({ ...context, chainMode: "ATOMIC" });
     const receipt = [...item.repository.submissions.values()][0]?.receipt;
-    expect(receipt).toEqual({
-      action: "ISSUE_AND_FUND", envelopeHash: "f".repeat(64), ledgerSequence: 1000001,
-      network: "TESTNET", receiptHash: "486a56457d24e803e6447ca35c0e84bee6c3f05567682ccfb4fcc1bb267cec6c",
-      requestHash: "70098b4c94f3b455736e57a2726b317f4cdb2e880ed2cc3a4fc6535d65a83ae3",
-      sandbox: true, status: "CONFIRMED", transactionHash: "9e78bda7c62ded3b947b51716817eba0b22327413bbe8c702ecb9a39dc2cd25c",
-    });
+    expect(receipt).toMatchObject({ action: "ISSUE_AND_FUND", envelopeHash: "f".repeat(64), network: "TESTNET", sandbox: true, status: "SUBMITTED" });
   });
 
   it.each(["PENDING", "ACTION_REQUIRED"] as const)("keeps issuer %s as waiting and never funds", async (scenario) => {
@@ -77,28 +107,23 @@ describe("BE-12 durable facility funding saga", () => {
     expect(repository.submissions.size).toBe(0);
   });
 
-  it("resumes after timeout and reconciles a lost chain response without resubmitting business steps", async () => {
+  it("uses lookup before retry and never blindly resubmits a lost response", async () => {
     const timed = fixture("APPROVED", "TIMEOUT_THEN_SUCCESS");
     await expect(timed.service.execute(context)).rejects.toMatchObject({ code: "PARTNER_TIMEOUT", retryable: true });
     await expect(new FacilityFundingCompensationService(timed.repository, timed.chain).execute(context)).rejects.toMatchObject({ code: "INVALID_STATE_TRANSITION" });
-    await expect(timed.service.execute(context)).rejects.toMatchObject({ code: "PARTNER_TIMEOUT", retryable: true });
-    await expect(timed.service.execute(context)).resolves.toMatchObject({ status: "COMPLETED" });
-    expect([...timed.repository.submissions.values()].filter((value) => value.receipt !== undefined)).toHaveLength(2);
+    await expect(timed.service.execute(context)).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });
+    expect([...timed.repository.submissions.values()].filter((value) => value.receipt !== undefined)).toHaveLength(1);
 
     const lost = fixture("APPROVED", "LOST_RESPONSE");
     await expect(lost.service.execute(context)).rejects.toMatchObject({ code: "PARTNER_TIMEOUT" });
-    await expect(lost.service.execute(context)).rejects.toMatchObject({ code: "PARTNER_TIMEOUT" });
-    await expect(lost.service.execute(context)).resolves.toMatchObject({ status: "COMPLETED" });
-    expect([...lost.repository.submissions.values()].map((value) => value.receipt?.action)).toEqual(["ISSUE", "FUND"]);
+    await expect(lost.service.execute(context)).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });
+    expect([...lost.repository.submissions.values()].map((value) => value.receipt?.action)).toEqual(["ISSUE"]);
   });
 
-  it("requires explicit compensation after issuance succeeds and funding fails", async () => {
+  it("does not compensate an issuance until canonical chain finality is known", async () => {
     const item = fixture("APPROVED", "FUND_REJECTED");
-    await expect(item.service.execute(context)).rejects.toMatchObject({ code: "PARTNER_REJECTED" });
-    await expect(item.repository.load(context, [...item.repository.submissions.values()][0]!.id)).resolves.toMatchObject({ status: "COMPENSATION_REQUIRED" });
-    const result = await new FacilityFundingCompensationService(item.repository, item.chain).execute(context);
-    expect(result).toMatchObject({ sandbox: true, status: "COMPENSATED" });
-    expect([...item.repository.submissions.values()].map((value) => value.receipt?.action)).toEqual(["ISSUE", undefined, "COMPENSATE"]);
+    await expect(item.service.execute(context)).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });
+    await expect(new FacilityFundingCompensationService(item.repository, item.chain).execute(context)).rejects.toMatchObject({ code: "INVALID_STATE_TRANSITION" });
   });
 
   it("rejects protocol mismatch and fails closed without a production chain", async () => {

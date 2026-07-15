@@ -1,9 +1,11 @@
 export * from "./adapters/deterministic-sandbox.js";
 export * from "./adapters/in-memory-control-journal.js";
 export * from "./adapters/postgres-control-journal.js";
+export * from "./adapters/postgres-control-command-repository.js";
 export * from "./adapters/postgres-control-lifecycle.js";
 export * from "./application/durable-control-evidence.js";
 export * from "./application/control-evidence-handler.js";
+export * from "./application/claim-command-service.js";
 export * from "./application/orchestrate-control-evidence.js";
 export * from "./domain/errors.js";
 export * from "./domain/receipt.js";
@@ -11,3 +13,4 @@ export * from "./domain/types.js";
 export * from "./ports/control-evidence.js";
 export * from "./ports/control-journal.js";
 export * from "./ports/control-lifecycle.js";
+export * from "./routes.js";

@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import { authorize, AuthorizationError, type ResourceAssignment } from "../../auth/authorization.js";
-import { bearerToken, type SupabaseJwtVerifier } from "../../auth/jwt-verifier.js";
+import { bearerToken, type IdentityVerifier } from "../../auth/jwt-verifier.js";
 import type { ActiveMembership } from "../../auth/membership-repository.js";
 import { parseTenantId } from "../../auth/tenant.js";
 import type { ActorRole, AuthenticatedIdentity, AuthorizationContext } from "../../auth/types.js";
@@ -113,7 +113,7 @@ export type ClaimRouteDependencies = {
     state?: string;
     visibility: ClaimVisibility;
   }): Promise<ClaimPage>;
-  verifier: Pick<SupabaseJwtVerifier, "verify">;
+  verifier: IdentityVerifier;
 };
 
 async function requestAuthorization(

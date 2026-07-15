@@ -10,10 +10,11 @@ export function validateChainActionReceipt(request: ChainActionRequest, receipt:
   const requestHash = chainActionRequestHash(request);
   const { receiptHash, ...unsigned } = receipt;
   if (
-    !receipt.sandbox || receipt.status !== "CONFIRMED" || receipt.action !== request.action ||
+    typeof receipt.sandbox !== "boolean" || receipt.status !== "SUBMITTED" || receipt.action !== request.action ||
     receipt.envelopeHash !== request.envelopeHash || receipt.network !== request.network ||
     receipt.requestHash !== requestHash || receiptHash !== canonicalHash(unsigned) ||
-    receipt.transactionHash.length !== 64 || !Number.isInteger(receipt.ledgerSequence)
+    receipt.transactionHash.length !== 64 ||
+    (receipt.ledgerSequence !== undefined && (!Number.isInteger(receipt.ledgerSequence) || receipt.ledgerSequence < 1))
   ) {
     throw new FundingSagaError("PARTNER_REJECTED", "Chain action receipt failed reconciliation.");
   }

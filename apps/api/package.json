@@ -15,9 +15,11 @@
     "lint": "tsc -p tsconfig.json --noEmit",
     "openapi:generate": "node scripts/generate-openapi.mjs",
     "openapi:lint": "redocly lint openapi/openapi.yaml --config redocly.yaml",
+    "risk:worker": "node --env-file-if-exists=../../.env --import tsx src/risk-worker.ts",
     "start": "node --env-file-if-exists=../../.env dist/server.js",
     "test": "vitest run",
     "test:integration:supabase": "node scripts/run-supabase-integration.mjs",
+    "test:integration:supabase-settlement-offers": "node scripts/run-settlement-offers-supabase-integration.mjs",
     "test:integration:supabase-anchor": "node scripts/run-anchor-supabase-integration.mjs",
     "test:integration:supabase-storage": "node scripts/run-supabase-storage-integration.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"

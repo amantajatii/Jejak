@@ -9,6 +9,8 @@ import {
 
 export type SettlementEventType = "ADJUSTMENT" | "CHARGEBACK" | "REFUND" | "SETTLEMENT";
 
+const maximumMinorAmount = (10n ** 38n) - 1n;
+
 export type SettlementEventInput = {
   amount: MoneyValue;
   claimId: string;
@@ -65,7 +67,7 @@ export class SettlementProtocolError extends Error {
 
 export function validateSettlementEvent(input: SettlementEventInput): void {
   assertMoney(input.amount);
-  if (moneyAmount(input.amount) <= 0n) invalid("Settlement event amount must be positive.");
+  if (boundedAmount(input.amount, "settlement event amount") <= 0n) invalid("Settlement event amount must be positive.");
   if (!/^[0-9a-f]{64}$/.test(input.sourceHash)) invalid("Settlement sourceHash must be lowercase SHA-256 hex.");
   if (!/^[A-Za-z0-9._:-]{1,64}$/.test(input.source)) invalid("Settlement source is invalid.");
   if (input.externalEventId.length < 1 || input.externalEventId.length > 255) invalid("Settlement externalEventId is invalid.");
@@ -154,7 +156,15 @@ function min(left: bigint, right: bigint): bigint {
 }
 
 function nonnegative(value: MoneyValue, label: string): bigint {
-  const amount = moneyAmount(value);
+  const amount = boundedAmount(value, label);
   if (amount < 0n) invalid(`Waterfall ${label} must not be negative.`);
+  return amount;
+}
+
+function boundedAmount(value: MoneyValue, label: string): bigint {
+  const amount = moneyAmount(value);
+  if (amount > maximumMinorAmount || amount < -maximumMinorAmount) {
+    invalid(`Waterfall ${label} exceeds the supported exact Money range.`);
+  }
   return amount;
 }

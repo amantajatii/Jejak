@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import { authorize, AuthorizationError } from "../../auth/authorization.js";
-import { bearerToken, type SupabaseJwtVerifier } from "../../auth/jwt-verifier.js";
+import { bearerToken, type IdentityVerifier } from "../../auth/jwt-verifier.js";
 import type { ActiveMembership } from "../../auth/membership-repository.js";
 import { parseTenantId } from "../../auth/tenant.js";
 import type { AuthorizationContext } from "../../auth/types.js";
@@ -42,7 +42,7 @@ export type IngestionRouteDependencies = {
     context: AuthorizationContext & { idempotencyKey: string; requestId: string },
     input: { force?: boolean; marketplaceConnectionId: string },
   ): Promise<PersistedIngestionResult>;
-  verifier: SupabaseJwtVerifier;
+  verifier: IdentityVerifier;
 };
 
 async function authorizedContext(

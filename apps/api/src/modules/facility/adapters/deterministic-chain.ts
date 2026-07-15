@@ -11,8 +11,8 @@ export class DeterministicFundingChainSandbox implements FundingChainPort {
 
   constructor(private readonly scenario: "SUCCESS" | "TIMEOUT_THEN_SUCCESS" | "LOST_RESPONSE" | "FUND_REJECTED" | "PROTOCOL_MISMATCH" = "SUCCESS") {}
 
-  async findAction(idempotencyKey: string): Promise<ChainActionReceipt | null> {
-    return structuredClone(this.#actions.get(idempotencyKey) ?? null);
+  async findAction(request: ChainActionRequest): Promise<ChainActionReceipt | null> {
+    return structuredClone(this.#actions.get(request.idempotencyKey) ?? null);
   }
 
   async submitAction(request: ChainActionRequest): Promise<ChainActionReceipt> {
@@ -34,7 +34,7 @@ export class DeterministicFundingChainSandbox implements FundingChainPort {
       network: request.network,
       requestHash,
       sandbox: true as const,
-      status: "CONFIRMED" as const,
+      status: "SUBMITTED" as const,
       transactionHash: canonicalHash({ action: request.action, requestHash }),
     };
     const receipt = { ...unsigned, receiptHash: canonicalHash(unsigned) };

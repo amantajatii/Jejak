@@ -17,7 +17,7 @@ function workFrom(row: {
   id: string;
   resourceId: string | null;
   tenantId: string;
-}): RiskWorkClaim {
+}, attempt: number): RiskWorkClaim {
   const context = row.context as OperationContext;
   if (
     typeof context.claimId !== "string" ||
@@ -29,7 +29,7 @@ function workFrom(row: {
   }
   return {
     kind: "CLAIMED",
-    attempt: 0,
+    attempt,
     work: {
       claimId: context.claimId,
       operationId: row.id,
@@ -72,6 +72,15 @@ export class PostgresRiskOperationJournal implements RiskOperationJournal {
           tenantId: operations.tenantId,
         });
       if (row !== undefined) {
+        const priorAttempts = await database
+          .select({ id: partnerAttempts.id })
+          .from(partnerAttempts)
+          .where(and(
+            eq(partnerAttempts.tenantId, input.tenantId),
+            eq(partnerAttempts.operationId, input.operationId),
+            eq(partnerAttempts.partner, "RISK"),
+            eq(partnerAttempts.operation, "EVALUATE"),
+          ));
         await database.insert(operationSteps).values({
           id: (this.options.nextId ?? uuidv7)(),
           tenantId: input.tenantId,
@@ -83,7 +92,7 @@ export class PostgresRiskOperationJournal implements RiskOperationJournal {
           createdAt: now(),
           updatedAt: now(),
         });
-        return workFrom(row);
+        return workFrom(row, priorAttempts.length);
       }
       const [existing] = await database
         .select({ status: operations.status })
@@ -139,6 +148,21 @@ export class PostgresRiskOperationJournal implements RiskOperationJournal {
         createdAt: now(),
         updatedAt: now(),
       });
+    });
+  }
+
+  async markCompleted(input: Parameters<RiskOperationJournal["markCompleted"]>[0]): Promise<void> {
+    if (input.tenantId !== this.actorContext.tenantId) return;
+    const now = this.options.now ?? (() => new Date());
+    await withTenantTransaction(this.database, this.actorContext, async (database) => {
+      await database
+        .update(operations)
+        .set({ status: "COMPLETED", updatedAt: now() })
+        .where(and(
+          eq(operations.tenantId, input.tenantId),
+          eq(operations.id, input.operationId),
+          eq(operations.kind, "RISK_EVALUATION"),
+        ));
     });
   }
 }

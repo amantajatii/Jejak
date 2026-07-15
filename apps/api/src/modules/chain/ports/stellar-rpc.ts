@@ -36,6 +36,7 @@ export type ContractStateSnapshot = {
   finalLoss?: string;
   firstLossConsumed?: string;
   firstLossFunded?: string;
+  issuedAmount?: string;
   outstandingPrincipal?: string;
   principal?: string;
   recovered?: string;
@@ -45,6 +46,7 @@ export type ContractStateSnapshot = {
 };
 
 export interface StellarStateReaderPort {
+  readAssetState(claimKey: string): Promise<ContractStateSnapshot>;
   readClaimState(claimKey: string): Promise<ContractStateSnapshot>;
   readFacilityState(claimKey: string): Promise<ContractStateSnapshot>;
   readResolutionState(claimKey: string): Promise<ContractStateSnapshot>;

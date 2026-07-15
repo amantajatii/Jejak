@@ -1,5 +1,6 @@
 import { v7 as uuidv7 } from "uuid";
 
+import { DomainError } from "../../shared/errors.js";
 import {
   SettlementProtocolError,
   settlementPayloadHash,
@@ -20,6 +21,7 @@ export class InMemorySettlementJournal implements SettlementJournalPort, Canonic
   readonly canonicalEvents = new Map<string, CanonicalWaterfallEvent>();
   readonly events = new Map<string, SettlementEventRecord>();
   readonly positions = new Map<string, WaterfallPosition>();
+  readonly claimVersions = new Map<string, number>();
   readonly runs = new Map<string, WaterfallRun>();
   readonly #eventsByIdentity = new Map<string, string>();
   readonly #eventsByPayload = new Map<string, string>();
@@ -65,6 +67,11 @@ export class InMemorySettlementJournal implements SettlementJournalPort, Canonic
       if (existing.allocation.resultHash !== input.allocation.resultHash) throw conflict();
       return { ...existing, replayed: true };
     }
+    const currentVersion = this.claimVersions.get(input.position.claimId) ?? 1;
+    if (currentVersion !== input.expectedVersion) {
+      throw new DomainError("VERSION_CONFLICT", "Claim version does not match If-Match.");
+    }
+    this.claimVersions.set(input.position.claimId, currentVersion + 1);
     const run: WaterfallRun = {
       allocation: input.allocation,
       claimId: input.position.claimId,

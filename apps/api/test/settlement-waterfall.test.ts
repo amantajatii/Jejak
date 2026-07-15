@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AuthorizationError } from "../src/auth/authorization.js";
 import type { ActiveMembership } from "../src/auth/membership-repository.js";
+import { DeterministicWaterfallSubmitter } from "../src/modules/settlement/adapters/deterministic-waterfall-submitter.js";
+import { GeneratedWaterfallSubmitter } from "../src/modules/settlement/adapters/generated-waterfall-submitter.js";
+import { createRuntimeWaterfallSubmitter } from "../src/modules/settlement/adapters/runtime-waterfall-submitter.js";
 import { InMemorySettlementJournal } from "../src/modules/settlement/adapters/in-memory-settlement-journal.js";
+import { ChainSettlementReconciliationBridge } from "../src/modules/settlement/adapters/chain-reconciliation-bridge.js";
 import { SettlementService } from "../src/modules/settlement/application/settlement-service.js";
 import { calculateWaterfall, SettlementProtocolError } from "../src/modules/settlement/domain/settlement.js";
 import type { SettlementContext, WaterfallSubmissionPort } from "../src/modules/settlement/ports/settlement.js";
@@ -11,6 +15,7 @@ import { WaterfallSubmissionError } from "../src/modules/settlement/ports/settle
 import { registerSettlementRoutes } from "../src/modules/settlement/routes.js";
 
 const tenantId = "01980a12-3456-789a-8abc-def012345678";
+const otherTenantId = "01980a12-3456-789a-8abc-def012345699";
 const actorId = "01980a12-3456-789a-8abc-def012345679";
 const membershipId = "01980a12-3456-789a-8abc-def012345680";
 const roleGrantId = "01980a12-3456-789a-8abc-def012345681";
@@ -106,6 +111,26 @@ describe("BE-14 exact waterfall", () => {
       seniorLoss: { amountMinor: "46" },
     });
   });
+
+  it("accepts the exact database Money boundary and rejects overflow without floating point", () => {
+    const maximum = "9".repeat(38);
+    expect(() => calculateWaterfall({
+      finalSettlement: false,
+      financingFeeDue: money("0"),
+      position: { ...position, outstandingPrincipal: money(maximum) },
+      servicingFeeDue: money("0"),
+      settlement: money(maximum),
+      settlementEventId,
+    })).not.toThrow();
+    expect(() => calculateWaterfall({
+      finalSettlement: false,
+      financingFeeDue: money("0"),
+      position: { ...position, outstandingPrincipal: money("1" + "0".repeat(38)) },
+      servicingFeeDue: money("0"),
+      settlement: money("1"),
+      settlementEventId,
+    })).toThrow(/exact Money range/);
+  });
 });
 
 describe("settlement replay and lost-response orchestration", () => {
@@ -133,10 +158,11 @@ describe("settlement replay and lost-response orchestration", () => {
       canonicalEvents: journal,
       journal,
       servicerAddress,
-      submitter: { submit } as WaterfallSubmissionPort,
+      submitter: { mode: "SANDBOX", submit },
     });
     const command = {
       claimId,
+      expectedVersion: 1,
       finalSettlement: true,
       financingFeeDue: money("3"),
       servicingFeeDue: money("2"),
@@ -164,15 +190,39 @@ describe("settlement replay and lost-response orchestration", () => {
       canonicalEvents: journal,
       journal,
       servicerAddress,
-      submitter: { submit: vi.fn() },
+      submitter: { mode: "SANDBOX", submit: vi.fn() },
     });
     await expect(service.executeWaterfall(context, {
       claimId,
+      expectedVersion: 1,
       finalSettlement: false,
       financingFeeDue: money("0"),
       servicingFeeDue: money("0"),
       settlementEventId,
     })).rejects.toBeInstanceOf(SettlementProtocolError);
+  });
+
+  it("rejects a stale waterfall If-Match before any chain submission", async () => {
+    const journal = new InMemorySettlementJournal({ nextId: () => settlementEventId });
+    journal.positions.set(claimId, position);
+    journal.claimVersions.set(claimId, 2);
+    await journal.ingest(context, settlementInput());
+    const submit = vi.fn();
+    const service = new SettlementService({
+      canonicalEvents: journal,
+      journal,
+      servicerAddress,
+      submitter: { mode: "SANDBOX", submit } as WaterfallSubmissionPort,
+    });
+    await expect(service.executeWaterfall(context, {
+      claimId,
+      expectedVersion: 1,
+      finalSettlement: false,
+      financingFeeDue: money("0"),
+      servicingFeeDue: money("0"),
+      settlementEventId,
+    })).rejects.toMatchObject({ code: "VERSION_CONFLICT" });
+    expect(submit).not.toHaveBeenCalled();
   });
 });
 
@@ -181,16 +231,26 @@ function membership(role: ActiveMembership["grants"][number]["role"]): ActiveMem
 }
 
 describe("settlement route handoff", () => {
-  it("exports uncomposed SERVICER routes with institutional RBAC", async () => {
+  it("exports exactly the frozen routes with assignment-scoped institutional RBAC", async () => {
     const app = Fastify();
     app.setErrorHandler((error, _request, reply) => reply.code(error instanceof AuthorizationError ? 403 : 400).send({
       error: error instanceof Error ? error.message : "Unknown error",
     }));
     let active = membership("SERVICER");
+    let assignments = [{ capability: "MANAGE", resourceId: claimId, resourceType: "CLAIM" }];
     const ingest = vi.fn(async () => ({ ...settlementInput(), id: settlementEventId, payloadHash: "2".repeat(64), receivedAt: "2026-07-15T12:01:00.000Z", replayed: false }));
     const executeWaterfall = vi.fn(async () => ({ allocation: {}, claimId, claimKey, id: settlementEventId, replayed: false, status: "PENDING_RECONCILIATION" }));
+    const reconcile = vi.fn(async () => ({
+      claimId,
+      indexed: { duplicates: 0, indexed: 1, latestLedger: 101, staleCheckpoints: 0 },
+      reconciliation: { mismatched: 0, pending: 0, reconciled: 1 },
+      through: "2026-07-15T12:00:00.000Z",
+    }));
     await registerSettlementRoutes(app, {
-      findMembership: async () => active,
+      findAssignments: async () => assignments,
+      findMembership: async (input) => input.tenantId === tenantId ? active : undefined,
+      reconciliation: { reconcile },
+      sandbox: false,
       service: { ingest, executeWaterfall } as unknown as SettlementService,
       verifier: { verify: async () => ({ subject: actorId }) },
     });
@@ -199,17 +259,131 @@ describe("settlement route handoff", () => {
       "idempotency-key": context.idempotencyKey,
       "x-jejak-tenant-id": tenantId,
     };
-    await expect(app.inject({ body: settlementInput(), headers, method: "POST", url: "/v1/settlement-events" }))
-      .resolves.toMatchObject({ statusCode: 201 });
+    const settlementResponse = await app.inject({ body: settlementInput(), headers, method: "POST", url: "/v1/settlement-events" });
+    expect(settlementResponse).toMatchObject({ statusCode: 201, headers: { "x-jejak-sandbox": "false" } });
+    expect(settlementResponse.json()).toMatchObject({ meta: { sandbox: false } });
     await expect(app.inject({
       body: { finalSettlement: true, financingFeeDue: money("3"), servicingFeeDue: money("2"), settlementEventId },
-      headers,
+      headers: { ...headers, "if-match": "1" },
       method: "POST",
       url: `/v1/claims/${claimId}/waterfall`,
-    })).resolves.toMatchObject({ statusCode: 202 });
+    })).resolves.toMatchObject({ statusCode: 200 });
+    await expect(app.inject({
+      body: { through: "2026-07-15T12:00:00.000Z" },
+      headers: { ...headers, "if-match": "1" },
+      method: "POST",
+      url: `/v1/claims/${claimId}/reconcile`,
+    })).resolves.toMatchObject({ statusCode: 200 });
+    expect(reconcile).toHaveBeenCalledWith(expect.objectContaining({
+      claimId,
+      expectedVersion: 1,
+      through: "2026-07-15T12:00:00.000Z",
+    }));
+    assignments = [];
+    await expect(app.inject({
+      body: { through: "2026-07-15T12:00:00.000Z" },
+      headers: { ...headers, "if-match": "1" },
+      method: "POST",
+      url: `/v1/claims/${claimId}/reconcile`,
+    })).resolves.toMatchObject({ statusCode: 403 });
+    assignments = [{ capability: "MANAGE", resourceId: claimId, resourceType: "CLAIM" }];
+    await expect(app.inject({
+      body: settlementInput(),
+      headers: { ...headers, "x-jejak-tenant-id": otherTenantId },
+      method: "POST",
+      url: "/v1/settlement-events",
+    })).resolves.toMatchObject({ statusCode: 403 });
     active = membership("FACILITY");
     await expect(app.inject({ body: settlementInput(), headers, method: "POST", url: "/v1/settlement-events" }))
       .resolves.toMatchObject({ statusCode: 403 });
     await app.close();
+  });
+});
+
+describe("settlement-to-chain reconciliation bridge", () => {
+  it("indexes before reconciling so BE-15 can durably project a canonical result", async () => {
+    const calls: string[] = [];
+    const bridge = new ChainSettlementReconciliationBridge({
+      index: async () => {
+        calls.push("index");
+        return { duplicates: 1, indexed: 2, latestLedger: 110, staleCheckpoints: 0 };
+      },
+      reconcile: async () => {
+        calls.push("reconcile");
+        return { mismatched: 0, pending: 0, reconciled: 1 };
+      },
+    }, { assertCurrent: async () => { calls.push("version"); } });
+    await expect(bridge.reconcile({
+      claimId,
+      context,
+      expectedVersion: 1,
+      through: "2026-07-15T12:00:00.000Z",
+    })).resolves.toMatchObject({ claimId, reconciliation: { reconciled: 1 } });
+    expect(calls).toEqual(["version", "index", "reconcile"]);
+  });
+
+  it("does not reconcile after a retryable indexing timeout", async () => {
+    const reconcile = vi.fn();
+    const bridge = new ChainSettlementReconciliationBridge({
+      index: async () => { throw new WaterfallSubmissionError("RPC_TIMEOUT", "timeout", false); },
+      reconcile,
+    }, { assertCurrent: async () => undefined });
+    await expect(bridge.reconcile({
+      claimId,
+      context,
+      expectedVersion: 1,
+      through: "2026-07-15T12:00:00.000Z",
+    })).rejects.toMatchObject({ retryable: true });
+    expect(reconcile).not.toHaveBeenCalled();
+  });
+
+  it("rejects a stale reconcile If-Match before asking BE-15 to index", async () => {
+    const index = vi.fn();
+    const bridge = new ChainSettlementReconciliationBridge({ index, reconcile: vi.fn() }, {
+      assertCurrent: async () => { throw new Error("stale claim version"); },
+    });
+    await expect(bridge.reconcile({
+      claimId,
+      context,
+      expectedVersion: 1,
+      through: "2026-07-15T12:00:00.000Z",
+    })).rejects.toThrow("stale claim version");
+    expect(index).not.toHaveBeenCalled();
+  });
+});
+
+describe("waterfall submitter runtime boundaries", () => {
+  const command = {
+    allocation: calculateWaterfall({
+      finalSettlement: false,
+      financingFeeDue: money("0"),
+      position,
+      servicingFeeDue: money("0"),
+      settlement: money("10"),
+      settlementEventId,
+    }),
+    claimKey,
+    servicerAddress,
+  };
+
+  it("returns deterministic sandbox receipts and preserves lost-response ambiguity", async () => {
+    const sandbox = new DeterministicWaterfallSubmitter();
+    await expect(sandbox.submit(command)).resolves.toEqual(await sandbox.submit(command));
+    expect(sandbox.mode).toBe("SANDBOX");
+
+    const lost = new DeterministicWaterfallSubmitter("LOST_RESPONSE");
+    await expect(lost.submit(command)).rejects.toMatchObject({ retryable: true, submissionMayHaveSucceeded: true });
+    await expect(lost.submit(command)).resolves.toMatchObject({ transactionHash: expect.stringMatching(/^[0-9a-f]{64}$/) });
+  });
+
+  it("fails production closed before constructing or submitting without a signer boundary", async () => {
+    const production = new GeneratedWaterfallSubmitter({});
+    expect(production).toMatchObject({ configured: false, mode: "PRODUCTION" });
+    await expect(production.submit(command)).rejects.toMatchObject({ code: "CONFIGURATION", retryable: false });
+    expect(createRuntimeWaterfallSubmitter({ mode: "SANDBOX" }).mode).toBe("SANDBOX");
+    expect(createRuntimeWaterfallSubmitter({ mode: "PRODUCTION" })).toMatchObject({
+      configured: false,
+      mode: "PRODUCTION",
+    });
   });
 });

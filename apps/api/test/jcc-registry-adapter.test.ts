@@ -51,7 +51,8 @@ describe("generated Eligibility Registry adapter", () => {
       .fn()
       .mockResolvedValueOnce({ transactionHash: "e".repeat(64), ledgerSequence: 123 })
       .mockResolvedValueOnce({ transactionHash: "f".repeat(64) });
-    const adapter = new EligibilityRegistryAdapter(client as never, { submit });
+    const lookup = vi.fn().mockResolvedValue(null);
+    const adapter = new EligibilityRegistryAdapter(client as never, { lookup, submit });
 
     const registered = await adapter.register({ ...registryRef, submissionId: "submission-1" });
     expect(registered).toEqual({
@@ -65,7 +66,10 @@ describe("generated Eligibility Registry adapter", () => {
       oracle: registryRef.oracle,
       attestation: contractValue,
     });
-    expect(submit).toHaveBeenNthCalledWith(1, registerTransaction);
+    expect(submit).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      submissionId: "submission-1",
+      transaction: registerTransaction,
+    }));
 
     await expect(
       adapter.read({ attestationKey: registryRef.attestationKey, now: "2026-07-15T00:00:00Z" }),
@@ -79,7 +83,10 @@ describe("generated Eligibility Registry adapter", () => {
       submissionId: "submission-2",
     });
     expect(revoked.transactionHash).toBe("f".repeat(64));
-    expect(submit).toHaveBeenNthCalledWith(2, revokeTransaction);
+    expect(submit).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      submissionId: "submission-2",
+      transaction: revokeTransaction,
+    }));
   });
 
   it("derives expired status from contract time without mutating the record", async () => {
@@ -100,10 +107,28 @@ describe("generated Eligibility Registry adapter", () => {
         register_attestation: vi.fn(),
         revoke_attestation: vi.fn(),
       } as never,
-      { submit: vi.fn() },
+      { lookup: vi.fn().mockResolvedValue(null), submit: vi.fn() },
     );
     await expect(
       adapter.read({ attestationKey: registryRef.attestationKey, now: "2026-07-16T00:00:00Z" }),
     ).resolves.toMatchObject({ envelopeHash: registryRef.envelopeHash, status: "EXPIRED" });
+  });
+
+  it("recovers a lost response by durable submission identity without rebuilding a transaction", async () => {
+    const client = {
+      get_attestation: vi.fn(),
+      is_active: vi.fn(),
+      register_attestation: vi.fn(),
+      revoke_attestation: vi.fn(),
+    };
+    const lookup = vi.fn().mockResolvedValue({ ledgerSequence: 456, transactionHash: "e".repeat(64) });
+    const adapter = new EligibilityRegistryAdapter(client as never, { lookup, submit: vi.fn() });
+    await expect(adapter.find({
+      attestationKey: registryRef.attestationKey,
+      envelopeHash: registryRef.envelopeHash,
+      submissionId: "submission-lost-response",
+    })).resolves.toMatchObject({ ledgerSequence: 456, transactionHash: "e".repeat(64) });
+    expect(client.register_attestation).not.toHaveBeenCalled();
+    expect(lookup).toHaveBeenCalledWith(expect.objectContaining({ submissionId: "submission-lost-response" }));
   });
 });

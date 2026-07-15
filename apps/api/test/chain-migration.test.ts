@@ -19,6 +19,9 @@ describe("chain/read-model migration security and query indexes", () => {
     expect(migration).toContain("settlement_events_append_only");
     expect(migration).toContain("waterfall_results_append_only");
     expect(migration).toContain("REVOKE UPDATE, DELETE, TRUNCATE ON jejak.settlement_events");
+    expect(migration).toContain("reject_settlement_stream_immutable_mutation");
+    expect(migration).toContain("settlement_streams_append_only");
+    expect(migration).toContain("REVOKE UPDATE, DELETE, TRUNCATE ON jejak.settlement_streams");
     expect(migration).not.toMatch(/SECURITY\s+DEFINER/i);
   });
 
@@ -37,6 +40,9 @@ describe("chain/read-model migration security and query indexes", () => {
     const rollback = await readFile(rollbackPath, "utf8");
     expect(rollback).toContain("DROP TRIGGER IF EXISTS chain_events_append_only");
     expect(rollback).toContain("DROP TRIGGER IF EXISTS waterfall_results_append_only");
+    expect(rollback).toContain("DROP TRIGGER IF EXISTS settlement_streams_append_only");
+    expect(rollback).toContain("DROP FUNCTION IF EXISTS jejak.reject_settlement_stream_immutable_mutation");
+    expect(rollback).toContain("GRANT SELECT, INSERT, UPDATE, DELETE ON jejak.settlement_streams TO jejak_api");
     expect(rollback).toContain("DROP POLICY IF EXISTS chain_events_tenant_isolation");
     expect(rollback).toContain("DROP TABLE IF EXISTS jejak.chain_events");
     expect(rollback).toContain("DROP COLUMN IF EXISTS contract_name");

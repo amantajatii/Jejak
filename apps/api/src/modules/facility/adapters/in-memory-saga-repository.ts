@@ -62,9 +62,9 @@ export class InMemoryFundingSagaRepository implements FundingSagaRepository {
     const key = [...this.submissions.entries()].find(([, value]) => value.id === input.submissionId)?.[0];
     if (key !== undefined) this.submissions.set(key, { id: input.submissionId, receipt: structuredClone(input.receipt) });
     const step = input.receipt.action === "ISSUE" ? "ASSET_ISSUANCE" : input.receipt.action === "COMPENSATE" ? "COMPENSATION" : "FACILITY_FUNDING";
-    await this.recordStep({ context: input.context, operationRecordId: input.operationRecordId, safeResult: { receiptHash: input.receipt.receiptHash, transactionHash: input.receipt.transactionHash }, status: "SUCCEEDED", step });
+    await this.recordStep({ context: input.context, operationRecordId: input.operationRecordId, safeResult: { receiptHash: input.receipt.receiptHash, transactionHash: input.receipt.transactionHash }, status: "WAITING", step });
     if (input.receipt.action === "ISSUE_AND_FUND") {
-      await this.recordStep({ context: input.context, operationRecordId: input.operationRecordId, safeResult: { receiptHash: input.receipt.receiptHash }, status: "SUCCEEDED", step: "ASSET_ISSUANCE" });
+      await this.recordStep({ context: input.context, operationRecordId: input.operationRecordId, safeResult: { receiptHash: input.receipt.receiptHash }, status: "WAITING", step: "ASSET_ISSUANCE" });
     }
   }
 
@@ -97,6 +97,30 @@ export class InMemoryFundingSagaRepository implements FundingSagaRepository {
     return structuredClone(input.result);
   }
 
+  async recordChainReconciliation(input: Parameters<FundingSagaRepository["recordChainReconciliation"]>[0]) {
+    const item = this.#item(input.context);
+    const expectedStep = stepForAction(input.reconciliation.action);
+    const submission = [...this.submissions.values()].find((candidate) => candidate.receipt?.transactionHash === input.reconciliation.transactionHash);
+    if (submission?.receipt === undefined || submission.receipt.action !== input.reconciliation.action) {
+      throw new Error("Chain reconciliation does not match a submitted funding action.");
+    }
+    if (input.reconciliation.outcome === "MISMATCH") {
+      item.record.status = "FAILED";
+      await this.recordStep({ context: input.context, operationRecordId: input.operationRecordId, safeResult: safeReconciliation(input.reconciliation), status: "FAILED", step: expectedStep });
+      return structuredClone(item.record);
+    }
+    await this.recordStep({ context: input.context, operationRecordId: input.operationRecordId, safeResult: safeReconciliation(input.reconciliation), status: "SUCCEEDED", step: expectedStep });
+    if (input.reconciliation.action === "ISSUE_AND_FUND") {
+      await this.recordStep({ context: input.context, operationRecordId: input.operationRecordId, safeResult: safeReconciliation(input.reconciliation), status: "SUCCEEDED", step: "ASSET_ISSUANCE" });
+    }
+    if (input.reconciliation.action === "COMPENSATE") {
+      item.record.status = "COMPENSATED";
+      item.result = { operationRecordId: item.record.operationRecordId, sandbox: true, status: "COMPENSATED" };
+      this.outbox.push({ eventType: "facility.funding.compensated", sandbox: true });
+    }
+    return structuredClone(item.record);
+  }
+
   #item(context: Parameters<FundingSagaRepository["load"]>[0]) {
     const item = this.#records.get(scope(context));
     if (item === undefined) throw new Error("Saga not found.");
@@ -108,4 +132,12 @@ export class InMemoryFundingSagaRepository implements FundingSagaRepository {
 
 function scope(context: { actorId: string; idempotencyKey: string; operationId: string; tenantId: string }) {
   return `${context.tenantId}:${context.actorId}:${context.operationId}:${context.idempotencyKey}`;
+}
+
+function stepForAction(action: import("../domain/types.js").FundingChainAction) {
+  return action === "ISSUE" ? "ASSET_ISSUANCE" : action === "COMPENSATE" ? "COMPENSATION" : "FACILITY_FUNDING";
+}
+
+function safeReconciliation(value: import("../domain/types.js").FundingChainReconciliation) {
+  return { canonicalEventId: value.canonicalEventId, ledgerSequence: value.ledgerSequence, outcome: value.outcome, transactionHash: value.transactionHash };
 }

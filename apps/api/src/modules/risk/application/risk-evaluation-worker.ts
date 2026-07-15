@@ -4,6 +4,7 @@ import { validateRiskEvaluation, type TrustedRiskEvaluation } from "../domain/ev
 import type { RiskEvaluationClient } from "../ports/client.js";
 import type {
   DurableRiskEvaluationCommitter,
+  RiskPostEvaluationLifecycle,
   RiskEvaluationInputProvider,
   RiskOperationJournal,
 } from "../ports/durable-operation.js";
@@ -31,6 +32,7 @@ export class RiskEvaluationWorkerService {
       committer: DurableRiskEvaluationCommitter;
       inputProvider: RiskEvaluationInputProvider;
       journal: RiskOperationJournal;
+      postEvaluation?: RiskPostEvaluationLifecycle;
     },
     private readonly options: {
       leaseMs?: number;
@@ -66,9 +68,33 @@ export class RiskEvaluationWorkerService {
     if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5) {
       throw new DomainError("VALIDATION_FAILED", "RISK worker maxAttempts must be from 1 through 5.");
     }
+    const durableEvaluation = await this.dependencies.committer.findTrusted({
+      operationId: claim.work.operationId,
+      requestHash,
+      tenantId: claim.work.tenantId,
+    });
+    if (durableEvaluation !== null) {
+      await this.continueAfterTrustedEvaluation({
+        claimExpectedVersion: prepared.claimExpectedVersion,
+        evaluation: durableEvaluation,
+        operationId: claim.work.operationId,
+        tenantId: claim.work.tenantId,
+      });
+      return { status: "SUCCEEDED", evaluation: durableEvaluation };
+    }
+    if (claim.attempt >= maxAttempts) {
+      const exhausted = new DomainError("PARTNER_REJECTED", "RISK retry budget is exhausted.");
+      await this.dependencies.journal.markFailed({
+        operationId: claim.work.operationId,
+        retryable: false,
+        safeErrorClass: exhausted.code,
+        tenantId: claim.work.tenantId,
+      });
+      throw exhausted;
+    }
 
     let lastError: unknown;
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    for (let attempt = claim.attempt + 1; attempt <= maxAttempts; attempt += 1) {
       let evaluation: TrustedRiskEvaluation;
       try {
         const response = await this.dependencies.client.evaluate(prepared.request);
@@ -106,6 +132,12 @@ export class RiskEvaluationWorkerService {
           requestHash,
           tenantId: claim.work.tenantId,
         });
+        await this.continueAfterTrustedEvaluation({
+          claimExpectedVersion: prepared.claimExpectedVersion,
+          evaluation,
+          operationId: claim.work.operationId,
+          tenantId: claim.work.tenantId,
+        });
       } catch (error) {
         const failure = errorClass(error);
         await this.dependencies.journal.markFailed({
@@ -127,5 +159,33 @@ export class RiskEvaluationWorkerService {
       tenantId: claim.work.tenantId,
     });
     throw lastError;
+  }
+
+  private async continueAfterTrustedEvaluation(input: Parameters<RiskPostEvaluationLifecycle["continue"]>[0]) {
+    try {
+      if (input.evaluation.effectiveDecision === "ELIGIBLE") {
+        if (this.dependencies.postEvaluation === undefined) {
+          throw new DomainError(
+            "PARTNER_TIMEOUT",
+            "Eligible evaluation is durable but canonical JCC issuance is not configured.",
+            true,
+          );
+        }
+        await this.dependencies.postEvaluation.continue(input);
+      }
+      await this.dependencies.journal.markCompleted({
+        operationId: input.operationId,
+        tenantId: input.tenantId,
+      });
+    } catch (error) {
+      const failure = errorClass(error);
+      await this.dependencies.journal.markFailed({
+        operationId: input.operationId,
+        retryable: failure.retryable,
+        safeErrorClass: failure.classification,
+        tenantId: input.tenantId,
+      });
+      throw error;
+    }
   }
 }

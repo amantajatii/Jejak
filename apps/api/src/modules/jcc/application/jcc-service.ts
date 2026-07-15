@@ -17,6 +17,7 @@ import type {
   PersistedJcc,
   RegistryAttestationRef,
   RegistryReconciler,
+  RegistrySubmissionRecovery,
   RegistrySubmission,
 } from "../ports/index.js";
 
@@ -25,6 +26,7 @@ type Dependencies = {
   journal: JccSubmissionJournal;
   reconciler: RegistryReconciler;
   registry: JccRegistry;
+  recovery: RegistrySubmissionRecovery;
   repository: JccRepository;
   signer: AttestationSigner;
   verifier: AttestationVerifier;
@@ -58,6 +60,11 @@ function assertRegistryMatch(expected: RegistryAttestationRef, actual: RegistryA
   if (canonicalHash(expected) !== canonicalHash(comparable)) {
     throw new DomainError("PARTNER_REJECTED", "Eligibility Registry state does not match canonical JCC.");
   }
+}
+
+function classifyRegistryTransport(error: unknown): DomainError {
+  if (error instanceof DomainError) return error;
+  return new DomainError("PARTNER_TIMEOUT", "Eligibility Registry transport outcome is unavailable.", true);
 }
 
 export class JccApplicationService {
@@ -106,10 +113,17 @@ export class JccApplicationService {
     });
     if (persisted === null) {
       const signature = await this.dependencies.signer.sign(request);
-      const envelope = assembleSignedJccEnvelope(request, signature);
-      const verification = await this.dependencies.verifier.verify({ request, signature });
-      if (verification.verified !== true) {
-        throw new DomainError("PARTNER_REJECTED", "JCC public verification did not succeed.");
+      let envelope: SignedJccEnvelope;
+      try {
+        envelope = assembleSignedJccEnvelope(request, signature);
+        const verification = await this.dependencies.verifier.verify({ request, signature });
+        if (verification.verified !== true) throw new Error("Public verifier returned no proof.");
+      } catch (error) {
+        if (error instanceof DomainError) throw error;
+        throw new DomainError(
+          "PARTNER_REJECTED",
+          `JCC signature identity or public verification failed: ${error instanceof Error ? error.message : "unknown failure"}`,
+        );
       }
       persisted = await this.dependencies.repository.insertOrFind({
         envelope,
@@ -143,11 +157,41 @@ export class JccApplicationService {
     let submission: RegistrySubmission;
     if (decision.kind === "REPLAY") {
       submission = decision.submission;
-    } else {
-      submission = await this.dependencies.registry.register({
-        ...expected,
-        submissionId: decision.submissionId,
+    } else if (decision.kind === "RECOVERY_REQUIRED") {
+      try {
+        const recovered = await this.dependencies.recovery.find({
+          attestationKey: expected.attestationKey,
+          envelopeHash: expected.envelopeHash,
+          submissionId: decision.submissionId,
+        });
+        submission = recovered ?? await this.dependencies.registry.register({
+          ...expected,
+          submissionId: decision.submissionId,
+        });
+      } catch (error) {
+        throw classifyRegistryTransport(error);
+      }
+      await this.dependencies.journal.markSubmitted({
+        ...submission,
+        operationId: decision.operationId,
+        tenantId: input.tenantId,
       });
+    } else {
+      try {
+        submission = await this.dependencies.registry.register({
+          ...expected,
+          submissionId: decision.submissionId,
+        });
+      } catch (error) {
+        const classified = classifyRegistryTransport(error);
+        await this.dependencies.journal.markFailed({
+          operationId: decision.operationId,
+          retryable: classified.retryable,
+          safeErrorClass: classified.code,
+          tenantId: input.tenantId,
+        });
+        throw classified;
+      }
       await this.dependencies.journal.markSubmitted({
         ...submission,
         operationId: decision.operationId,
@@ -160,12 +204,20 @@ export class JccApplicationService {
       expectedStatus: "ACTIVE",
     });
     if (!reconciliation.reconciled || reconciliation.record?.status !== "ACTIVE") {
+      await this.dependencies.journal.markFailed({
+        operationId: decision.operationId, retryable: true,
+        safeErrorClass: "PARTNER_TIMEOUT", tenantId: input.tenantId,
+      });
       throw new DomainError("PARTNER_TIMEOUT", "JCC registration is awaiting indexed reconciliation.", true);
     }
     if (
       reconciliation.record.attestationKey !== expected.attestationKey ||
       reconciliation.record.envelopeHash !== expected.envelopeHash
     ) {
+      await this.dependencies.journal.markFailed({
+        operationId: decision.operationId, retryable: false,
+        safeErrorClass: "PARTNER_REJECTED", tenantId: input.tenantId,
+      });
       throw new DomainError("PARTNER_REJECTED", "Indexed registration does not match canonical JCC.");
     }
     const live = await this.dependencies.registry.read({
@@ -173,6 +225,10 @@ export class JccApplicationService {
       now: input.issuedAt,
     });
     if (live === null || live.status !== "ACTIVE") {
+      await this.dependencies.journal.markFailed({
+        operationId: decision.operationId, retryable: true,
+        safeErrorClass: "PARTNER_TIMEOUT", tenantId: input.tenantId,
+      });
       throw new DomainError("PARTNER_TIMEOUT", "JCC registration is not active in contract state.", true);
     }
     assertRegistryMatch(expected, live);
@@ -227,6 +283,28 @@ export class JccApplicationService {
     let submission: RegistrySubmission;
     if (decision.kind === "REPLAY") {
       submission = decision.submission;
+    } else if (decision.kind === "RECOVERY_REQUIRED") {
+      try {
+        const recovered = await this.dependencies.recovery.find({
+          attestationKey: envelope.attestation.attestationKey,
+          envelopeHash: envelope.envelopeHash,
+          submissionId: decision.submissionId,
+        });
+        submission = recovered ?? await this.dependencies.registry.revoke({
+          actor: input.actor,
+          attestationKey: envelope.attestation.attestationKey,
+          envelopeHash: envelope.envelopeHash,
+          reasonCode: input.reasonCode,
+          submissionId: decision.submissionId,
+        });
+      } catch (error) {
+        throw classifyRegistryTransport(error);
+      }
+      await this.dependencies.journal.markSubmitted({
+        ...submission,
+        operationId: decision.operationId,
+        tenantId: input.tenantId,
+      });
     } else {
       submission = await this.dependencies.registry.revoke({
         actor: input.actor,

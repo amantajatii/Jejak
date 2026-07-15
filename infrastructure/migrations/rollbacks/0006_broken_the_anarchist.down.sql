@@ -1,3 +1,8 @@
+DROP TRIGGER IF EXISTS settlement_streams_append_only ON jejak.settlement_streams;
+DROP FUNCTION IF EXISTS jejak.reject_settlement_stream_immutable_mutation();
+GRANT SELECT, INSERT, UPDATE, DELETE ON jejak.settlement_streams TO jejak_api;
+GRANT SELECT, INSERT, UPDATE ON jejak.settlement_streams TO jejak_worker;
+
 DROP TRIGGER IF EXISTS waterfall_results_append_only ON jejak.waterfall_results;
 DROP TRIGGER IF EXISTS settlement_events_append_only ON jejak.settlement_events;
 DROP TRIGGER IF EXISTS chain_reconciliation_results_append_only ON jejak.chain_reconciliation_results;

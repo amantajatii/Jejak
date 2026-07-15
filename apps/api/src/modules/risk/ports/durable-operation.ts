@@ -49,14 +49,38 @@ export interface RiskOperationJournal {
     safeErrorClass: string;
     tenantId: string;
   }): Promise<void>;
+  markCompleted(input: { operationId: string; tenantId: string }): Promise<void>;
 }
 
 export interface DurableRiskEvaluationCommitter {
+  findTrusted(input: {
+    operationId: string;
+    requestHash: string;
+    tenantId: string;
+  }): Promise<TrustedRiskEvaluation | null>;
   commit(input: {
     claimExpectedVersion: number;
     evaluation: TrustedRiskEvaluation;
     operationId: string;
     requestHash: string;
+    tenantId: string;
+  }): Promise<void>;
+}
+
+export interface RiskPostEvaluationLifecycle {
+  continue(input: {
+    claimExpectedVersion: number;
+    evaluation: TrustedRiskEvaluation;
+    operationId: string;
+    tenantId: string;
+  }): Promise<void>;
+}
+
+export interface EligibleRiskActivationCommitter {
+  activate(input: {
+    claimExpectedVersion: number;
+    evaluation: TrustedRiskEvaluation;
+    operationId: string;
     tenantId: string;
   }): Promise<void>;
 }

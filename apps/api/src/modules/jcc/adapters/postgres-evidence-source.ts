@@ -67,7 +67,7 @@ export class PostgresJccEvidenceSource implements JccEvidenceSource {
     };
     const snapshot = row.snapshotPayload as DecisionSnapshot;
     if (
-      claim.state !== "ELIGIBLE" ||
+      !["ANALYZED", "ELIGIBLE"].includes(claim.state) ||
       snapshot.dataSnapshotHash !== row.dataSnapshotHash ||
       snapshot.id !== claim.settlementStreamId ||
       snapshot.tenantId !== input.tenantId

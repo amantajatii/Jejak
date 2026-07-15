@@ -1,28 +1,140 @@
+name: jejak-sandbox
+
+x-api-runtime: &api-runtime
+  build:
+    context: .
+    dockerfile: infrastructure/docker/runtime.Dockerfile
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+
+x-api-environment: &api-environment
+  APP_VERSION: ${APP_VERSION:-local-compose}
+  DATABASE_DIRECT_URL: ${DATABASE_DIRECT_URL:-}
+  DATABASE_URL: ${DATABASE_URL:-}
+  DEMO_ACTOR_ID_REFS: ${DEMO_ACTOR_ID_REFS:-}
+  DEMO_JWT_ISSUER: ${DEMO_JWT_ISSUER:-}
+  DEMO_JWT_SIGNING_KEY_REF: ${DEMO_JWT_SIGNING_KEY_REF:-}
+  DEMO_SELLER_SUBJECT_SALT_REF: ${DEMO_SELLER_SUBJECT_SALT_REF:-}
+  DEMO_TENANT_ID_REFS: ${DEMO_TENANT_ID_REFS:-}
+  HOST: 0.0.0.0
+  JCC_PUBLIC_KEY_REGISTRY_REF: ${JCC_PUBLIC_KEY_REGISTRY_REF:-}
+  JCC_SIGNER_TOKEN_REF: ${JCC_SIGNER_TOKEN_REF:-}
+  JCC_SIGNER_URL: ${JCC_SIGNER_URL:-}
+  JEJAK_CHAIN_MODE: ${JEJAK_CHAIN_MODE:-}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  NODE_ENV: production
+  PARTNER_MODE: SANDBOX
+  PORT: 4000
+  RISK_SELLER_SUBJECT_SALT_REF: ${RISK_SELLER_SUBJECT_SALT_REF:-}
+  RISK_SERVICE_TOKEN_REF: ${RISK_SERVICE_TOKEN_REF:-}
+  RISK_SERVICE_URL: ${RISK_SERVICE_URL:-http://risk:8001}
+  STELLAR_NETWORK_PASSPHRASE: ${STELLAR_NETWORK_PASSPHRASE:-}
+  STELLAR_RPC_URL: ${STELLAR_RPC_URL:-}
+  STELLAR_SIGNER_SECRET_REF: ${STELLAR_SIGNER_SECRET_REF:-}
+  STELLAR_TESTNET_MANIFEST_PATH: ${STELLAR_TESTNET_MANIFEST_PATH:-/workspace/contracts/soroban/deployments/testnet.json}
+  WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+
 services:
-  api:
-    build:
-      context: .
-      dockerfile: infrastructure/docker/api.Dockerfile
+  postgres:
+    image: postgres:17-alpine
     environment:
-      APP_VERSION: local-compose
-      HOST: 0.0.0.0
-      LOG_LEVEL: info
-      NODE_ENV: production
-      PARTNER_MODE: SANDBOX
-      PORT: 4000
-      WEB_ORIGIN: http://localhost:3000
+      POSTGRES_DB: ${JEJAK_POSTGRES_DB:-jejak}
+      POSTGRES_PASSWORD: ${JEJAK_POSTGRES_PASSWORD:-}
+      POSTGRES_USER: ${JEJAK_POSTGRES_USER:-jejak}
     ports:
-      - "4000:4000"
-    read_only: true
-    tmpfs:
-      - /tmp
+      - "127.0.0.1:${JEJAK_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - jejak-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
     cap_drop:
       - ALL
     security_opt:
       - no-new-privileges:true
+
+  migrate:
+    <<: *api-runtime
+    command: ["pnpm", "--dir", "apps/api", "db:migrate"]
+    environment:
+      <<: *api-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  risk:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/risk.Dockerfile
+    environment:
+      JCC_KEY_ID: ${JCC_KEY_ID:-}
+      JCC_SIGNING_KEY_REF: ${JCC_SIGNING_KEY_REF:-}
+      RISK_JCC_PRIVATE_KEY_HEX: ${RISK_JCC_PRIVATE_KEY_HEX:-}
+      RISK_SERVICE_TOKEN: ${RISK_SERVICE_TOKEN:-}
+    ports:
+      - "127.0.0.1:${JEJAK_RISK_PORT:-8001}:8001"
+    read_only: true
+    tmpfs:
+      - /tmp
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
-      interval: 10s
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=2)"]
+      interval: 5s
       timeout: 3s
-      retries: 3
+      retries: 12
       start_period: 5s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    <<: *api-runtime
+    command: ["node", "apps/api/dist/server.js"]
+    environment:
+      <<: *api-environment
+    ports:
+      - "127.0.0.1:${JEJAK_API_PORT:-4000}:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      risk:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  risk-worker:
+    <<: *api-runtime
+    profiles: ["worker"]
+    command: ["node", "apps/api/dist/risk-worker.js"]
+    environment:
+      <<: *api-environment
+      RISK_WORKER_ACTOR_ID: ${RISK_WORKER_ACTOR_ID:-}
+      RISK_WORKER_BATCH_SIZE: ${RISK_WORKER_BATCH_SIZE:-}
+      RISK_WORKER_IDENTITY_REF: ${RISK_WORKER_IDENTITY_REF:-}
+      RISK_WORKER_POLL_MS: ${RISK_WORKER_POLL_MS:-}
+      RISK_WORKER_TENANT_ID: ${RISK_WORKER_TENANT_ID:-}
+    depends_on:
+      api:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      risk:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  jejak-postgres:

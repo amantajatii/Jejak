@@ -146,13 +146,22 @@ DATA, RISK, AND CLAIM LIFECYCLE
     deterministic namespaced ordering; checked integer Money; incremental predecessor
     baselines; quality identity/reason evidence; canonical hashes; insert-or-replay;
     immutable successor lineage; and hash/payload reconciliation on repository reads.
+    Hardening: migration 0006 now revokes runtime UPDATE/DELETE/TRUNCATE on
+               settlement_streams and adds a database append-only trigger with a
+               non-callable runtime guard function. INSERT retains forced tenant RLS;
+               rollback removes the trigger/function and restores the prior grants.
     Evidence: focused BE-05/BE-06 suite passes 19 tests with one guarded live test
-              skipped; full API passes 128 tests, typecheck, build, and diff check.
-              Commit: 485fd1a.
-    Open: run guarded live insert/replay/isolation/metadata-immutability acceptance
-          serially. Integration migration owner must also revoke UPDATE/DELETE and
-          add the immutable trigger to settlement_streams; existing migration guards
-          decision_snapshot_metadata but not the canonical settlement-stream row.
+              skipped; migration/lifecycle/offer focused checks pass 13/13;
+              static migration security check passes for 36 tenant tables; journal
+              and existing Drizzle snapshot state are verified; git diff --check passes.
+    Acceptance: guarded BE-06/07 verifier covers runtime UPDATE/DELETE denial,
+                privileged trigger denial, insert/replay, tenant SELECT/INSERT
+                isolation, immutable predecessor/successor lineage, and no partial
+                audit/outbox/idempotency records after failed mutations.
+    Open: dedicated-test DATABASE_URL or DATABASE_DIRECT_URL configuration is
+          unavailable to the guarded runner. Two cloud attempts stopped before any
+          mutation, rollback, or restore; rerun the prepared serial acceptance once
+          the dedicated test configuration is restored.
 
 [~] BE-07  MUST  Claim and financing-offer lifecycle APIs
     Done: invalid transitions and version conflicts are rejected.
@@ -165,12 +174,22 @@ DATA, RISK, AND CLAIM LIFECYCLE
     Reliability: migration 0007 adds a partial unique guard preventing concurrent
                  active OFFERED/ACCEPTED offers for one tenant claim; PostgreSQL
                  unique races map to a safe invalid-transition response.
+    Migration integrity: journal entry 0007 and Drizzle snapshot preserve the exact
+                         unique (tenant_id, claim_id) predicate for OFFERED/ACCEPTED;
+                         terminal offers remain outside the guard and rollback drops
+                         the index safely.
     Evidence: focused claim/lifecycle/integration checkpoint passes 25/25 tests;
-              the integrated API checkpoint passes 187 tests with 2 guarded skips;
-              scoped strict TypeScript and the 36-table migration check pass.
-    Open: run guarded live PostgreSQL route/concurrency acceptance and apply/verify
-          migration 0007 on the dedicated test project; rerun final full typecheck
-          and build after the parallel worktree stabilizes.
+              migration/lifecycle/offer focused checks pass 13/13; static migration
+              security check passes for 36 tenant tables and git diff --check passes.
+    Acceptance: the prepared guarded live verifier races two runtime inserts and
+                asserts one winner, SQLSTATE 23505 loser, tenant independence,
+                terminal-offer replacement, and no loser audit/outbox/idempotency
+                side effects.
+    Open: the guarded cloud runner stopped before mutation because dedicated-test
+          DATABASE_URL or DATABASE_DIRECT_URL configuration is unavailable. Rerun
+          the serial UP/check -> BE-06/07 -> DOWN -> UP/catalog sequence after
+          configuration recovery; full API typecheck remains blocked by unrelated
+          parallel facility errors.
 
 [~] BE-08  MUST  Risk-service client and orchestration
     Done: snapshot hashes/results reconcile; failures remain safe.

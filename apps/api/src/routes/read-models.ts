@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import { authorize, AuthorizationError } from "../auth/authorization.js";
-import { bearerToken, type SupabaseJwtVerifier } from "../auth/jwt-verifier.js";
+import { bearerToken, type IdentityVerifier } from "../auth/jwt-verifier.js";
 import type { ActiveMembership } from "../auth/membership-repository.js";
 import { parseTenantId } from "../auth/tenant.js";
 import type { ActorRole, AuthorizationContext } from "../auth/types.js";
@@ -23,7 +23,7 @@ const auditQuery = z.object({
 export type ReadModelRouteDependencies = {
   findMembership(input: { authSubject: string; requestId: string; tenantId: string }): Promise<ActiveMembership | undefined>;
   serviceForActor(actorId: string): ReadModelService;
-  verifier: Pick<SupabaseJwtVerifier, "verify">;
+  verifier: IdentityVerifier;
 };
 
 export async function registerReadModelRoutes(app: FastifyInstance, dependencies: ReadModelRouteDependencies): Promise<void> {

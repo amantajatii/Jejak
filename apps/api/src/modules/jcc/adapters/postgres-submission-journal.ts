@@ -41,7 +41,7 @@ export class PostgresJccSubmissionJournal implements JccSubmissionJournal {
         if (existing.envelopeHash !== input.envelopeHash) return { kind: "CONFLICT" as const };
         if (existing.operationId === null) return { kind: "CONFLICT" as const };
         if (existing.transactionHash === null) {
-          return { kind: "NEW" as const, operationId: existing.operationId, submissionId: existing.id };
+          return { kind: "RECOVERY_REQUIRED" as const, operationId: existing.operationId, submissionId: existing.id };
         }
         return {
           kind: "REPLAY" as const,
@@ -143,7 +143,7 @@ export class PostgresJccSubmissionJournal implements JccSubmissionJournal {
     const now = this.options.now ?? (() => new Date());
     await withTenantTransaction(this.database, this.actorContext, async (database) => {
       await database.update(operations).set({
-        status: "FAILED",
+        status: input.retryable ? "RETRYABLE" : "FAILED",
         context: { safeErrorClass: input.safeErrorClass },
         updatedAt: now(),
       }).where(and(eq(operations.tenantId, input.tenantId), eq(operations.id, input.operationId)));

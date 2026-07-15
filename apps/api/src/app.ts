@@ -1,6 +1,7 @@
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import Fastify, { LogController, type FastifyInstance } from "fastify";
+import { ZodError } from "zod";
 
 import { AuthorizationError } from "./auth/authorization.js";
 import { AuthenticationError } from "./auth/jwt-verifier.js";
@@ -11,8 +12,22 @@ import { InvitationError } from "./invitations/service.js";
 import { createRequestId } from "./plugins/request-context.js";
 import { IdempotencyConflictError } from "./reliability/mutation-coordinator.js";
 import { registerClaimRoutes, type ClaimRouteDependencies } from "./modules/claims/routes.js";
+import {
+  registerControlDecisionRoutes,
+  registerControlEvidenceRoutes,
+  registerPauseRoutes,
+  type ControlRouteDependencies,
+} from "./modules/control/routes.js";
+import { registerFacilityFundingRoutes, type FacilityFundingRouteDependencies } from "./modules/facility/routes.js";
 import { registerIngestionRoutes, type IngestionRouteDependencies } from "./modules/ingestion/routes.js";
+import { registerDemoRoutes, type DemoRouteDependencies } from "./modules/demo/routes.js";
+import { registerRefundSpikeRoutes, type RefundSpikeRouteDependencies } from "./modules/demo/refund-spike-routes.js";
+import { DemoContextNotFoundError } from "./modules/demo/reset-service.js";
+import { registerIssuerIssueRoutes, type IssuerIssueRouteDependencies } from "./modules/issuer/routes.js";
+import { registerResolutionRoutes, type ResolutionRouteDependencies } from "./modules/resolution/routes.js";
+import { registerSettlementRoutes, type SettlementRouteDependencies } from "./modules/settlement/routes.js";
 import { DomainError } from "./modules/shared/errors.js";
+import { registerWorkspaceRoutes, type WorkspaceRouteDependencies } from "./modules/workspace/routes.js";
 import {
   createDeferredProbe,
   createPostgresReadinessProbe,
@@ -25,11 +40,19 @@ import { registerReadModelRoutes, type ReadModelRouteDependencies } from "./rout
 export type BuildAppOptions = {
   claimDependencies?: ClaimRouteDependencies;
   config?: AppConfig;
+  controlDependencies?: ControlRouteDependencies;
+  demoDependencies?: DemoRouteDependencies;
+  facilityFundingDependencies?: FacilityFundingRouteDependencies;
   ingestionDependencies?: IngestionRouteDependencies;
+  issuerIssueDependencies?: IssuerIssueRouteDependencies;
   logger?: boolean;
   invitationDependencies?: InvitationRouteDependencies;
   readModelDependencies?: ReadModelRouteDependencies;
   readinessProbes?: ReadinessProbe[];
+  refundSpikeDependencies?: RefundSpikeRouteDependencies;
+  resolutionDependencies?: ResolutionRouteDependencies;
+  settlementDependencies?: SettlementRouteDependencies;
+  workspaceDependencies?: WorkspaceRouteDependencies;
 };
 
 function hasValidation(error: unknown): boolean {
@@ -63,6 +86,9 @@ function publicError(error: unknown): {
   if (error instanceof IdempotencyConflictError) {
     return { code: error.code, message: error.message, retryable: false, statusCode: 409 };
   }
+  if (error instanceof DemoContextNotFoundError) {
+    return { code: error.code, message: error.message, retryable: false, statusCode: 404 };
+  }
   if (error instanceof DomainError) {
     const statusCode =
       error.code === "VERSION_CONFLICT"
@@ -82,7 +108,7 @@ function publicError(error: unknown): {
       statusCode,
     };
   }
-  if (hasValidation(error)) {
+  if (hasValidation(error) || error instanceof ZodError) {
     return {
       code: "VALIDATION_FAILED",
       message: "The request failed validation.",
@@ -101,15 +127,39 @@ function publicError(error: unknown): {
 
 export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
   const config = options.config ?? loadConfig();
+  const loggingEnabled = options.logger ?? config.nodeEnv !== "test";
   const app = Fastify({
     genReqId: createRequestId,
     logController: new LogController({ disableRequestLogging: config.nodeEnv === "test" }),
-    logger: options.logger ?? config.nodeEnv !== "test",
+    logger: loggingEnabled
+      ? {
+          level: config.logLevel,
+          redact: {
+            censor: "[REDACTED]",
+            paths: [
+              "req.headers.authorization",
+              "req.headers.cookie",
+              "req.body.accessToken",
+              "req.body.token",
+              "res.headers.set-cookie",
+            ],
+          },
+        }
+      : false,
   });
 
   await app.register(helmet);
   await app.register(cors, {
+    allowedHeaders: [
+      "Authorization",
+      "Content-Type",
+      "Idempotency-Key",
+      "If-Match",
+      "X-Correlation-Id",
+      "X-Jejak-Tenant-Id",
+    ],
     credentials: true,
+    exposedHeaders: ["X-Request-Id", "X-Jejak-Sandbox"],
     origin: config.webOrigin,
   });
 
@@ -120,8 +170,22 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   ];
 
   await registerHealthRoutes(app, { config, probes });
+  if (options.demoDependencies !== undefined) {
+    await registerDemoRoutes(app, options.demoDependencies);
+  }
   if (options.claimDependencies !== undefined) {
     await registerClaimRoutes(app, options.claimDependencies);
+  }
+  if (options.controlDependencies !== undefined) {
+    await registerControlEvidenceRoutes(app, options.controlDependencies);
+    await registerControlDecisionRoutes(app, options.controlDependencies);
+    await registerPauseRoutes(app, options.controlDependencies);
+  }
+  if (options.issuerIssueDependencies !== undefined) {
+    await registerIssuerIssueRoutes(app, options.issuerIssueDependencies);
+  }
+  if (options.facilityFundingDependencies !== undefined) {
+    await registerFacilityFundingRoutes(app, options.facilityFundingDependencies);
   }
   if (options.ingestionDependencies !== undefined) {
     await registerIngestionRoutes(app, options.ingestionDependencies);
@@ -131,6 +195,18 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   }
   if (options.readModelDependencies !== undefined) {
     await registerReadModelRoutes(app, options.readModelDependencies);
+  }
+  if (options.refundSpikeDependencies !== undefined) {
+    await registerRefundSpikeRoutes(app, options.refundSpikeDependencies);
+  }
+  if (options.resolutionDependencies !== undefined) {
+    await registerResolutionRoutes(app, options.resolutionDependencies);
+  }
+  if (options.settlementDependencies !== undefined) {
+    await registerSettlementRoutes(app, options.settlementDependencies);
+  }
+  if (options.workspaceDependencies !== undefined) {
+    await registerWorkspaceRoutes(app, options.workspaceDependencies);
   }
 
   app.setNotFoundHandler(async (request, reply) =>

@@ -61,6 +61,7 @@ class MemoryRepository implements JccRepository {
 class MemoryJournal implements JccSubmissionJournal {
   readonly submissions = new Map<string, RegistrySubmission>();
   readonly ids = new Map<string, string>();
+  readonly begun = new Set<string>();
   async begin(input: Parameters<JccSubmissionJournal["begin"]>[0]): Promise<ChainSubmissionDecision> {
     const existing = this.submissions.get(input.idempotencyKey);
     if (existing !== undefined) {
@@ -68,6 +69,10 @@ class MemoryJournal implements JccSubmissionJournal {
     }
     const submissionId = this.ids.get(input.idempotencyKey) ?? `submission-${this.ids.size + 1}`;
     this.ids.set(input.idempotencyKey, submissionId);
+    if (this.begun.has(input.idempotencyKey)) {
+      return { kind: "RECOVERY_REQUIRED", operationId: input.operationId, submissionId };
+    }
+    this.begun.add(input.idempotencyKey);
     return { kind: "NEW", operationId: input.operationId, submissionId };
   }
   async markSubmitted(input: RegistrySubmission & { operationId: string; tenantId: string }) {
@@ -142,6 +147,7 @@ function dependencies(options: { reconcile?: boolean } = {}) {
       }),
     },
     registry,
+    recovery: { find: vi.fn().mockResolvedValue(null) },
     repository,
     signer,
     verifier: { verify: vi.fn().mockResolvedValue({ verified: true as const }) },
@@ -208,6 +214,47 @@ describe("canonical JCC and registry orchestration", () => {
     await expect(service.issue(issueInput)).rejects.toMatchObject({ code: "PARTNER_TIMEOUT" });
     const row = await deps.repository.findById({ attestationId, tenantId });
     expect(row?.operationalStatus).toBe("PENDING_REGISTRATION");
+  });
+
+  it("fails closed on signer timeout and signer identity/hash mismatch", async () => {
+    const timeoutDeps = dependencies();
+    timeoutDeps.signer.sign.mockRejectedValueOnce(Object.assign(new Error("signer timeout"), {
+      code: "PARTNER_TIMEOUT", retryable: true,
+    }));
+    await expect(new JccApplicationService(timeoutDeps).issue(issueInput)).rejects.toThrow("signer timeout");
+    expect(await timeoutDeps.repository.findById({ attestationId, tenantId })).toBeNull();
+
+    const mismatchDeps = dependencies();
+    mismatchDeps.signer.sign.mockImplementationOnce(async (input) => ({
+      ...signature(input), attestationId: "0198a5ea-7c9c-7000-8000-000000000999",
+    }));
+    await expect(new JccApplicationService(mismatchDeps).issue(issueInput)).rejects.toThrow(
+      "does not echo the canonical signing identity",
+    );
+    expect(mismatchDeps.registry.register).not.toHaveBeenCalled();
+  });
+
+  it("recovers a lost registry response without signing or blindly submitting again after restart", async () => {
+    const deps = dependencies();
+    const register = deps.registry.register.getMockImplementation();
+    let submitted: RegistrySubmission | undefined;
+    deps.registry.register.mockImplementationOnce(async (input) => {
+      submitted = await register!(input);
+      throw Object.assign(new Error("response lost"), { code: "PARTNER_TIMEOUT", retryable: true });
+    });
+    const firstService = new JccApplicationService(deps);
+    await expect(firstService.issue(issueInput)).rejects.toMatchObject({
+      code: "PARTNER_TIMEOUT",
+      retryable: true,
+    });
+    if (submitted === undefined) throw new Error("Expected simulated registry submission.");
+    deps.recovery.find.mockResolvedValue(submitted);
+
+    const restartedService = new JccApplicationService(deps);
+    await expect(restartedService.issue(issueInput)).resolves.toMatchObject({ operationalStatus: "ACTIVE" });
+    expect(deps.signer.sign).toHaveBeenCalledTimes(1);
+    expect(deps.registry.register).toHaveBeenCalledTimes(1);
+    expect(deps.recovery.find).toHaveBeenCalledTimes(1);
   });
 
   it("reconciles revocation and expiry without mutating signed evidence", async () => {

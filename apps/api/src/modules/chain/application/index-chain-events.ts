@@ -264,6 +264,18 @@ export class ChainEventIndexer {
         compare(findings, "AMOUNT_MISMATCH", "financing fee", expectation.expectedFinancingFeePaid, waterfall.financingFeePaid, expectation, event);
         compare(findings, "HASH_MISMATCH", "waterfall state result hash", expectation.expectedResultHash, waterfall.resultHash, expectation, event);
       }
+      if (event.type === "asset.issued" && expectation.expectedAmount !== undefined) {
+        const asset = await this.dependencies.stateReader.readAssetState(expectation.claimKey);
+        compare(findings, "AMOUNT_MISMATCH", "live issued amount", expectation.expectedAmount, asset.issuedAmount, expectation, event);
+      }
+      if (event.type === "position.funded" && expectation.expectedAmount !== undefined) {
+        const facility = await this.dependencies.stateReader.readFacilityState(expectation.claimKey);
+        compare(findings, "AMOUNT_MISMATCH", "live funded principal", expectation.expectedAmount, facility.principal, expectation, event);
+      }
+      if (event.type === "resolution.closed" && expectation.expectedAmount !== undefined) {
+        const resolution = await this.dependencies.stateReader.readResolutionState(expectation.claimKey);
+        compare(findings, "AMOUNT_MISMATCH", "live final loss", expectation.expectedAmount, resolution.finalLoss, expectation, event);
+      }
     }
 
     for (const item of findings) await this.dependencies.repository.recordFinding({ finding: item, tenantId });

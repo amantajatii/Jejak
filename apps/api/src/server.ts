@@ -1,5 +1,7 @@
 import { resolve } from "node:path";
 
+import type { IdentityVerifier } from "./auth/jwt-verifier.js";
+import type { DemoIdentityIssuer } from "./modules/demo/index.js";
 import { loadConfig } from "./config/env.js";
 import { registerTelemetryHooks, startTelemetry } from "./telemetry/index.js";
 
@@ -16,49 +18,113 @@ const config = loadConfig();
 const telemetry = await startTelemetry(config);
 const [
   { buildApp },
-  { SupabaseJwtVerifier },
+  { AuthenticationError, SupabaseJwtVerifier },
   { createDatabase },
+  { createDemoIdentityRuntime, createRuntimeIdentityVerifier, EnvironmentDemoSigningKeyResolver, PostgresDemoActorRegistry },
   { createEvidenceStorage, loadEvidenceModuleConfig },
   { createEvidenceStorageReadinessProbe, isReadinessCapableEvidenceStorage },
-  { createDeferredProbe, createPostgresReadinessProbe, createRiskServiceReadinessProbe },
+  { createRuntimeReadinessProbes },
   { createRuntimeRouteDependencies },
+  { EnvironmentSecretReferenceResolver },
 ] = await Promise.all([
   import("./app.js"),
   import("./auth/jwt-verifier.js"),
   import("./db/client.js"),
+  import("./modules/demo/index.js"),
   import("./modules/evidence/config.js"),
   import("./modules/evidence/readiness.js"),
-  import("./readiness/postgres-probe.js"),
+  import("./readiness/index.js"),
   import("./runtime/route-composition.js"),
+  import("./runtime/secret-references.js"),
 ]);
 const evidenceConfig = loadEvidenceModuleConfig();
 const evidenceStorage = createEvidenceStorage(evidenceConfig);
 const database = config.databaseUrl === undefined ? undefined : createDatabase(config.databaseUrl);
+const secretReferences = new EnvironmentSecretReferenceResolver();
 const issuer = config.supabaseJwtIssuer ?? (config.supabaseUrl === undefined ? undefined : `${config.supabaseUrl}/auth/v1`);
 const jwksUrl = config.supabaseJwksUrl ?? (issuer === undefined ? undefined : `${issuer}/.well-known/jwks.json`);
+const productionVerifier = issuer === undefined || jwksUrl === undefined
+  ? undefined
+  : new SupabaseJwtVerifier({
+      issuer,
+      jwksUrl,
+      ...((config.supabasePublishableKey ?? config.supabaseSecretKey) === undefined
+        ? {}
+        : { publishableKey: config.supabasePublishableKey ?? config.supabaseSecretKey }),
+      ...(config.supabaseUrl === undefined ? {} : { supabaseUrl: config.supabaseUrl }),
+    });
+let verifier: IdentityVerifier | undefined = productionVerifier;
+let demoIdentityIssuer: DemoIdentityIssuer | undefined;
+if (config.demoMode === true) {
+  if (database === undefined || config.demoJwtSigningKeyRef === undefined || config.demoJwtIssuer === undefined || config.demoJwtAudience === undefined || config.demoJwtTtlSeconds === undefined) {
+    throw new Error("Demo identity requires database and complete DEMO_JWT_* configuration.");
+  }
+  const demoIdentity = await createDemoIdentityRuntime({
+    actorRegistry: new PostgresDemoActorRegistry(database.db),
+    audience: config.demoJwtAudience,
+    issuer: config.demoJwtIssuer,
+    signingKeyReference: config.demoJwtSigningKeyRef,
+    signingKeys: new EnvironmentDemoSigningKeyResolver(),
+    ttlSeconds: config.demoJwtTtlSeconds,
+  });
+  demoIdentityIssuer = demoIdentity.issuer;
+  verifier = createRuntimeIdentityVerifier({
+    demo: demoIdentity.verifier,
+    demoIssuer: config.demoJwtIssuer,
+    demoMode: true,
+    production: productionVerifier ?? { verify: async () => { throw new AuthenticationError(); } },
+  });
+}
+const workspaceConfiguration =
+  config.chainMode === undefined ||
+  config.fundingAssetCode === undefined ||
+  config.fundingAssetIssuer === undefined ||
+  config.jclaimAssetCode === undefined ||
+  config.jclaimAssetIssuer === undefined
+    ? undefined
+    : {
+        chainMode: config.chainMode,
+        ...(config.stellarExplorerBaseUrl === undefined
+          ? {}
+          : { explorerBaseUrl: config.stellarExplorerBaseUrl }),
+        fundingAssetCode: config.fundingAssetCode,
+        fundingAssetIssuer: config.fundingAssetIssuer,
+        jclaimAssetCode: config.jclaimAssetCode,
+        jclaimIssuer: config.jclaimAssetIssuer,
+        sandbox: config.partnerMode === "SANDBOX",
+      };
+if (config.demoMode === true && workspaceConfiguration === undefined) {
+  throw new Error(
+    "Demo runtime requires JEJAK_CHAIN_MODE, FUNDING_ASSET_CODE, FUNDING_ASSET_ISSUER, JCLAIM_ASSET_CODE, and JCLAIM_ASSET_ISSUER.",
+  );
+}
 const routeDependencies =
-  database === undefined || issuer === undefined || jwksUrl === undefined
+  database === undefined || verifier === undefined
     ? undefined
     : createRuntimeRouteDependencies({
         database: database.db,
+        ...(demoIdentityIssuer === undefined ? {} : { demoIdentityIssuer }),
         evidenceMaximumBytes: evidenceConfig.policy.maxBytes,
         evidenceStorage,
-        verifier: new SupabaseJwtVerifier({
-          issuer,
-          jwksUrl,
-          ...((config.supabasePublishableKey ?? config.supabaseSecretKey) === undefined
-            ? {}
-            : { publishableKey: config.supabasePublishableKey ?? config.supabaseSecretKey }),
-          ...(config.supabaseUrl === undefined ? {} : { supabaseUrl: config.supabaseUrl }),
-        }),
+        partnerMode: config.partnerMode,
+        verifier,
+        ...(workspaceConfiguration === undefined ? {} : { workspace: workspaceConfiguration }),
       });
 const app = await buildApp({
   config,
   ...(routeDependencies ?? {}),
   readinessProbes: [
-    createPostgresReadinessProbe(config.databaseUrl),
-    createRiskServiceReadinessProbe(config.riskServiceUrl),
-    createDeferredProbe("stellar_rpc"),
+    ...createRuntimeReadinessProbes({
+      ...(config.chainMode === undefined ? {} : { chainMode: config.chainMode }),
+      ...(config.databaseUrl === undefined ? {} : { databaseUrl: config.databaseUrl }),
+      ...(config.jccSignerTokenReference === undefined
+        ? {}
+        : { jccSignerTokenRef: config.jccSignerTokenReference }),
+      ...(config.jccSignerUrl === undefined ? {} : { jccSignerUrl: config.jccSignerUrl }),
+      ...(config.riskServiceUrl === undefined ? {} : { riskServiceUrl: config.riskServiceUrl }),
+      secretReferences,
+      ...(config.stellarRpcUrl === undefined ? {} : { stellarRpcUrl: config.stellarRpcUrl }),
+    }),
     createEvidenceStorageReadinessProbe(
       isReadinessCapableEvidenceStorage(evidenceStorage) ? evidenceStorage : undefined,
       evidenceStorage.mode === "SUPABASE",

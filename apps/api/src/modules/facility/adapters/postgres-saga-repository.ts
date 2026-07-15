@@ -4,6 +4,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { JejakDatabase } from "../../../db/client.js";
 import { withTenantTransaction } from "../../../db/context.js";
 import { claims, controlEvidence, eligibilityAttestations, facilityPositions, financingOffers } from "../../../db/schema/domain.js";
+import { chainReconciliationExpectations } from "../../../db/schema/chain.js";
 import { auditEvents, chainSubmissions, idempotencyRecords, operationSteps, operations, outboxEvents, partnerAttempts } from "../../../db/schema/reliability.js";
 import { canonicalHash } from "../../../reliability/canonical-json.js";
 import { chainActionRequestHash } from "../domain/chain-receipt.js";
@@ -41,7 +42,12 @@ export class PostgresFundingSagaRepository implements FundingSagaRepository {
       const [attestation] = await database.select({ id: eligibilityAttestations.id }).from(eligibilityAttestations).where(and(eq(eligibilityAttestations.tenantId, context.tenantId), eq(eligibilityAttestations.claimId, context.claimId), eq(eligibilityAttestations.status, "ACTIVE"), gt(eligibilityAttestations.expiresAt, now))).limit(1);
       if (attestation === undefined) throw new FundingSagaError("INVALID_STATE_TRANSITION", "An active eligibility attestation is required.");
       const [offer] = await database.select().from(financingOffers).where(and(eq(financingOffers.tenantId, context.tenantId), eq(financingOffers.id, context.offerId), eq(financingOffers.claimId, context.claimId), eq(financingOffers.status, "ACCEPTED"), gt(financingOffers.expiresAt, now))).limit(1);
-      if (offer === undefined || offer.principalAmountMinor !== context.source.amountMinor || offer.principalCurrency !== context.source.currency || offer.principalScale !== context.source.scale || (offer.principalIssuer ?? undefined) !== context.source.issuer) throw new FundingSagaError("VALIDATION_FAILED", "Accepted offer does not match the requested funding amount.");
+      const termsHash = financingOfferTermsHash(offer?.canonicalPayload);
+      if (
+        offer === undefined || offer.principalCurrency !== context.source.currency || offer.principalScale !== context.source.scale ||
+        (offer.principalIssuer ?? undefined) !== context.source.issuer || termsHash !== context.chainIntent.acceptedTermsHash ||
+        BigInt(context.source.amountMinor) > BigInt(offer.principalAmountMinor)
+      ) throw new FundingSagaError("VALIDATION_FAILED", "Requested maximum amount exceeds accepted offer terms.");
       const [position] = await database.select({ id: facilityPositions.id }).from(facilityPositions).where(and(eq(facilityPositions.tenantId, context.tenantId), eq(facilityPositions.claimId, context.claimId), inArray(facilityPositions.status, ["ACTIVE", "PENDING", "PAUSED"]))).limit(1);
       if (position !== undefined) throw new FundingSagaError("INVALID_STATE_TRANSITION", "Claim already has an active facility position.");
       await upsertStep(database, this.nextId, now, context.tenantId, operationRecordId, "PRECONDITIONS", "SUCCEEDED", { claimVersion: claim.version, evidenceId: evidence.id, offerId: offer.id });
@@ -61,7 +67,7 @@ export class PostgresFundingSagaRepository implements FundingSagaRepository {
   prepareChain(input: Parameters<FundingSagaRepository["prepareChain"]>[0]): Promise<{ receipt?: ChainActionReceipt; submissionId: string }> {
     return withTenantTransaction(this.database, input.context, async (database) => {
       const [existing] = await database.select().from(chainSubmissions).where(and(eq(chainSubmissions.tenantId, input.context.tenantId), eq(chainSubmissions.operationId, input.operationRecordId), eq(chainSubmissions.idempotencyKey, input.request.idempotencyKey))).limit(1);
-      if (existing !== undefined) return { submissionId: existing.id, ...(existing.status === "CONFIRMED" && existing.transactionHash !== null && existing.ledgerSequence !== null ? { receipt: reconstructReceipt(input.request, existing.transactionHash, existing.ledgerSequence) } : {}) };
+      if (existing !== undefined) return { submissionId: existing.id, ...(existing.status === "SUBMITTED" && existing.transactionHash !== null ? { receipt: reconstructReceipt(input.request, existing.transactionHash, existing.ledgerSequence ?? undefined) } : {}) };
       const id = this.nextId();
       await database.insert(chainSubmissions).values({ id, tenantId: input.context.tenantId, operationId: input.operationRecordId, network: input.request.network, idempotencyKey: input.request.idempotencyKey, envelopeHash: input.request.envelopeHash, status: "PENDING", createdAt: this.now(), updatedAt: this.now() });
       return { submissionId: id };
@@ -71,16 +77,18 @@ export class PostgresFundingSagaRepository implements FundingSagaRepository {
   commitChain(input: Parameters<FundingSagaRepository["commitChain"]>[0]): Promise<void> {
     return withTenantTransaction(this.database, input.context, async (database) => {
       const now = this.now();
-      await database.update(chainSubmissions).set({ status: "CONFIRMED", transactionHash: input.receipt.transactionHash, ledgerSequence: input.receipt.ledgerSequence, updatedAt: now }).where(and(eq(chainSubmissions.tenantId, input.context.tenantId), eq(chainSubmissions.id, input.submissionId)));
+      await database.update(chainSubmissions).set({ status: "SUBMITTED", transactionHash: input.receipt.transactionHash, ledgerSequence: input.receipt.ledgerSequence ?? null, updatedAt: now }).where(and(eq(chainSubmissions.tenantId, input.context.tenantId), eq(chainSubmissions.id, input.submissionId)));
       const step: FundingStepName = input.receipt.action === "ISSUE" ? "ASSET_ISSUANCE" : input.receipt.action === "COMPENSATE" ? "COMPENSATION" : "FACILITY_FUNDING";
-      await upsertStep(database, this.nextId, now, input.context.tenantId, input.operationRecordId, step, "SUCCEEDED", safeChainReceipt(input.receipt));
-      if (input.receipt.action === "ISSUE_AND_FUND") await upsertStep(database, this.nextId, now, input.context.tenantId, input.operationRecordId, "ASSET_ISSUANCE", "SUCCEEDED", safeChainReceipt(input.receipt));
-      if (input.receipt.action === "ISSUE") await updateClaimState(database, input.context, "ISSUED", now);
-      if (input.receipt.action === "FUND" || input.receipt.action === "ISSUE_AND_FUND") {
-        await updateClaimState(database, input.context, "FUNDED", now);
-        const [existing] = await database.select({ id: facilityPositions.id }).from(facilityPositions).where(and(eq(facilityPositions.tenantId, input.context.tenantId), eq(facilityPositions.id, input.context.facilityPositionId))).limit(1);
-        if (existing === undefined) await database.insert(facilityPositions).values({ id: input.context.facilityPositionId, tenantId: input.context.tenantId, canonicalPayload: { claimId: input.context.claimId, financingOfferId: input.context.offerId, outstanding: input.context.source, status: "ACTIVE", transactionHash: input.receipt.transactionHash, version: 1 }, claimId: input.context.claimId, financingOfferId: input.context.offerId, status: "ACTIVE", chainReference: input.receipt.transactionHash, outstandingAmountMinor: input.context.source.amountMinor, outstandingCurrency: input.context.source.currency, outstandingScale: input.context.source.scale, outstandingIssuer: input.context.source.issuer, createdAt: now, updatedAt: now, version: 1 });
-      }
+      await upsertStep(database, this.nextId, now, input.context.tenantId, input.operationRecordId, step, "WAITING", safeChainReceipt(input.receipt));
+      if (input.receipt.action === "ISSUE_AND_FUND") await upsertStep(database, this.nextId, now, input.context.tenantId, input.operationRecordId, "ASSET_ISSUANCE", "WAITING", safeChainReceipt(input.receipt));
+      await database.insert(chainReconciliationExpectations).values({
+        id: this.nextId(), tenantId: input.context.tenantId, chainSubmissionId: input.submissionId,
+        claimKey: input.context.chainIntent.claimKey,
+        expectedAmount: input.context.source.amountMinor,
+        expectedClaimState: expectedState(input.receipt.action),
+        expectedEventType: expectedEvent(input.receipt.action),
+        ...(input.receipt.action === "ISSUE" ? { approvedPrincipalBaseUnits: input.context.source.amountMinor } : {}),
+      }).onConflictDoNothing();
     });
   }
 
@@ -97,6 +105,32 @@ export class PostgresFundingSagaRepository implements FundingSagaRepository {
   }
 
   complete(input: Parameters<FundingSagaRepository["complete"]>[0]): Promise<FundingSagaResult> { return withTenantTransaction(this.database, input.context, async (database) => { await finish(database, this.nextId, this.now(), input.context, input.operationRecordId, input.result, undefined, "facility.funding.completed"); return input.result; }); }
+
+  recordChainReconciliation(input: Parameters<FundingSagaRepository["recordChainReconciliation"]>[0]): Promise<FundingSagaRecord> {
+    return withTenantTransaction(this.database, input.context, async (database) => {
+      const now = this.now();
+      const [submission] = await database.select({ id: chainSubmissions.id }).from(chainSubmissions).where(and(
+        eq(chainSubmissions.tenantId, input.context.tenantId), eq(chainSubmissions.operationId, input.operationRecordId),
+        eq(chainSubmissions.transactionHash, input.reconciliation.transactionHash), eq(chainSubmissions.status, "SUBMITTED"),
+      )).limit(1);
+      if (submission === undefined) throw new FundingSagaError("PARTNER_REJECTED", "Canonical reconciliation does not match a submitted chain transaction.");
+      const step = stepForAction(input.reconciliation.action);
+      if (input.reconciliation.outcome === "MISMATCH") {
+        await upsertStep(database, this.nextId, now, input.context.tenantId, input.operationRecordId, step, "FAILED", safeReconciliation(input.reconciliation));
+        await database.update(operations).set({ status: "FAILED", updatedAt: now }).where(and(eq(operations.tenantId, input.context.tenantId), eq(operations.id, input.operationRecordId)));
+        await writeAudit(database, this.nextId(), now, input.context, input.operationRecordId, "facility.funding.chain_mismatch", "FAILED", input.reconciliation.canonicalEventId);
+        return loadRecord(database, input.context.tenantId, input.operationRecordId);
+      }
+      await upsertStep(database, this.nextId, now, input.context.tenantId, input.operationRecordId, step, "SUCCEEDED", safeReconciliation(input.reconciliation));
+      if (input.reconciliation.action === "ISSUE_AND_FUND") await upsertStep(database, this.nextId, now, input.context.tenantId, input.operationRecordId, "ASSET_ISSUANCE", "SUCCEEDED", safeReconciliation(input.reconciliation));
+      if (input.reconciliation.action === "COMPENSATE") {
+        await updateClaimState(database, input.context, "CONTROLLED", now);
+        const result: FundingSagaResult = { operationRecordId: input.operationRecordId, sandbox: true, status: "COMPENSATED" };
+        await finish(database, this.nextId, now, input.context, input.operationRecordId, result, input.reconciliation.transactionHash, "facility.funding.compensated");
+      }
+      return loadRecord(database, input.context.tenantId, input.operationRecordId);
+    });
+  }
 }
 
 async function loadRecord(database: JejakDatabase, tenantId: string, id: string): Promise<FundingSagaRecord> {
@@ -130,10 +164,19 @@ async function finish(database: JejakDatabase, nextId: () => string, now: Date, 
 
 async function writeAudit(database: JejakDatabase, id: string, now: Date, context: FundingSagaContext, operationId: string, action: string, result: string, reason?: string): Promise<void> { await database.insert(auditEvents).values({ id, tenantId: context.tenantId, actorId: context.actorId, requestId: context.requestId, correlationId: context.correlationId, idempotencyKey: context.idempotencyKey, action, resourceType: "FACILITY_FUNDING", resourceId: context.claimId, result, ...(reason === undefined ? {} : { reasonCode: reason }), references: { operationId, sandbox: true }, createdAt: now }); }
 
-function reconstructReceipt(request: ChainActionRequest, transactionHash: string, ledgerSequence: number): ChainActionReceipt { const unsigned = { action: request.action, envelopeHash: request.envelopeHash, ledgerSequence, network: request.network, requestHash: chainActionRequestHash(request), sandbox: true as const, status: "CONFIRMED" as const, transactionHash }; return { ...unsigned, receiptHash: canonicalHash(unsigned) }; }
+function reconstructReceipt(request: ChainActionRequest, transactionHash: string, ledgerSequence: number | undefined): ChainActionReceipt { const unsigned = { action: request.action, envelopeHash: request.envelopeHash, ...(ledgerSequence === undefined ? {} : { ledgerSequence }), network: request.network, requestHash: chainActionRequestHash(request), sandbox: true, status: "SUBMITTED" as const, transactionHash }; return { ...unsigned, receiptHash: canonicalHash(unsigned) }; }
 function safeChainReceipt(receipt: ChainActionReceipt) { return { action: receipt.action, envelopeHash: receipt.envelopeHash, ledgerSequence: receipt.ledgerSequence, network: receipt.network, receiptHash: receipt.receiptHash, requestHash: receipt.requestHash, sandbox: true, status: receipt.status, transactionHash: receipt.transactionHash }; }
 function safeContext(context: FundingSagaContext) { return { chainMode: context.chainMode, claimId: context.claimId, facilityPositionId: context.facilityPositionId, network: context.network, offerId: context.offerId, sandbox: true, source: context.source }; }
 function idempotencyScope(context: FundingSagaContext) { return and(eq(idempotencyRecords.tenantId, context.tenantId), eq(idempotencyRecords.actorId, context.actorId), eq(idempotencyRecords.operationId, context.operationId), eq(idempotencyRecords.idempotencyKey, context.idempotencyKey)); }
 function isFundingResult(value: unknown): value is FundingSagaResult { return typeof value === "object" && value !== null && "operationRecordId" in value && "status" in value && "sandbox" in value; }
 function isStep(value: string): value is FundingStepName { return ["PRECONDITIONS", "ISSUER_APPROVAL", "ASSET_ISSUANCE", "FACILITY_FUNDING", "ANCHOR_PAYOUT", "COMPENSATION"].includes(value); }
 function asObject(value: unknown): Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
+type FinancingOfferPayload = { termsHash: string };
+function financingOfferTermsHash(value: unknown): string | undefined {
+  const termsHash = asObject(value).termsHash;
+  return typeof termsHash === "string" && /^[a-f0-9]{64}$/i.test(termsHash) ? termsHash : undefined;
+}
+function expectedEvent(action: ChainActionReceipt["action"]): string { return action === "ISSUE" ? "asset.issued" : action === "COMPENSATE" ? "asset.redeemed" : "position.funded"; }
+function expectedState(action: ChainActionReceipt["action"]): string { return action === "ISSUE" ? "ISSUED" : action === "COMPENSATE" ? "CONTROLLED" : "FUNDED"; }
+function stepForAction(action: import("../domain/types.js").FundingChainAction): FundingStepName { return action === "ISSUE" ? "ASSET_ISSUANCE" : action === "COMPENSATE" ? "COMPENSATION" : "FACILITY_FUNDING"; }
+function safeReconciliation(value: import("../domain/types.js").FundingChainReconciliation) { return { canonicalEventId: value.canonicalEventId, ledgerSequence: value.ledgerSequence, outcome: value.outcome, transactionHash: value.transactionHash }; }

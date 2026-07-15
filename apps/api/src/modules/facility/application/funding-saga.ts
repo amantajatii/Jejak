@@ -6,6 +6,7 @@ import { validateChainActionReceipt } from "../domain/chain-receipt.js";
 import type {
   ChainActionReceipt,
   ChainActionRequest,
+  FundingChainReconciliation,
   FundingChainAction,
   FundingSagaContext,
   FundingSagaRecord,
@@ -27,7 +28,7 @@ export class FacilityFundingSagaService {
   ) {}
 
   async execute(context: FundingSagaContext): Promise<FundingSagaResult> {
-    if (this.chain.mode !== "SANDBOX") {
+    if (this.chain.mode === "PRODUCTION" && this.chain.configured !== true) {
       throw new FundingSagaError("PARTNER_REJECTED", "No production funding-chain implementation is configured.");
     }
     const payloadHash = canonicalHash(context);
@@ -49,7 +50,7 @@ export class FacilityFundingSagaService {
       await this.repository.commitIssuer({ context, operationRecordId: record.operationRecordId, receipt: issuerReceipt });
       if (issuerReceipt.status === "PENDING" || issuerReceipt.status === "ACTION_REQUIRED") {
         await this.repository.markStatus(context, record.operationRecordId, "WAITING_EXTERNAL", issuerReceipt.status);
-        return { issuerReceipt, operationRecordId: record.operationRecordId, sandbox: true, status: "WAITING_EXTERNAL" };
+        return waitingResult(record.operationRecordId, issuerReceipt);
       }
       if (!issuerReceipt.approved) {
         await this.repository.markStatus(context, record.operationRecordId, "FAILED", "ISSUER_REJECTED");
@@ -63,19 +64,22 @@ export class FacilityFundingSagaService {
         if (!succeeded(record, "FACILITY_FUNDING")) {
           const submitted = await this.#chainAction(context, record.operationRecordId, "ISSUE_AND_FUND", context.fundEnvelopeHash);
           await this.repository.commitChain({ context, operationRecordId: record.operationRecordId, receipt: submitted.receipt, submissionId: submitted.submissionId });
-          record = await this.repository.load(context, record.operationRecordId);
+          await this.repository.markStatus(context, record.operationRecordId, "WAITING_EXTERNAL", "CHAIN_SUBMITTED_PENDING_RECONCILIATION");
+          return waitingResult(record.operationRecordId, issuerReceipt);
         }
       } else {
         if (!succeeded(record, "ASSET_ISSUANCE")) {
           const submitted = await this.#chainAction(context, record.operationRecordId, "ISSUE", context.issueEnvelopeHash);
           await this.repository.commitChain({ context, operationRecordId: record.operationRecordId, receipt: submitted.receipt, submissionId: submitted.submissionId });
-          record = await this.repository.load(context, record.operationRecordId);
+          await this.repository.markStatus(context, record.operationRecordId, "WAITING_EXTERNAL", "CHAIN_SUBMITTED_PENDING_RECONCILIATION");
+          return waitingResult(record.operationRecordId, issuerReceipt);
         }
         if (!succeeded(record, "FACILITY_FUNDING")) {
           try {
             const submitted = await this.#chainAction(context, record.operationRecordId, "FUND", context.fundEnvelopeHash);
             await this.repository.commitChain({ context, operationRecordId: record.operationRecordId, receipt: submitted.receipt, submissionId: submitted.submissionId });
-            record = await this.repository.load(context, record.operationRecordId);
+            await this.repository.markStatus(context, record.operationRecordId, "WAITING_EXTERNAL", "CHAIN_SUBMITTED_PENDING_RECONCILIATION");
+            return waitingResult(record.operationRecordId, issuerReceipt);
           } catch (error) {
             if (isRetryable(error)) await this.repository.markStatus(context, record.operationRecordId, "PAUSED", safeError(error));
             else await this.repository.markCompensationRequired(context, record.operationRecordId, safeError(error));
@@ -113,6 +117,31 @@ export class FacilityFundingSagaService {
     return this.repository.complete({ context, operationRecordId: record.operationRecordId, result });
   }
 
+  /**
+   * Internal worker boundary. Session 1 calls this only after BE-15 has matched
+   * the submitted transaction to canonical event and generated-client state.
+   */
+  async resumeAfterChainReconciliation(
+    context: FundingSagaContext,
+    reconciliation: FundingChainReconciliation,
+  ): Promise<FundingSagaResult> {
+    const begun = await this.repository.begin(context, canonicalHash(context));
+    if (begun.kind === "CONFLICT") throw new FundingSagaError("INVALID_STATE_TRANSITION", "Funding reconciliation payload conflicts.");
+    if (begun.kind === "REPLAY") return begun.result;
+    const record = await this.repository.recordChainReconciliation({
+      context,
+      operationRecordId: begun.record.operationRecordId,
+      reconciliation,
+    });
+    if (reconciliation.outcome === "MISMATCH") {
+      throw new FundingSagaError("PARTNER_REJECTED", "Canonical chain reconciliation does not match the submitted funding action.");
+    }
+    if (reconciliation.action === "COMPENSATE") {
+      return { operationRecordId: record.operationRecordId, sandbox: true, status: "COMPENSATED" };
+    }
+    return this.execute(context);
+  }
+
   async #chainAction(
     context: FundingSagaContext,
     operationRecordId: string,
@@ -121,17 +150,29 @@ export class FacilityFundingSagaService {
   ): Promise<{ receipt: ChainActionReceipt; submissionId: string }> {
     const request: ChainActionRequest = {
       action,
+      acceptedTermsHash: context.chainIntent.acceptedTermsHash,
+      assetControllerContractId: context.chainIntent.assetControllerContractId,
       claimId: context.claimId,
+      claimKey: context.chainIntent.claimKey,
       envelopeHash,
+      facilityContractId: context.chainIntent.facilityContractId,
+      facilityHolder: context.chainIntent.facilityHolder,
+      facilityId: context.chainIntent.facilityId,
+      facilityOperator: context.chainIntent.facilityOperator,
+      facilityTreasury: context.chainIntent.facilityTreasury,
+      firstLossAmountMinor: context.chainIntent.firstLossAmountMinor,
       idempotencyKey: canonicalHash({ action, claimId: context.claimId, operationRecordId, tenantId: context.tenantId }),
+      issuerOperator: context.chainIntent.issuerOperator,
       network: context.network,
       requestedAt: context.requestedAt,
+      resultHash: context.chainIntent.resultHash,
+      sellerPayoutAccount: context.chainIntent.sellerPayoutAccount,
       source: context.source,
       tenantId: context.tenantId,
     };
     const prepared = await this.repository.prepareChain({ context, operationRecordId, request });
     if (prepared.receipt !== undefined) return { receipt: prepared.receipt, submissionId: prepared.submissionId };
-    const found = await this.chain.findAction(request.idempotencyKey);
+    const found = await this.chain.findAction(request);
     const receipt = found ?? await this.chain.submitAction(request);
     validateChainActionReceipt(request, receipt);
     return { receipt, submissionId: prepared.submissionId };
@@ -152,20 +193,32 @@ export class FacilityFundingCompensationService {
     }
     const request: ChainActionRequest = {
       action: "COMPENSATE",
+      acceptedTermsHash: context.chainIntent.acceptedTermsHash,
+      assetControllerContractId: context.chainIntent.assetControllerContractId,
       claimId: context.claimId,
+      claimKey: context.chainIntent.claimKey,
       envelopeHash: context.compensationEnvelopeHash,
+      facilityContractId: context.chainIntent.facilityContractId,
+      facilityHolder: context.chainIntent.facilityHolder,
+      facilityId: context.chainIntent.facilityId,
+      facilityOperator: context.chainIntent.facilityOperator,
+      facilityTreasury: context.chainIntent.facilityTreasury,
+      firstLossAmountMinor: context.chainIntent.firstLossAmountMinor,
       idempotencyKey: canonicalHash({ action: "COMPENSATE", operationRecordId: record.operationRecordId }),
+      issuerOperator: context.chainIntent.issuerOperator,
       network: context.network,
       requestedAt: context.requestedAt,
+      resultHash: context.chainIntent.resultHash,
+      sellerPayoutAccount: context.chainIntent.sellerPayoutAccount,
       source: context.source,
       tenantId: context.tenantId,
     };
     const prepared = await this.repository.prepareChain({ context, operationRecordId: record.operationRecordId, request });
-    const receipt = prepared.receipt ?? await this.chain.findAction(request.idempotencyKey) ?? await this.chain.submitAction(request);
+    const receipt = prepared.receipt ?? await this.chain.findAction(request) ?? await this.chain.submitAction(request);
     validateChainActionReceipt(request, receipt);
     await this.repository.commitChain({ context, operationRecordId: record.operationRecordId, receipt, submissionId: prepared.submissionId });
-    await this.repository.markCompensated(context, record.operationRecordId, receipt);
-    return { operationRecordId: record.operationRecordId, sandbox: true, status: "COMPENSATED" };
+    await this.repository.markStatus(context, record.operationRecordId, "WAITING_EXTERNAL", "COMPENSATION_SUBMITTED_PENDING_RECONCILIATION");
+    return { operationRecordId: record.operationRecordId, sandbox: true, status: "WAITING_EXTERNAL" };
   }
 }
 
@@ -179,6 +232,15 @@ function safeIssuerReceipt(record: FundingSagaRecord): IssuerApprovalReceipt | u
 
 function safeAnchorReceipt(record: FundingSagaRecord): AnchorPayoutReceipt | undefined {
   return record.steps.ANCHOR_PAYOUT?.safeResult?.receipt as AnchorPayoutReceipt | undefined;
+}
+
+function waitingResult(operationRecordId: string, issuerReceipt?: IssuerApprovalReceipt): FundingSagaResult {
+  return {
+    ...(issuerReceipt === undefined ? {} : { issuerReceipt }),
+    operationRecordId,
+    sandbox: true,
+    status: "WAITING_EXTERNAL",
+  };
 }
 
 function issuerContext(context: FundingSagaContext): IssuerOperationContext {

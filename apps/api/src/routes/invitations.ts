@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 import { authorize, AuthorizationError } from "../auth/authorization.js";
-import { bearerToken, type SupabaseJwtVerifier } from "../auth/jwt-verifier.js";
+import { bearerToken, type IdentityVerifier } from "../auth/jwt-verifier.js";
 import type { ActiveMembership } from "../auth/membership-repository.js";
 import { parseTenantId } from "../auth/tenant.js";
 import type { ActorRole, AuthenticatedIdentity, AuthorizationContext } from "../auth/types.js";
@@ -18,14 +18,14 @@ const idParams = z.object({ id: z.uuid() });
 export type InvitationRouteDependencies = {
   findMembership(input: { authSubject: string; requestId: string; tenantId: string }): Promise<ActiveMembership | undefined>;
   service: InvitationService;
-  verifier: SupabaseJwtVerifier;
+  verifier: IdentityVerifier;
 };
 
 function invitationData(view: InvitationView) {
   return { ...view, expiresAt: view.expiresAt.toISOString() };
 }
 
-async function identity(request: FastifyRequest, verifier: SupabaseJwtVerifier): Promise<AuthenticatedIdentity> {
+async function identity(request: FastifyRequest, verifier: IdentityVerifier): Promise<AuthenticatedIdentity> {
   return verifier.verify(bearerToken(request.headers.authorization));
 }
 

@@ -1,4 +1,4 @@
-import type { SupabaseJwtVerifier } from "../auth/jwt-verifier.js";
+import type { IdentityVerifier } from "../auth/jwt-verifier.js";
 import {
   findActiveMembership,
   findActiveResourceAssignments,
@@ -10,7 +10,21 @@ import { ClaimLifecycleApplication } from "../modules/claims/application/claim-s
 import { FinancingOfferApplication } from "../modules/claims/application/offer-service.js";
 import { PostgresClaimQueryRepository } from "../modules/claims/adapters/postgres-query-repository.js";
 import type { ClaimRouteDependencies } from "../modules/claims/routes.js";
+import {
+  ClaimControlCommandService,
+  PostgresControlCommandRepository,
+  type ControlRouteDependencies,
+} from "../modules/control/index.js";
 import type { EvidenceStorage } from "../modules/evidence/ports/evidence-storage.js";
+import {
+  DemoResetService,
+  PostgresDemoResetRepository,
+  type DemoIdentityIssuer,
+  type DemoRouteDependencies,
+} from "../modules/demo/index.js";
+import { PostgresRefundSpikeRepository } from "../modules/demo/postgres-refund-spike-repository.js";
+import { RefundSpikeService } from "../modules/demo/refund-spike-service.js";
+import type { RefundSpikeRouteDependencies } from "../modules/demo/refund-spike-routes.js";
 import {
   createPostgresCsvIngestionApplication,
   createPostgresMarketplaceSyncApplication,
@@ -23,29 +37,71 @@ import {
   PostgresReadModelRepository,
   ReadModelService,
 } from "../modules/read-model/index.js";
+import {
+  PostgresResolutionRepository,
+  ResolutionService,
+  type ResolutionReconciliationPort,
+  type ResolutionRouteDependencies,
+} from "../modules/resolution/index.js";
+import {
+  ClaimWorkspaceService,
+  PostgresClaimWorkspaceRepository,
+  type ClaimWorkspaceConfiguration,
+  type WorkspaceRouteDependencies,
+} from "../modules/workspace/index.js";
 import type { InvitationRouteDependencies } from "../routes/invitations.js";
 import type { ReadModelRouteDependencies } from "../routes/read-models.js";
 
 export type RuntimeRouteDependencies = {
   claimDependencies: ClaimRouteDependencies;
+  controlDependencies: ControlRouteDependencies;
+  demoDependencies?: DemoRouteDependencies;
   ingestionDependencies: IngestionRouteDependencies;
   invitationDependencies: InvitationRouteDependencies;
   readModelDependencies: ReadModelRouteDependencies;
+  refundSpikeDependencies?: RefundSpikeRouteDependencies;
+  resolutionDependencies?: ResolutionRouteDependencies;
+  workspaceDependencies?: WorkspaceRouteDependencies;
 };
 
 export function createRuntimeRouteDependencies(input: {
   database: JejakDatabase;
   evidenceMaximumBytes: number;
   evidenceStorage: EvidenceStorage;
-  verifier: SupabaseJwtVerifier;
+  demoIdentityIssuer?: DemoIdentityIssuer;
+  partnerMode: "SANDBOX" | "PRODUCTION";
+  resolution?: {
+    reconciliation: ResolutionReconciliationPort;
+    resolverAddress: string;
+  };
+  verifier: IdentityVerifier;
+  workspace?: ClaimWorkspaceConfiguration;
 }): RuntimeRouteDependencies {
   const queries = new PostgresClaimQueryRepository(input.database);
   const marketplace = new DeterministicSandboxMarketplaceAdapter({});
   const csvReader = new StorageCsvObjectReader(input.evidenceStorage, input.evidenceMaximumBytes);
+  const demoReset = new DemoResetService(new PostgresDemoResetRepository(input.database));
   const findMembership: ClaimRouteDependencies["findMembership"] = (request) =>
     findActiveMembership(input.database, request);
+  const findAssignments: ControlRouteDependencies["findAssignments"] = (request) =>
+    findActiveResourceAssignments(input.database, request);
+  const authorization = {
+    findAssignments,
+    findMembership,
+    verifier: input.verifier,
+  };
+  const controlService = new ClaimControlCommandService(
+    new PostgresControlCommandRepository(input.database, { mode: input.partnerMode }),
+  );
 
   return {
+    ...(input.demoIdentityIssuer === undefined ? {} : {
+      demoDependencies: {
+        createSession: ({ role, tenantId }) => input.demoIdentityIssuer!.issue({ role, tenantId }),
+        getContext: (tenantId) => demoReset.getContext(tenantId),
+        reset: (request) => demoReset.reset(request),
+      },
+    }),
     claimDependencies: {
       acceptOffer: (context, command) =>
         new FinancingOfferApplication(input.database, context).accept(command),
@@ -65,6 +121,11 @@ export function createRuntimeRouteDependencies(input: {
       hasActiveOffer: (context, claimId) => queries.hasActiveOffer(context, claimId),
       listClaims: (context, query) => queries.listClaims(context, query),
       verifier: input.verifier,
+    },
+    controlDependencies: {
+      ...authorization,
+      sandbox: input.partnerMode === "SANDBOX",
+      service: controlService,
     },
     ingestionDependencies: {
       findIngestion: (context, ingestionId) =>
@@ -95,5 +156,39 @@ export function createRuntimeRouteDependencies(input: {
         new ReadModelService(new PostgresReadModelRepository(input.database, actorId)),
       verifier: input.verifier,
     },
+    ...(input.demoIdentityIssuer === undefined
+      ? {}
+      : {
+          refundSpikeDependencies: {
+            ...authorization,
+            sandbox: true,
+            service: new RefundSpikeService(new PostgresRefundSpikeRepository(input.database)),
+          },
+        }),
+    ...(input.resolution === undefined
+      ? {}
+      : {
+          resolutionDependencies: {
+            ...authorization,
+            sandbox: input.partnerMode === "SANDBOX",
+            service: new ResolutionService(
+              new PostgresResolutionRepository(input.database, {
+                resolverAddress: input.resolution.resolverAddress,
+              }),
+              input.resolution.reconciliation,
+            ),
+          },
+        }),
+    ...(input.workspace === undefined
+      ? {}
+      : {
+          workspaceDependencies: {
+            ...authorization,
+            sandbox: input.workspace.sandbox,
+            service: new ClaimWorkspaceService(
+              new PostgresClaimWorkspaceRepository(input.database, input.workspace),
+            ),
+          },
+        }),
   };
 }

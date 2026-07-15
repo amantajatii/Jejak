@@ -11,25 +11,42 @@ import { WaterfallSubmissionError } from "../ports/settlement.js";
 
 type ExecuteTransaction = Awaited<ReturnType<ServicingWaterfall.Client["execute"]>>;
 
-export class GeneratedWaterfallSubmitter implements WaterfallSubmissionPort {
-  readonly #client: ServicingWaterfall.Client;
+export interface WaterfallTransactionSubmitter {
+  submit(input: {
+    resultHash: string;
+    transaction: ExecuteTransaction;
+  }): Promise<WaterfallSubmissionReceipt>;
+}
 
-  constructor(private readonly options: {
-    contractId: string;
-    networkPassphrase: string;
-    publicKey: string;
-    rpcUrl: string;
-    submit(transaction: ExecuteTransaction): Promise<WaterfallSubmissionReceipt>;
-  }) {
-    this.#client = new ServicingWaterfall.Client({
-      contractId: options.contractId,
-      networkPassphrase: options.networkPassphrase,
-      publicKey: options.publicKey,
-      rpcUrl: options.rpcUrl,
-    });
+export type GeneratedWaterfallSubmitterOptions = {
+  contractId?: string;
+  networkPassphrase?: string;
+  publicKey?: string;
+  rpcUrl?: string;
+  signer?: WaterfallTransactionSubmitter;
+};
+
+export class GeneratedWaterfallSubmitter implements WaterfallSubmissionPort {
+  readonly mode = "PRODUCTION" as const;
+  readonly configured: boolean;
+  readonly #client?: ServicingWaterfall.Client;
+
+  constructor(private readonly options: GeneratedWaterfallSubmitterOptions) {
+    this.configured = hasProductionBoundary(options);
+    if (this.configured) {
+      this.#client = new ServicingWaterfall.Client({
+        contractId: options.contractId!,
+        networkPassphrase: options.networkPassphrase!,
+        publicKey: options.publicKey!,
+        rpcUrl: options.rpcUrl!,
+      });
+    }
   }
 
   async submit(command: WaterfallSubmissionCommand): Promise<WaterfallSubmissionReceipt> {
+    if (!this.configured || this.#client === undefined || this.options.signer === undefined) {
+      throw new WaterfallSubmissionError("CONFIGURATION", "Production Stellar signer, RPC, and contract configuration is required.", false);
+    }
     let transaction: ExecuteTransaction;
     try {
       transaction = await this.#client.execute({
@@ -77,12 +94,24 @@ export class GeneratedWaterfallSubmitter implements WaterfallSubmissionPort {
       throw new WaterfallSubmissionError("PROTOCOL_MISMATCH", "Simulated waterfall allocation does not match the prepared result.", false);
     }
     try {
-      return await this.options.submit(transaction);
+      return await this.options.signer.submit({ resultHash: command.allocation.resultHash, transaction });
     } catch (error) {
       if (error instanceof WaterfallSubmissionError) throw error;
       throw new WaterfallSubmissionError("RPC_UNAVAILABLE", "Waterfall submission response was lost or unavailable.", true, { cause: error });
     }
   }
+}
+
+function hasProductionBoundary(options: GeneratedWaterfallSubmitterOptions): options is Required<GeneratedWaterfallSubmitterOptions> {
+  return nonempty(options.contractId) &&
+    nonempty(options.networkPassphrase) &&
+    nonempty(options.publicKey) &&
+    nonempty(options.rpcUrl) &&
+    options.signer !== undefined;
+}
+
+function nonempty(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function bytes(value: string, label: string): Buffer {

@@ -40,6 +40,31 @@ export type FundingSagaContext = {
   requestedAt: string;
   source: MoneyValue;
   tenantId: string;
+  /**
+   * Canonical, server-derived chain facts.  These values never come from the
+   * frozen FundClaim request body.
+   */
+  chainIntent: FundingChainIntent;
+};
+
+export type FundingChainIntent = {
+  acceptedTermsHash: string;
+  assetControllerContractId: string;
+  claimKey: string;
+  controlEvidenceHash: string;
+  controlEvidenceId: string;
+  facilityContractId: string;
+  facilityHolder: string;
+  facilityId: string;
+  facilityOperator: string;
+  facilityTreasury: string;
+  firstLossAmountMinor: string;
+  attestationEnvelopeHash: string;
+  attestationId: string;
+  issuerOperator: string;
+  payoutReference: string;
+  resultHash: string;
+  sellerPayoutAccount: string;
 };
 
 export type FundingStep = {
@@ -57,11 +82,23 @@ export type FundingSagaRecord = {
 
 export type ChainActionRequest = {
   action: FundingChainAction;
+  acceptedTermsHash: string;
+  assetControllerContractId: string;
   claimId: string;
+  claimKey: string;
   envelopeHash: string;
+  facilityContractId: string;
+  facilityHolder: string;
+  facilityId: string;
+  facilityOperator: string;
+  facilityTreasury: string;
+  firstLossAmountMinor: string;
   idempotencyKey: string;
+  issuerOperator: string;
   network: string;
   requestedAt: string;
+  resultHash: string;
+  sellerPayoutAccount: string;
   source: MoneyValue;
   tenantId: string;
 };
@@ -69,12 +106,13 @@ export type ChainActionRequest = {
 export type ChainActionReceipt = {
   action: FundingChainAction;
   envelopeHash: string;
-  ledgerSequence: number;
+  ledgerSequence?: number;
   network: string;
   receiptHash: string;
   requestHash: string;
-  sandbox: true;
-  status: "CONFIRMED";
+  sandbox: boolean;
+  /** Submission acknowledgement only.  BE-15 owns canonical finality. */
+  status: "SUBMITTED";
   transactionHash: string;
 };
 
@@ -82,6 +120,15 @@ export type FundingSagaResult = {
   anchorReceipt?: AnchorPayoutReceipt;
   issuerReceipt?: IssuerApprovalReceipt;
   operationRecordId: string;
-  sandbox: true;
+  sandbox: boolean;
   status: FundingSagaStatus;
+};
+
+/** Input for the internal BE-15 → funding-saga handoff; never an HTTP body. */
+export type FundingChainReconciliation = {
+  action: FundingChainAction;
+  canonicalEventId: string;
+  ledgerSequence: number;
+  outcome: "RECONCILED" | "MISMATCH";
+  transactionHash: string;
 };

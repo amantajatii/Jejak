@@ -3,11 +3,13 @@ import { Buffer } from "node:buffer";
 import { EligibilityRegistry } from "@jejak/stellar-client";
 import type { contract } from "@stellar/stellar-sdk";
 
+import { canonicalHash } from "../../../reliability/canonical-json.js";
 import type {
   JccRegistry,
   RegistryAttestationRef,
   RegistryRecord,
   RegistrySubmission,
+  RegistrySubmissionRecovery,
 } from "../ports/index.js";
 
 type RegistryClient = Pick<
@@ -16,7 +18,8 @@ type RegistryClient = Pick<
 >;
 
 export interface RegistryTransactionSubmitter {
-  submit(transaction: unknown): Promise<{ ledgerSequence?: number; transactionHash: string }>;
+  lookup(input: { requestHash: string; submissionId: string }): Promise<{ ledgerSequence?: number; transactionHash: string } | null>;
+  submit(input: { requestHash: string; submissionId: string; transaction: unknown }): Promise<{ ledgerSequence?: number; transactionHash: string }>;
 }
 
 function bytes32(value: string, label: string): Buffer {
@@ -63,11 +66,23 @@ function record(ref: EligibilityRegistry.AttestationRef, status: RegistryRecord[
   };
 }
 
-export class EligibilityRegistryAdapter implements JccRegistry {
+export class EligibilityRegistryAdapter implements JccRegistry, RegistrySubmissionRecovery {
   constructor(
     private readonly client: RegistryClient,
     private readonly submitter: RegistryTransactionSubmitter,
   ) {}
+
+  async find(input: {
+    attestationKey: string;
+    envelopeHash: string;
+    submissionId: string;
+  }): Promise<RegistrySubmission | null> {
+    const submitted = await this.submitter.lookup({
+      requestHash: submissionRequestHash(input),
+      submissionId: input.submissionId,
+    });
+    return submitted === null ? null : submission(input, submitted);
+  }
 
   async register(input: RegistryAttestationRef & { submissionId: string }): Promise<RegistrySubmission> {
     const transaction = await this.client.register_attestation({
@@ -75,14 +90,12 @@ export class EligibilityRegistryAdapter implements JccRegistry {
       attestation: contractRef(input),
     });
     unwrap(transaction.result, "register simulation");
-    const submitted = await this.submitter.submit(transaction);
-    return {
+    const submitted = await this.submitter.submit({
+      requestHash: submissionRequestHash(input),
       submissionId: input.submissionId,
-      attestationKey: input.attestationKey,
-      envelopeHash: input.envelopeHash,
-      transactionHash: submitted.transactionHash,
-      ...(submitted.ledgerSequence === undefined ? {} : { ledgerSequence: submitted.ledgerSequence }),
-    };
+      transaction,
+    });
+    return submission(input, submitted);
   }
 
   async read(input: { attestationKey: string; now: string }): Promise<RegistryRecord | null> {
@@ -114,13 +127,32 @@ export class EligibilityRegistryAdapter implements JccRegistry {
       reason_code: input.reasonCode,
     });
     unwrap(transaction.result, "revoke simulation");
-    const submitted = await this.submitter.submit(transaction);
-    return {
+    const submitted = await this.submitter.submit({
+      requestHash: submissionRequestHash(input),
       submissionId: input.submissionId,
-      attestationKey: input.attestationKey,
-      envelopeHash: input.envelopeHash,
-      transactionHash: submitted.transactionHash,
-      ...(submitted.ledgerSequence === undefined ? {} : { ledgerSequence: submitted.ledgerSequence }),
-    };
+      transaction,
+    });
+    return submission(input, submitted);
   }
+}
+
+function submissionRequestHash(input: { attestationKey: string; envelopeHash: string; submissionId: string }): string {
+  return canonicalHash({
+    attestationKey: input.attestationKey,
+    envelopeHash: input.envelopeHash,
+    submissionId: input.submissionId,
+  });
+}
+
+function submission(
+  input: { attestationKey: string; envelopeHash: string; submissionId: string },
+  submitted: { ledgerSequence?: number; transactionHash: string },
+): RegistrySubmission {
+  return {
+    submissionId: input.submissionId,
+    attestationKey: input.attestationKey,
+    envelopeHash: input.envelopeHash,
+    transactionHash: submitted.transactionHash,
+    ...(submitted.ledgerSequence === undefined ? {} : { ledgerSequence: submitted.ledgerSequence }),
+  };
 }

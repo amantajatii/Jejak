@@ -1,4 +1,6 @@
 export * from "./adapters/eligibility-registry.js";
+export * from "./adapters/environment-verifier.js";
+export * from "./adapters/http-signer.js";
 export * from "./adapters/postgres-evidence-source.js";
 export * from "./adapters/postgres-repository.js";
 export * from "./adapters/postgres-registry-reconciler.js";

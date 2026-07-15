@@ -9,6 +9,7 @@ import type {
   AttestationVerifier,
   JccRegistry,
   RegistryReconciler,
+  RegistrySubmissionRecovery,
 } from "../ports/index.js";
 import { JccApplicationService } from "./jcc-service.js";
 
@@ -17,6 +18,7 @@ export function createPostgresJccApplication(input: {
   database: JejakDatabase;
   reconciler: RegistryReconciler;
   registry: JccRegistry;
+  recovery: RegistrySubmissionRecovery;
   sellerSubjectHasher: SellerSubjectHasher;
   signer: AttestationSigner;
   verifier: AttestationVerifier;
@@ -30,6 +32,7 @@ export function createPostgresJccApplication(input: {
     journal: new PostgresJccSubmissionJournal(input.database, input.actorContext),
     reconciler: input.reconciler,
     registry: input.registry,
+    recovery: input.recovery,
     repository: new PostgresJccRepository(input.database, { actorContext: input.actorContext }),
     signer: input.signer,
     verifier: input.verifier,

@@ -3,6 +3,7 @@ import type { IssuerApprovalReceipt } from "../../issuer/index.js";
 import type {
   ChainActionReceipt,
   ChainActionRequest,
+  FundingChainReconciliation,
   FundingSagaContext,
   FundingSagaRecord,
   FundingSagaResult,
@@ -28,4 +29,5 @@ export interface FundingSagaRepository {
   markStatus(context: FundingSagaContext, operationRecordId: string, status: FundingSagaStatus, reason?: string): Promise<void>;
   prepareChain(input: { context: FundingSagaContext; operationRecordId: string; request: ChainActionRequest }): Promise<{ receipt?: ChainActionReceipt; submissionId: string }>;
   recordStep(input: { context: FundingSagaContext; operationRecordId: string; safeResult?: Record<string, unknown>; status: "SUCCEEDED" | "WAITING" | "FAILED"; step: FundingStepName }): Promise<void>;
+  recordChainReconciliation(input: { context: FundingSagaContext; operationRecordId: string; reconciliation: FundingChainReconciliation }): Promise<FundingSagaRecord>;
 }

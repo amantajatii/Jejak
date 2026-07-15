@@ -10,6 +10,14 @@ const claimEncumbranceGuard = await readFile(resolve(root, "0004_hot_doctor_faus
 const anchor = await readFile(resolve(root, "0005_lame_ultron.sql"), "utf8");
 const chainReadModels = await readFile(resolve(root, "0006_broken_the_anarchist.sql"), "utf8");
 const activeOfferGuard = await readFile(resolve(root, "0007_lively_bloodstrike.sql"), "utf8");
+const journal = JSON.parse(await readFile(resolve(root, "meta/_journal.json"), "utf8")) as {
+  entries: Array<{ idx: number; tag: string }>;
+};
+const activeOfferSnapshot = JSON.parse(
+  await readFile(resolve(root, "meta/0007_snapshot.json"), "utf8"),
+) as {
+  tables?: Record<string, { indexes?: Record<string, { columns?: Array<{ expression?: string }>; isUnique?: boolean; where?: string }> }>;
+};
 const rollback0 = await readFile(resolve(root, "rollbacks/0000_keen_shiver_man.down.sql"), "utf8");
 const rollback1 = await readFile(resolve(root, "rollbacks/0001_security_foundation.down.sql"), "utf8");
 const rollback2 = await readFile(resolve(root, "rollbacks/0002_lucky_molly_hayes.down.sql"), "utf8");
@@ -62,16 +70,40 @@ requireText(chainReadModels, /settlement_events_claim_page_idx/, "settlement cla
 requireText(chainReadModels, /waterfall_results_result_hash_uq/, "waterfall replay constraint is missing");
 requireText(chainReadModels, /settlement_events_append_only/, "settlement event immutability is missing");
 requireText(chainReadModels, /waterfall_results_append_only/, "waterfall result immutability is missing");
+requireText(chainReadModels, /reject_settlement_stream_immutable_mutation/, "settlement-stream immutable trigger is missing");
+requireText(chainReadModels, /CREATE TRIGGER settlement_streams_append_only/, "settlement-stream append-only trigger is missing");
+requireText(chainReadModels, /REVOKE UPDATE, DELETE, TRUNCATE ON jejak\.settlement_streams/, "settlement streams must be immutable by grant");
+requireText(chainReadModels, /REVOKE ALL ON FUNCTION jejak\.reject_settlement_stream_immutable_mutation\(\)/, "settlement-stream guard function must not be callable by runtime roles");
 requireText(chainReadModels, /chain_reconciliation_expectations_submission_fk_idx/, "reconciliation submission FK index is missing");
 requireText(rollback6, /DROP TABLE IF EXISTS jejak\.chain_events/, "chain read-model rollback is missing");
 requireText(rollback6, /DROP COLUMN IF EXISTS contract_name/, "checkpoint rollback is missing");
 requireText(rollback6, /DROP TRIGGER IF EXISTS waterfall_results_append_only/, "waterfall immutability rollback is missing");
+requireText(rollback6, /DROP TRIGGER IF EXISTS settlement_streams_append_only/, "settlement-stream trigger rollback is missing");
+requireText(rollback6, /DROP FUNCTION IF EXISTS jejak\.reject_settlement_stream_immutable_mutation\(\)/, "settlement-stream guard rollback is missing");
+requireText(rollback6, /GRANT SELECT, INSERT, UPDATE, DELETE ON jejak\.settlement_streams TO jejak_api/, "settlement-stream API grant restoration is missing");
+requireText(rollback6, /GRANT SELECT, INSERT, UPDATE ON jejak\.settlement_streams TO jejak_worker/, "settlement-stream worker grant restoration is missing");
 requireText(rollback6, /DROP INDEX IF EXISTS jejak\.chain_events_waterfall_result_hash_idx/, "waterfall hash index rollback is missing");
 if (/\b(real|double precision)\b/i.test(chainReadModels)) failures.push("floating-point chain Money type found");
 if (/SECURITY\s+DEFINER/i.test(chainReadModels)) failures.push("chain SECURITY DEFINER is forbidden");
 requireText(activeOfferGuard, /financing_offers_active_claim_uq/, "active financing-offer guard is missing");
 requireText(activeOfferGuard, /status.*in \('OFFERED', 'ACCEPTED'\)/i, "active financing-offer statuses are not constrained");
 requireText(rollback7, /DROP INDEX IF EXISTS jejak\.financing_offers_active_claim_uq/, "active financing-offer rollback is missing");
+
+const migration6 = journal.entries.find((entry) => entry.tag === "0006_broken_the_anarchist");
+const migration7 = journal.entries.find((entry) => entry.tag === "0007_lively_bloodstrike");
+if (migration6?.idx !== 6 || migration7?.idx !== 7) {
+  failures.push("migration journal must preserve the 0006/0007 ordering");
+}
+const activeOfferIndex = activeOfferSnapshot.tables?.["jejak.financing_offers"]?.indexes?.[
+  "financing_offers_active_claim_uq"
+];
+if (
+  activeOfferIndex?.isUnique !== true ||
+  activeOfferIndex.columns?.map((column) => column.expression).join(",") !== "tenant_id,claim_id" ||
+  activeOfferIndex.where !== "\"jejak\".\"financing_offers\".\"status\" in ('OFFERED', 'ACCEPTED')"
+) {
+  failures.push("0007 snapshot must preserve the exact active financing-offer partial unique index");
+}
 
 const tenantTables = [...initial.matchAll(/CREATE TABLE "jejak"\."([^"]+)" \([\s\S]*?\n\);/g)]
   .filter((match) => match[0].includes('"tenant_id" uuid NOT NULL'))

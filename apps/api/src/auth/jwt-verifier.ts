@@ -7,6 +7,10 @@ import {
 
 import type { AuthenticatedIdentity } from "./types.js";
 
+export interface IdentityVerifier {
+  verify(token: string): Promise<AuthenticatedIdentity>;
+}
+
 export class AuthenticationError extends Error {
   readonly code = "AUTHENTICATION_REQUIRED";
 
@@ -25,7 +29,7 @@ export type JwtVerifierOptions = {
   supabaseUrl?: string;
 };
 
-export class SupabaseJwtVerifier {
+export class SupabaseJwtVerifier implements IdentityVerifier {
   readonly #audience: string;
   readonly #issuer: string;
   readonly #keyResolver: JWTVerifyGetKey;
