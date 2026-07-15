@@ -18,6 +18,8 @@
     "api-client:generate": "pnpm --filter @jejak/api-client generate",
     "contracts:python": "python3 -m pytest tests/contract/python -q",
     "contracts:check": "node scripts/check-generated.mjs",
+    "contracts:drift-test": "node --test tests/contract/generated-drift.test.mjs",
+    "container:smoke": "node tests/integration/api-container-smoke.mjs",
     "supabase": "supabase"
   },
   "devDependencies": {

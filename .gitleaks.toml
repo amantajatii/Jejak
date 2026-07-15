@@ -1,0 +1,8 @@
+title = "Jejak secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact public RFC 8032 test key vector; never production material"
+paths = ['''^packages/domain/fixtures/vectors/jcc-jcs-ed25519-v1\.json$''']
