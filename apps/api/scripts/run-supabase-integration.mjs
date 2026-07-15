@@ -13,14 +13,14 @@ function run(args) {
 
 let primaryError;
 try {
-  run(["db:migrate"]);
+  run(["db:migrate:test-project"]);
   run(["exec", "tsx", "scripts/verify-supabase.ts"]);
 } catch (error) {
   primaryError = error;
 } finally {
   try {
     run(["db:rollback"]);
-    run(["db:migrate"]);
+    run(["db:migrate:test-project"]);
   } catch (cleanupError) {
     if (primaryError === undefined) primaryError = cleanupError;
   }

@@ -97,7 +97,7 @@ try {
     new CreateEvidenceUploadIntent(storage, defaultEvidencePolicy, signer).execute(expectation),
   );
   await expectCrossTenantRejection(
-    new CreateEvidenceDownloadIntent(storage, defaultEvidencePolicy).execute({
+    () => new CreateEvidenceDownloadIntent(storage, defaultEvidencePolicy).execute({
       authorizedTenantId: uuidv7(),
       documentSecretRef: finalized.documentSecretRef,
     }),
@@ -121,9 +121,9 @@ async function expectStorageConflict(operation: Promise<unknown>): Promise<void>
   throw new Error("Supabase Storage acceptance failed: overwrite must be rejected");
 }
 
-async function expectCrossTenantRejection(operation: Promise<unknown>): Promise<void> {
+async function expectCrossTenantRejection(operation: () => Promise<unknown>): Promise<void> {
   try {
-    await operation;
+    await operation();
   } catch (error) {
     if ((error as { code?: string }).code === "EVIDENCE_NOT_FOUND") return;
   }

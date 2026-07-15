@@ -1,9 +1,10 @@
+import { randomBytes } from "node:crypto";
 import { resolve } from "node:path";
 
 import { v7 as uuidv7 } from "uuid";
 
 import { loadConfig } from "../src/config/env.js";
-import { createMigrationClient } from "../src/db/client.js";
+import { createMigrationClient, resolveMigrationDatabaseUrl } from "../src/db/client.js";
 import { assertDedicatedTestProject } from "./migration-guard.js";
 
 try {
@@ -16,7 +17,8 @@ const config = loadConfig();
 assertDedicatedTestProject(config);
 const url = config.databaseDirectUrl ?? config.databaseUrl;
 if (url === undefined) throw new Error("A database URL is required.");
-const handle = createMigrationClient(url);
+const migrationUrl = resolveMigrationDatabaseUrl(url, config.supabaseUrl);
+const handle = createMigrationClient(migrationUrl);
 const tenantA = uuidv7();
 const tenantB = uuidv7();
 const sellerA = uuidv7();
@@ -35,7 +37,8 @@ try {
   const tables = await handle.sql<{ count: number }[]>`
     select count(*)::int as count from information_schema.tables where table_schema = 'jejak'
   `;
-  assert(tables[0]?.count === 26, "all 26 Jejak tables must exist");
+  const tableCount = tables[0]?.count ?? 0;
+  assert(tableCount >= 26, "the foundation tables and all additive lifecycle tables must exist");
 
   const rls = await handle.sql<{ count: number }[]>`
     select count(*)::int as count
@@ -43,7 +46,7 @@ try {
     join pg_namespace namespace on namespace.oid = class.relnamespace
     where namespace.nspname = 'jejak' and class.relkind = 'r' and class.relrowsecurity and class.relforcerowsecurity
   `;
-  assert(rls[0]?.count === 26, "RLS must be enabled and forced on every Jejak table");
+  assert(rls[0]?.count === tableCount, "RLS must be enabled and forced on every Jejak table");
 
   const exposed = await handle.sql<{ count: number }[]>`
     select count(*)::int as count
@@ -65,28 +68,10 @@ try {
       (${sellerB}, ${tenantB}, '{}'::jsonb, 'seller-b', 'ACTIVE')
   `;
 
-  const isolated = await handle.sql.begin(async (transaction) => {
-    await transaction`set local role jejak_api`;
-    await transaction`select set_config('jejak.tenant_id', ${tenantA}, true)`;
-    const rows = await transaction<{ tenant_id: string }[]>`select tenant_id from jejak.sellers order by tenant_id`;
-    return [...rows];
-  });
+  const runtimeResult = await verifyRuntimeTenantIsolation(migrationUrl, tenantA, tenantB);
+  const isolated = runtimeResult.rows;
   assert(isolated.length === 1 && isolated[0]?.tenant_id === tenantA, "tenant A must not read tenant B rows");
-
-  let crossTenantRejected = false;
-  try {
-    await handle.sql.begin(async (transaction) => {
-      await transaction`set local role jejak_api`;
-      await transaction`select set_config('jejak.tenant_id', ${tenantA}, true)`;
-      await transaction`
-        insert into jejak.sellers (id, tenant_id, canonical_payload, seller_subject, status)
-        values (${uuidv7()}, ${tenantB}, '{}'::jsonb, 'forbidden', 'ACTIVE')
-      `;
-    });
-  } catch (error) {
-    crossTenantRejected = (error as { code?: string }).code === "42501";
-  }
-  assert(crossTenantRejected, "cross-tenant insert must be rejected by RLS");
+  assert(runtimeResult.crossTenantRejected, "cross-tenant insert must be rejected by RLS");
 
   const auditId = uuidv7();
   await handle.sql`
@@ -105,4 +90,57 @@ try {
   console.log("Supabase foundation acceptance passed: schema, grants, forced RLS, two-tenant isolation, append-only audit.");
 } finally {
   await handle.close();
+}
+
+async function verifyRuntimeTenantIsolation(
+  databaseUrl: string,
+  tenantId: string,
+  forbiddenTenantId: string,
+): Promise<{ crossTenantRejected: boolean; rows: { tenant_id: string }[] }> {
+  const temporaryPassword = randomBytes(32).toString("hex");
+  const validUntil = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const setup = createMigrationClient(databaseUrl);
+  try {
+    await setup.sql.unsafe(
+      `alter role jejak_api login password '${temporaryPassword}' valid until '${validUntil}'`,
+    );
+  } finally {
+    await setup.close();
+  }
+
+  const runtimeUrl = new URL(databaseUrl);
+  runtimeUrl.username = "jejak_api";
+  runtimeUrl.password = temporaryPassword;
+  const runtime = createMigrationClient(runtimeUrl.toString());
+  try {
+    const rows = await runtime.sql.begin(async (transaction) => {
+      await transaction`select set_config('jejak.tenant_id', ${tenantId}, true)`;
+      return [
+        ...(await transaction<{ tenant_id: string }[]>`
+          select tenant_id from jejak.sellers order by tenant_id
+        `),
+      ];
+    });
+    let crossTenantRejected = false;
+    try {
+      await runtime.sql.begin(async (transaction) => {
+        await transaction`select set_config('jejak.tenant_id', ${tenantId}, true)`;
+        await transaction`
+          insert into jejak.sellers (id, tenant_id, canonical_payload, seller_subject, status)
+          values (${uuidv7()}, ${forbiddenTenantId}, '{}'::jsonb, 'forbidden', 'ACTIVE')
+        `;
+      });
+    } catch (error) {
+      crossTenantRejected = (error as { code?: string }).code === "42501";
+    }
+    return { crossTenantRejected, rows };
+  } finally {
+    await runtime.close().catch(() => undefined);
+    const cleanup = createMigrationClient(databaseUrl);
+    try {
+      await cleanup.sql`alter role jejak_api nologin password null`;
+    } finally {
+      await cleanup.close();
+    }
+  }
 }

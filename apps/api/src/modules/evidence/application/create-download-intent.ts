@@ -27,9 +27,6 @@ export class CreateEvidenceDownloadIntent {
       version: coordinates.version,
     };
     return this.telemetry.trace("evidence.create_download_intent", attributes, async () => {
-      if ((await this.storage.inspectObject(reference.objectKey)) === null) {
-        throw new EvidenceStorageError("EVIDENCE_NOT_FOUND", "Evidence object was not found.");
-      }
       return this.storage.createDownloadIntent(reference.objectKey, this.policy.downloadTtlSeconds);
     });
   }
