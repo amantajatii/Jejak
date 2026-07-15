@@ -1,0 +1,141 @@
+JEJAK BACKEND TRACKER
+=====================
+
+Owner       : BE / Integration Steward
+Source      : jejak-master-implementation-brief.md v2.0, Section 25
+Updated     : 15 July 2026
+Current wave: Wave 0 — Contract Freeze
+Design spec : docs/superpowers/specs/2026-07-15-jejak-backend-roadmap-wave-0-design.md
+Design state: APPROVED + SELF-REVIEWED
+Impl. plan  : docs/superpowers/plans/2026-07-15-jejak-backend-wave-0-implementation-plan.md
+Plan state  : EXECUTING; Task 1 preflight active
+
+STATUS
+------
+[x] DONE      Acceptance criteria passed with test/evidence.
+[~] DOING     Actively being implemented.
+[ ] TODO      Not started or no completion evidence.
+[-] DEFERRED  Explicitly outside the hackathon baseline.
+[!] BLOCKED   Cannot proceed until the stated dependency is available.
+
+SUMMARY
+-------
+DONE: 0  |  DOING: 1  |  TODO: 19  |  BLOCKED: 0  |  DEFERRED: 1
+
+Repository evidence at initialization:
+- apps/web exists and belongs to FE.
+- apps/server, apps/ai-service, and contracts are only placeholders.
+- Canonical paths apps/api and apps/risk-service do not exist yet.
+- No root pnpm/Turborepo workspace, packages/domain, OpenAPI, migrations,
+  Docker Compose, BE tests, or integration tests exist yet.
+- Therefore, no BE task is currently complete.
+
+
+WAVE 0 — FOUNDATION AND FROZEN CONTRACTS
+----------------------------------------
+[~] BE-00  MUST  Create monorepo/root scaffold
+    Done: all apps/packages install and build independently.
+
+[ ] BE-01  MUST  Publish canonical JSON Schema and OpenAPI
+    Done: TS/Python validation and reproducible client generation pass.
+
+[ ] BE-02  MUST  Add PostgreSQL/Drizzle schema and migrations
+    Done: a fresh database migrates up and down safely.
+
+[ ] BE-03  MUST  Implement auth, tenant isolation, and RBAC
+    Done: object-level authorization tests pass for every role.
+
+[ ] BE-04  MUST  Implement audit, idempotency, and transactional outbox
+    Done: duplicate requests/events are safe and fully auditable.
+
+
+DATA, RISK, AND CLAIM LIFECYCLE
+-------------------------------
+[ ] BE-05  MUST  Marketplace sandbox adapter and CSV ingestion
+    Done: raw hashes, normalized events, and quality reports persist.
+
+[ ] BE-06  MUST  Reconciliation ledger and decision-time snapshot
+    Done: immutable, cutoff-bound settlement snapshots are created.
+
+[ ] BE-07  MUST  Claim and financing-offer lifecycle APIs
+    Done: invalid transitions and version conflicts are rejected.
+
+[ ] BE-08  MUST  Risk-service client and orchestration
+    Done: snapshot hashes/results reconcile; failures remain safe.
+
+[ ] BE-09  MUST  JCC persistence and registry orchestration
+    Done: JCC signature/hash and on-chain result reconcile.
+
+
+PARTNER AND STELLAR ORCHESTRATION
+--------------------------------
+[ ] BE-10  MUST  Originator/control-evidence adapter
+    Done: deterministic sandbox evidence; raw documents stay off-chain.
+
+[ ] BE-11  MUST  Issuer and SEP-8-shaped adapter
+    Done: approve/revise/pending/action/reject paths are testable.
+
+[ ] BE-12  MUST  Facility/funding orchestrator
+    Done: persisted saga safely resumes after RPC/response failure.
+
+[ ] BE-13  MUST  Anchor adapter and local-payout receipt
+    Done: sandbox conversion receipt is labeled and reconciled.
+
+[ ] BE-14  MUST  Settlement ingestion and waterfall orchestration
+    Done: duplicates are safe; shortfall enters the correct path.
+
+[ ] BE-15  MUST  Chain event indexer and reconciliation
+    Done: reindex from checkpoint works and mismatches are detected.
+
+
+READ MODELS, OPERATIONS, AND INTEGRATION
+---------------------------------------
+[ ] BE-16  MUST  Portfolio and audit query APIs
+    Done: institutional queries are correct, authorized, and tested.
+
+[ ] BE-17  MUST  Docker Compose, CI, OpenTelemetry, and health checks
+    Done: fresh clone starts successfully with health/traces visible.
+
+[ ] BE-18  MUST  Integration and failure-injection tests
+    Done: happy, adverse, replay, timeout, and reconciliation tests pass.
+
+[ ] BE-19  SHOULD  Encrypted evidence object-storage adapter
+    Done: local MinIO/sandbox and production-shaped interface work.
+
+[-] BE-20  LATER  Real partner implementations
+    Resume only when real partners and credentials exist; never claim now.
+
+
+INTEGRATION-STEWARD CHECKLIST
+-----------------------------
+[ ] Canonical Money, IDs, enums, entities, errors, and fixtures are frozen.
+[ ] FE consumes generated OpenAPI client; no handwritten domain copies.
+[ ] RISK validates the same Money/ID/snapshot contracts.
+[ ] SC bindings/events match the frozen ABI and indexer fixtures.
+[ ] Breaking frozen-contract changes use an approved ICP.
+[ ] Generated artifacts are reproducible and checked for drift in CI.
+[ ] External calls have timeout, retry class, correlation, and reconciliation.
+[ ] Chain state is reconciled; submission success is never assumed final.
+[ ] Migrations include safe up/down and rollback instructions.
+[ ] docs/status/be.md is updated at every integration gate.
+
+
+NEXT ACTIONS
+------------
+1. BE-00: establish the canonical root workspace and align apps/api versus
+   the current apps/server placeholder without touching FE-owned code.
+2. BE-01: freeze packages/domain schemas, fixtures, errors, and OpenAPI with
+   FE, SC, and RISK before feature implementation.
+3. Create docs/status/be.md and record Wave 0 evidence continuously.
+4. Reach Gate A before starting the happy-path vertical slice.
+
+
+IMPORTANT BOUNDARIES
+--------------------
+- Use integer Money; never floating point for financial values.
+- Keep PII and legal documents off-chain and out of logs/events.
+- Mutations require idempotency, optimistic concurrency, and audit records.
+- Use a transactional outbox; never best-effort event publication.
+- Sandbox partners must be visibly labeled in APIs, UI metadata, logs, and docs.
+- BE coordinates integrations but does not own risk-model internals or Soroban logic.
+- A task moves to DONE only after its acceptance criteria and tests pass.

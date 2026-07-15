@@ -1,0 +1,28 @@
+{
+  "name": "jejak",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": "24.10.0"
+  },
+  "packageManager": "pnpm@10.18.3",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "domain:generate": "pnpm --filter @jejak/domain generate",
+    "domain:validate": "pnpm --filter @jejak/domain validate",
+    "openapi:generate": "pnpm --filter @jejak/api openapi:generate",
+    "api-client:generate": "pnpm --filter @jejak/api-client generate",
+    "contracts:check": "node scripts/check-generated.mjs",
+    "supabase": "supabase"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "supabase": "2.109.1",
+    "turbo": "2.10.5",
+    "typescript": "5.9.3"
+  }
+}
