@@ -90,8 +90,19 @@ describe("atomic mutation foundation", () => {
 
 describe("safe telemetry/event attributes", () => {
   it("redacts secrets recursively", () => {
-    expect(safeAttributes({ authorization: "Bearer raw", nested: { email: "person@example.test", status: "ok" } }))
-      .toEqual({ authorization: "[REDACTED]", nested: { email: "[REDACTED]", status: "ok" } });
+    expect(
+      safeAttributes({
+        authorization: "Bearer raw",
+        nested: {
+          email: "person@example.test",
+          signedUrl: "https://private.example.test/object?token=raw",
+          status: "ok",
+        },
+      }),
+    ).toEqual({
+      authorization: "[REDACTED]",
+      nested: { email: "[REDACTED]", signedUrl: "[REDACTED]", status: "ok" },
+    });
   });
   it("uses bounded exponential backoff with jitter", () => {
     expect(retryDelayMilliseconds(3, () => 0.5)).toBe(4_000);

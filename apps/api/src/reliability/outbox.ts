@@ -8,14 +8,16 @@ export function retryDelayMilliseconds(attempt: number, random = Math.random): n
 
 export async function claimOutboxBatch(
   sql: Sql,
-  input: { batchSize: number; leaseMilliseconds: number; workerId: string },
+  input: { batchSize: number; leaseMilliseconds: number; tenantId: string; workerId: string },
 ): Promise<unknown[]> {
   return sql.begin(async (transaction) => {
+    await transaction`select set_config('jejak.tenant_id', ${input.tenantId}, true)`;
     const rows = await transaction`
       with candidates as (
         select id
         from jejak.outbox_events
-        where status in ('PENDING', 'PROCESSING')
+        where tenant_id = ${input.tenantId}
+          and status in ('PENDING', 'PROCESSING')
           and next_attempt_at <= now()
           and (leased_until is null or leased_until < now())
         order by created_at
@@ -28,7 +30,7 @@ export async function claimOutboxBatch(
           leased_until = now() + (${input.leaseMilliseconds} * interval '1 millisecond'),
           attempt_count = event.attempt_count + 1
       from candidates
-      where event.id = candidates.id
+      where event.id = candidates.id and event.tenant_id = ${input.tenantId}
       returning event.*
     `;
     return [...rows];

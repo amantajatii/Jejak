@@ -1,4 +1,4 @@
-const sensitiveKey = /(authorization|cookie|email|password|secret|token|credential|raw|document)/i;
+const sensitiveKey = /(authorization|cookie|email|password|secret|token|credential|raw|document|url)/i;
 
 export function safeAttributes(input: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(

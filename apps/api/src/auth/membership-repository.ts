@@ -1,11 +1,13 @@
-import { and, eq, gt, isNull, or } from "drizzle-orm";
+import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
 
+import type { ResourceAssignment } from "./authorization.js";
 import type { ActiveRoleGrant } from "./types.js";
 import type { JejakDatabase } from "../db/client.js";
 import { applyTransactionContext } from "../db/context.js";
 import {
   membershipRoleGrants,
   organizationMemberships,
+  resourceAssignments,
   userProfiles,
 } from "../db/schema/index.js";
 
@@ -20,6 +22,7 @@ export async function findActiveMembership(
   database: JejakDatabase,
   input: { authSubject: string; requestId: string; tenantId: string },
 ): Promise<ActiveMembership | undefined> {
+  const now = new Date();
   return database.transaction(async (transaction) => {
     await applyTransactionContext(transaction, {
       actorId: input.authSubject,
@@ -48,9 +51,10 @@ export async function findActiveMembership(
           eq(userProfiles.status, "ACTIVE"),
           eq(organizationMemberships.tenantId, input.tenantId),
           eq(organizationMemberships.status, "ACTIVE"),
-          or(isNull(organizationMemberships.expiresAt), gt(organizationMemberships.expiresAt, new Date())),
+          or(isNull(organizationMemberships.expiresAt), gt(organizationMemberships.expiresAt, now)),
           eq(membershipRoleGrants.status, "ACTIVE"),
-          or(isNull(membershipRoleGrants.validUntil), gt(membershipRoleGrants.validUntil, new Date())),
+          lte(membershipRoleGrants.validFrom, now),
+          or(isNull(membershipRoleGrants.validUntil), gt(membershipRoleGrants.validUntil, now)),
         ),
       );
     const first = rows[0];
@@ -61,5 +65,38 @@ export async function findActiveMembership(
       membershipId: first.membershipId,
       tenantId: input.tenantId,
     };
+  });
+}
+
+export async function findActiveResourceAssignments(
+  database: JejakDatabase,
+  input: {
+    actorId: string;
+    membershipId: string;
+    requestId: string;
+    tenantId: string;
+  },
+): Promise<ResourceAssignment[]> {
+  return database.transaction(async (transaction) => {
+    await applyTransactionContext(transaction, {
+      actorId: input.actorId,
+      membershipId: input.membershipId,
+      requestId: input.requestId,
+      tenantId: input.tenantId,
+    });
+    return transaction
+      .select({
+        capability: resourceAssignments.capability,
+        resourceId: resourceAssignments.resourceId,
+        resourceType: resourceAssignments.resourceType,
+      })
+      .from(resourceAssignments)
+      .where(
+        and(
+          eq(resourceAssignments.tenantId, input.tenantId),
+          eq(resourceAssignments.membershipId, input.membershipId),
+          eq(resourceAssignments.status, "ACTIVE"),
+        ),
+      );
   });
 }

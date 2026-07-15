@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { authorize, AuthorizationError } from "../src/auth/authorization.js";
 import { AuthenticationError, bearerToken, SupabaseJwtVerifier } from "../src/auth/jwt-verifier.js";
 import { parseTenantId } from "../src/auth/tenant.js";
+import { actorRoles } from "../src/auth/types.js";
 
 describe("Supabase JWT verification", () => {
   it("verifies issuer, audience, signature, expiry, and subject", async () => {
@@ -11,7 +12,11 @@ describe("Supabase JWT verification", () => {
     const jwk = await exportJWK(publicKey);
     jwk.kid = "test-key";
     const issuer = "https://abcdefghijklmnopqrst.supabase.co/auth/v1";
-    const token = await new SignJWT({ email: "member@example.test" })
+    const token = await new SignJWT({
+      app_metadata: { role: "ADMIN" },
+      email: "member@example.test",
+      user_metadata: { role: "ADMIN" },
+    })
       .setProtectedHeader({ alg: "ES256", kid: jwk.kid })
       .setSubject("01980a12-3456-789a-8abc-def012345678")
       .setIssuer(issuer)
@@ -82,5 +87,76 @@ describe("tenant and RBAC policy", () => {
         tenantId,
       }),
     ).toThrow(AuthorizationError);
+  });
+
+  it.each(actorRoles)("authorizes the canonical %s role only when the route allows it", (role) => {
+    const context = authorize({
+      actorId: tenantId,
+      grants: [{ grantId: `${role.toLowerCase()}-grant`, role }],
+      membershipId: tenantId,
+      requiredRoles: [role],
+      tenantId,
+    });
+    expect(context.role).toBe(role);
+    expect(context.roleGrantId).toBe(`${role.toLowerCase()}-grant`);
+
+    expect(() =>
+      authorize({
+        actorId: tenantId,
+        grants: [{ grantId: `${role.toLowerCase()}-grant`, role }],
+        membershipId: tenantId,
+        requiredRoles: actorRoles.filter((candidate) => candidate !== role),
+        tenantId,
+      }),
+    ).toThrow(AuthorizationError);
+  });
+
+  it("requires an exact active resource assignment for non-admin roles", () => {
+    const resource = {
+      capability: "MANAGE",
+      resourceId: tenantId,
+      resourceType: "CLAIM",
+    };
+    expect(
+      authorize({
+        actorId: tenantId,
+        assignments: [resource],
+        grants: [{ grantId: "originator-grant", role: "ORIGINATOR" }],
+        membershipId: tenantId,
+        requiredRoles: ["ORIGINATOR"],
+        resource,
+        tenantId,
+      }).role,
+    ).toBe("ORIGINATOR");
+
+    expect(() =>
+      authorize({
+        actorId: tenantId,
+        assignments: [{ ...resource, capability: "READ" }],
+        grants: [{ grantId: "originator-grant", role: "ORIGINATOR" }],
+        membershipId: tenantId,
+        requiredRoles: ["ORIGINATOR"],
+        resource,
+        tenantId,
+      }),
+    ).toThrow(AuthorizationError);
+  });
+
+  it("allows an approved admin role without manufacturing a resource assignment", () => {
+    expect(
+      authorize({
+        actorId: tenantId,
+        assignments: [],
+        grants: [{ grantId: "admin-grant", role: "ADMIN" }],
+        membershipId: tenantId,
+        requiredRoles: ["ADMIN"],
+        resource: {
+          capability: "MANAGE",
+          resourceId: tenantId,
+          resourceType: "CLAIM",
+        },
+        tenantId,
+      }).role,
+    ).toBe("ADMIN");
   });
 });
