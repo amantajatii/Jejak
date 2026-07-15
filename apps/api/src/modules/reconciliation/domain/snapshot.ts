@@ -24,6 +24,7 @@ export type DecisionSnapshot = {
   tenantId: string;
   sellerId: string;
   marketplaceConnectionId: string;
+  sourceNamespace: string;
   sourceCurrency: string;
   snapshotCutoffAt: string;
   dataSnapshotHash: string;
@@ -34,9 +35,12 @@ export type DecisionSnapshot = {
   firstEventAt: string;
   lastEventAt: string;
   dataQualityScoreBps: number;
+  blocksAutomation: boolean;
+  includedEventIdentities: string[];
   includedEventHashes: string[];
   ledgerHighWaterMark?: string;
   qualityReportHash: string;
+  qualityReasonCodes: string[];
   snapshotSchemaVersion: "JEJAK_SETTLEMENT_SNAPSHOT_V1";
   featureSchemaVersion: string;
   predecessorSnapshotId?: string;
@@ -62,9 +66,11 @@ export function buildDecisionSnapshot(input: {
   tenantId: string;
   sellerId: string;
   marketplaceConnectionId: string;
+  sourceNamespace?: string;
   cutoffAt: string;
   createdAt: string;
   events: CanonicalMarketplaceEvent[];
+  includedEvents?: CanonicalMarketplaceEvent[];
   qualityReport: IngestionQualityReport;
   moneyUnit: MoneyValue;
   baseline?: ReconciliationBaseline;
@@ -91,6 +97,10 @@ export function buildDecisionSnapshot(input: {
     .filter((event) => new Date(event.occurredAt).valueOf() <= cutoff.valueOf())
     .slice()
     .sort(compareEvents);
+  const includedEvents = (input.includedEvents ?? events)
+    .filter((event) => new Date(event.occurredAt).valueOf() <= cutoff.valueOf())
+    .slice()
+    .sort(compareEvents);
   let grossUnsettled = baseline.grossUnsettled;
   let knownAdjustments = baseline.knownAdjustments;
   let realizedToDate = baseline.realizedToDate;
@@ -110,10 +120,15 @@ export function buildDecisionSnapshot(input: {
       );
     }
   }
+  for (const event of includedEvents) assertSameMoneyUnit(input.moneyUnit, event.amount);
 
-  const firstEventAt = baseline.firstEventAt ?? events[0]?.occurredAt ?? input.cutoffAt;
-  const lastEventAt = events.at(-1)?.occurredAt ?? baseline.lastEventAt ?? input.cutoffAt;
-  const includedEventHashes = events.map((event) => event.sourceRowHash);
+  const firstEventAt = baseline.firstEventAt ?? includedEvents[0]?.occurredAt ?? input.cutoffAt;
+  const lastEventAt = includedEvents.at(-1)?.occurredAt ?? baseline.lastEventAt ?? input.cutoffAt;
+  const includedEventHashes = includedEvents.map((event) => event.sourceRowHash);
+  const sourceNamespace = input.sourceNamespace ?? "UNSPECIFIED";
+  const includedEventIdentities = includedEvents.map(
+    (event) => `${sourceNamespace}:${event.externalEventId}`,
+  );
   const qualityReportHash = canonicalHash({
     format: input.qualityReport.format,
     totalRows: input.qualityReport.totalRows,
@@ -130,11 +145,14 @@ export function buildDecisionSnapshot(input: {
       detail: issue.detail,
     })),
   });
+  const qualityReasonCodes = [...new Set(input.qualityReport.issues.map((issue) => issue.code))].sort();
+  const blocksAutomation = input.qualityReport.issues.some((issue) => issue.blocksAutomation);
   const hashInput = {
     schema: "JEJAK_SETTLEMENT_SNAPSHOT_V1",
     tenantId: input.tenantId,
     sellerId: input.sellerId,
     marketplaceConnectionId: input.marketplaceConnectionId,
+    sourceNamespace,
     snapshotCutoffAt: input.cutoffAt,
     grossUnsettled,
     knownAdjustments,
@@ -143,20 +161,24 @@ export function buildDecisionSnapshot(input: {
     firstEventAt,
     lastEventAt,
     dataQualityScoreBps: input.qualityReport.qualityScoreBps,
+    blocksAutomation,
     qualityReportHash,
+    qualityReasonCodes,
+    includedEventIdentities,
     includedEventHashes,
     featureSchemaVersion: input.featureSchemaVersion ?? "JEJAK_RISK_FEATURES_V1",
     ...(input.predecessorSnapshotId === undefined
       ? {}
       : { predecessorSnapshotId: input.predecessorSnapshotId }),
   };
-  const lastIncludedEvent = events.at(-1);
+  const lastIncludedEvent = includedEvents.at(-1);
 
   return {
     id: input.id,
     tenantId: input.tenantId,
     sellerId: input.sellerId,
     marketplaceConnectionId: input.marketplaceConnectionId,
+    sourceNamespace,
     sourceCurrency: input.moneyUnit.currency,
     snapshotCutoffAt: input.cutoffAt,
     dataSnapshotHash: canonicalHash(hashInput),
@@ -167,11 +189,14 @@ export function buildDecisionSnapshot(input: {
     firstEventAt,
     lastEventAt,
     dataQualityScoreBps: input.qualityReport.qualityScoreBps,
+    blocksAutomation,
+    includedEventIdentities,
     includedEventHashes,
     ...(lastIncludedEvent === undefined
       ? {}
       : { ledgerHighWaterMark: lastIncludedEvent.externalEventId }),
     qualityReportHash,
+    qualityReasonCodes,
     snapshotSchemaVersion: "JEJAK_SETTLEMENT_SNAPSHOT_V1",
     featureSchemaVersion: input.featureSchemaVersion ?? "JEJAK_RISK_FEATURES_V1",
     ...(input.predecessorSnapshotId === undefined

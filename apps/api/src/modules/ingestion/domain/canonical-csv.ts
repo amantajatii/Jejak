@@ -154,7 +154,7 @@ function normalizeRow(
   if (!/^\d+$/.test(record.scale ?? "") || !Number.isInteger(scale) || scale < 0 || scale > 18) {
     issues.push(rowIssue(rowNumber, "scale", "Scale must be an integer from 0 through 18."));
   }
-  for (const fieldName of optionalHeaders) {
+  for (const fieldName of ["external_event_id", ...optionalHeaders]) {
     const value = record[fieldName] ?? "";
     if (value.length > 0 && formulaPattern.test(value)) {
       issues.push(rowIssue(rowNumber, fieldName, "Formula-like text is not accepted."));

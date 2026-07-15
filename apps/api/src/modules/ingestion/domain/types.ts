@@ -34,7 +34,7 @@ export type DataQualityIssue = {
 };
 
 export type IngestionQualityReport = {
-  format: "JEJAK_CANONICAL_CSV_V1";
+  format: "JEJAK_CANONICAL_CSV_V1" | "JEJAK_MARKETPLACE_BATCH_V1";
   totalRows: number;
   validUniqueRows: number;
   duplicateRows: number;

@@ -65,10 +65,39 @@ describe("canonical marketplace CSV", () => {
     expect(result.report.rejectedRows).toBe(1);
   });
 
+  it("produces byte-for-byte deterministic safe evidence for malformed rows", () => {
+    const malformed = bytes(
+      `${header}\nevent-1,UNKNOWN,not-a-time,1.5,?,99,=private-formula`,
+    );
+    const first = parseCanonicalCsv(malformed).report;
+    const second = parseCanonicalCsv(malformed).report;
+
+    expect(second).toEqual(first);
+    expect(first).toMatchObject({ qualityScoreBps: 0, rejectedRows: 1, validUniqueRows: 0 });
+    expect(first.issues.map((issue) => [issue.rowNumber, issue.field, issue.code])).toEqual([
+      [2, "event_type", "DATA_INCONSISTENT"],
+      [2, "occurred_at", "DATA_INCONSISTENT"],
+      [2, "amount_minor", "DATA_INCONSISTENT"],
+      [2, "currency", "DATA_INCONSISTENT"],
+      [2, "scale", "DATA_INCONSISTENT"],
+      [2, "order_reference", "DATA_INCONSISTENT"],
+    ]);
+    expect(JSON.stringify(first)).not.toContain("private-formula");
+  });
+
   it("verifies the exact object hash before persistence", async () => {
     const body = bytes(`${header}\nevent-1,ORDER_SETTLED,2026-07-15T00:00:00Z,100,TIDR,2,order`);
-    const persist = vi.fn().mockResolvedValue({ ingestionId: "ingestion-1" });
+    const persist = vi.fn().mockImplementation(async (input) => ({
+      ingestionId: "ingestion-1",
+      replayed: false,
+      report: input.report,
+    }));
     const reader = { read: vi.fn().mockResolvedValue(body) };
+    const repository = {
+      findById: vi.fn().mockResolvedValue(null),
+      findConnection: vi.fn().mockResolvedValue(null),
+      persist,
+    };
 
     await expect(
       ingestCanonicalCsv({
@@ -77,7 +106,7 @@ describe("canonical marketplace CSV", () => {
         storageObjectKey: "private/object.csv",
         expectedContentHash: "0".repeat(64),
         reader,
-        repository: { persist },
+        repository,
       }),
     ).rejects.toMatchObject({ code: "VALIDATION_FAILED" } satisfies Partial<DomainError>);
     expect(persist).not.toHaveBeenCalled();
@@ -88,7 +117,7 @@ describe("canonical marketplace CSV", () => {
       storageObjectKey: "private/object.csv",
       expectedContentHash: sha256Hex(body),
       reader,
-      repository: { persist },
+      repository,
     });
     expect(result.ingestionId).toBe("ingestion-1");
     expect(persist).toHaveBeenCalledWith(
