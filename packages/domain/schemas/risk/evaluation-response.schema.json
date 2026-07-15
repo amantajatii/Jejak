@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/risk/evaluation-response.schema.json",
+  "title": "RiskEvaluationResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestId",
+    "claimId",
+    "dataSnapshotHash",
+    "policyVersion",
+    "evaluationId",
+    "modelId",
+    "modelVersion",
+    "decision",
+    "sdsBps",
+    "expectedDilutionBps",
+    "tailDilutionBps",
+    "eligibleSettlementValue",
+    "maxAdvanceAmount",
+    "reasonCodes",
+    "featureSnapshotHash",
+    "evaluatedAt"
+  ],
+  "properties": {
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "dataSnapshotHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "policyVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "evaluationId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "modelId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "modelVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "decision": { "$ref": "../enums/eligibility-decision.schema.json" },
+    "sdsBps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "expectedDilutionBps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "tailDilutionBps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+    "eligibleSettlementValue": { "$ref": "../common/money.schema.json" },
+    "maxAdvanceAmount": { "$ref": "../common/money.schema.json" },
+    "reasonCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "../enums/reason-code.schema.json" }
+    },
+    "featureSnapshotHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "evaluatedAt": { "$ref": "../common/timestamp.schema.json" }
+  }
+}

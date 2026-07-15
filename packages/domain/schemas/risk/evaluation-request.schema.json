@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/risk/evaluation-request.schema.json",
+  "title": "RiskEvaluationRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requestId",
+    "claimId",
+    "claimKey",
+    "sellerSubjectHash",
+    "settlementStreamId",
+    "dataSnapshotHash",
+    "snapshotCutoffAt",
+    "sourceCurrency",
+    "features",
+    "featureSnapshotHash",
+    "grossUnsettled",
+    "policyVersion"
+  ],
+  "properties": {
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "claimId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "claimKey": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "sellerSubjectHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "settlementStreamId": { "$ref": "../common/identifiers.schema.json#/$defs/uuidV7" },
+    "dataSnapshotHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "snapshotCutoffAt": { "$ref": "../common/timestamp.schema.json" },
+    "sourceCurrency": { "$ref": "../common/identifiers.schema.json#/$defs/currency" },
+    "features": {
+      "type": "object",
+      "maxProperties": 256,
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" },
+          { "type": "null" }
+        ]
+      }
+    },
+    "featureSnapshotHash": { "$ref": "../common/identifiers.schema.json#/$defs/sha256Hex" },
+    "grossUnsettled": { "$ref": "../common/money.schema.json" },
+    "policyVersion": { "type": "string", "minLength": 1, "maxLength": 64 }
+  }
+}

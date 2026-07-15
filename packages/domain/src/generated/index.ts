@@ -27,6 +27,8 @@ export type { PartnerMode } from "./enums/partner-mode.js";
 export type { ReasonCode } from "./enums/reason-code.js";
 export type { ResolutionCase } from "./entities/resolution-case.js";
 export type { ResolutionStatus } from "./enums/resolution-status.js";
+export type { RiskEvaluationRequest } from "./risk/evaluation-request.js";
+export type { RiskEvaluationResponse } from "./risk/evaluation-response.js";
 export type { ScenarioFixture } from "./fixtures/scenario.js";
 export type { Seller } from "./entities/seller.js";
 export type { SettlementEvent } from "./entities/settlement-event.js";
