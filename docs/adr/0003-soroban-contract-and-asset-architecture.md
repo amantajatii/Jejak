@@ -16,4 +16,3 @@ All amounts use checked `i128`; public hashes use `BytesN<32>`; scalable records
 - Contract IDs remain stable across compatible WASM upgrades.
 - Testnet assets and partner actions remain visibly sandbox-only.
 - Off-chain PII, legal evidence, FX quotes, and detailed model features never enter contract storage or events.
-

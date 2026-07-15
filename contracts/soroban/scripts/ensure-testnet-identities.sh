@@ -26,4 +26,3 @@ for identity in "${identities[@]}"; do
   fi
   printf '%s=%s\n' "$identity" "$(stellar keys address "$identity")"
 done
-

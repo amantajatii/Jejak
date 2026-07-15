@@ -20,4 +20,3 @@ generate asset-controller jejak_asset_controller.wasm
 generate facility jejak_facility.wasm
 generate servicing-waterfall jejak_servicing_waterfall.wasm
 generate resolution-manager jejak_resolution_manager.wasm
-

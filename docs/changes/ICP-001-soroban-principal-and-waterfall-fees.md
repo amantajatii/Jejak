@@ -26,4 +26,3 @@ Security impact: Enforces issuance cap, deterministic cash priority, replay prot
 Rollout/rollback: Deploy only this ABI. Roll back by deploying a new version; never reinterpret stored source amounts.
 
 Decision: APPROVED for Testnet v1; BE consumer acknowledgement remains an integration gate.
-

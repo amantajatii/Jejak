@@ -19,4 +19,3 @@ jejak-asset-controller = { path = "../asset-controller" }
 jejak-facility = { path = "../facility" }
 jejak-servicing-waterfall = { path = "../servicing-waterfall" }
 jejak-resolution-manager = { path = "../resolution-manager" }
-

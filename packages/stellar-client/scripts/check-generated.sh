@@ -21,4 +21,3 @@ do
 done
 
 diff -ru "$current" "$tmp"
-
