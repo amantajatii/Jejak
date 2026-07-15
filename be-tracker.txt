@@ -22,22 +22,61 @@ SUMMARY
 -------
 DONE: 1  |  DOING: 2  |  TODO: 17  |  BLOCKED: 0  |  DEFERRED: 1
 
-Repository evidence at initialization:
+INITIAL BASELINE — HISTORICAL
+-----------------------------
+Repository evidence before Wave 0 implementation:
 - apps/web exists and belongs to FE.
 - apps/server, apps/ai-service, and contracts are only placeholders.
 - Canonical paths apps/api and apps/risk-service do not exist yet.
 - No root pnpm/Turborepo workspace, packages/domain, OpenAPI, migrations,
   Docker Compose, BE tests, or integration tests exist yet.
-- Therefore, no BE task is currently complete.
+- At that baseline, no BE task had completion evidence.
+
+
+IMPLEMENTATION EVIDENCE — CURRENT
+---------------------------------
+[x] Root pnpm/Turborepo workspace and shared TypeScript configuration.
+[x] Fastify runtime shell with canonical /health and /ready responses.
+[x] 39 compiled schema resources; 31 generated TypeScript modules.
+[x] 8 deterministic sandbox scenarios; 6 cross-runtime vector sets.
+[x] OpenAPI 3.1: 23 Section 18 operations plus health/readiness.
+[x] Framework-neutral @jejak/api-client with per-request token provider.
+[x] Cross-language Python consumer proof reading canonical files directly.
+[x] Generated drift rejection, CI workflow, secret scan, and Compose config.
+[x] Contract-generation/Supabase runbooks, ADRs, and handoff instructions.
+[ ] API container smoke: waiting for a machine/CI runner with Docker daemon.
+
+Verified tests/checks:
+- Domain: 14 tests passed.
+- API: 13 tests passed.
+- Generated API client: 3 tests passed.
+- Python contracts: 7 tests passed.
+- Generated drift rejection: 1 test passed.
+- Root lint, typecheck, test, build, and contracts:check passed.
+- Docker Compose configuration passed; local image smoke not run.
+
+Evidence commits:
+- 5f929ef  root workspace/config
+- 6790c48  Fastify health/readiness
+- 5a2936c  schemas, fixtures, and vectors
+- 0a01977  OpenAPI and generated API client
+- f1e60d1  Python contract validation
+- 96c3b4f  CI, drift, and container foundation
+- 4d35e0e  handoff, ADR, status, and gate evidence
 
 
 WAVE 0 — FOUNDATION AND FROZEN CONTRACTS
 ----------------------------------------
 [~] BE-00  MUST  Create monorepo/root scaffold
     Done: all apps/packages install and build independently.
+    Evidence: root/API/domain/client/FE builds pass.
+    Open: FE approval to remove apps/web/package-lock.json and RISK/SC
+          acknowledgement of workspace alignment.
 
 [x] BE-01  MUST  Publish canonical JSON Schema and OpenAPI
     Done: TS/Python validation and reproducible client generation pass.
+    Evidence: schemas, fixtures, vectors, OpenAPI, generated client,
+              drift check, and Python consumer tests all pass.
 
 [ ] BE-02  MUST  Add PostgreSQL/Drizzle schema and migrations
     Done: a fresh database migrates up and down safely.
@@ -95,6 +134,9 @@ READ MODELS, OPERATIONS, AND INTEGRATION
 
 [~] BE-17  MUST  Docker Compose, CI, OpenTelemetry, and health checks
     Done: fresh clone starts successfully with health/traces visible.
+    Evidence: health/readiness, CI workflow, Dockerfile, Compose config,
+              secret scan, and smoke runner exist.
+    Open: container smoke evidence and OpenTelemetry implementation.
 
 [ ] BE-18  MUST  Integration and failure-injection tests
     Done: happy, adverse, replay, timeout, and reconciliation tests pass.
@@ -109,15 +151,15 @@ READ MODELS, OPERATIONS, AND INTEGRATION
 INTEGRATION-STEWARD CHECKLIST
 -----------------------------
 [x] Canonical Money, IDs, enums, entities, errors, and fixtures are frozen.
-[ ] FE consumes generated OpenAPI client; no handwritten domain copies.
-[ ] RISK validates the same Money/ID/snapshot contracts.
-[ ] SC bindings/events match the frozen ABI and indexer fixtures.
+[~] FE handoff published; generated-client adoption acknowledgement pending.
+[~] RISK Python proof exists; owner JCS/Ed25519 acknowledgement pending.
+[~] SC vector handoff published; Rust ABI/event acknowledgement pending.
 [ ] Breaking frozen-contract changes use an approved ICP.
 [x] Generated artifacts are reproducible and checked for drift in CI.
 [ ] External calls have timeout, retry class, correlation, and reconciliation.
 [ ] Chain state is reconciled; submission success is never assumed final.
 [ ] Migrations include safe up/down and rollback instructions.
-[ ] docs/status/be.md is updated at every integration gate.
+[x] docs/status/be.md contains current Wave 0 evidence and open gates.
 
 
 NEXT ACTIONS
