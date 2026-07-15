@@ -3,7 +3,7 @@
   "status": "promoted",
   "sandbox_only": true,
   "network": {"name": "testnet", "passphrase": "Test SDF Network ; September 2015", "protocol": 27},
-  "source": {"branch": "agent/sc", "base_git_commit": "ddb60bad89207304eb145267ff8da5def932b343"},
+  "source": {"branch": "agent/sc", "implementation_git_commit": "4ffbcc2"},
   "toolchain": {"stellar_cli": "27.0.0", "soroban_sdk": "27.0.0", "rustc": "1.95.0", "cargo": "1.95.0"},
   "deployer": {"alias": "jejak-deployer", "address": "GB4HSH72SE27IVSQV6O5WDV4UJCYFR5WVZEW2CEF3GWDWF46GPMO5MFU"},
   "roles": {
