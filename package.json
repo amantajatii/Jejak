@@ -16,6 +16,7 @@
     "domain:validate": "pnpm --filter @jejak/domain validate",
     "openapi:generate": "pnpm --filter @jejak/api openapi:generate",
     "api-client:generate": "pnpm --filter @jejak/api-client generate",
+    "contracts:python": "python3 -m pytest tests/contract/python -q",
     "contracts:check": "node scripts/check-generated.mjs",
     "supabase": "supabase"
   },
