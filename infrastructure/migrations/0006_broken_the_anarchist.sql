@@ -121,6 +121,17 @@ CREATE INDEX "chain_reconciliation_results_expectation_fk_idx" ON "jejak"."chain
 CREATE INDEX "audit_events_tenant_page_idx" ON "jejak"."audit_events" USING btree ("tenant_id", "created_at" DESC, "id" DESC);--> statement-breakpoint
 CREATE INDEX "audit_events_action_page_idx" ON "jejak"."audit_events" USING btree ("tenant_id", "action", "created_at" DESC, "id" DESC);--> statement-breakpoint
 CREATE INDEX "audit_events_resource_page_idx" ON "jejak"."audit_events" USING btree ("tenant_id", "resource_type", "created_at" DESC, "id" DESC);--> statement-breakpoint
+CREATE INDEX "chain_events_waterfall_result_hash_idx" ON "jejak"."chain_events" USING btree
+  ("tenant_id", (("safe_payload" ->> 'resultHash')))
+  WHERE "event_type" = 'waterfall.executed';--> statement-breakpoint
+CREATE INDEX "settlement_events_claim_page_idx" ON "jejak"."settlement_events" USING btree
+  ("tenant_id", "claim_id", "occurred_at" DESC, "id" DESC);--> statement-breakpoint
+CREATE INDEX "settlement_events_claim_fk_idx" ON "jejak"."settlement_events" USING btree ("claim_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "waterfall_results_result_hash_uq" ON "jejak"."waterfall_results" USING btree ("tenant_id", "result_hash");--> statement-breakpoint
+CREATE INDEX "waterfall_results_claim_page_idx" ON "jejak"."waterfall_results" USING btree
+  ("tenant_id", "claim_id", "created_at" DESC, "id" DESC);--> statement-breakpoint
+CREATE INDEX "waterfall_results_claim_fk_idx" ON "jejak"."waterfall_results" USING btree ("claim_id");--> statement-breakpoint
+CREATE INDEX "waterfall_results_settlement_event_fk_idx" ON "jejak"."waterfall_results" USING btree ("settlement_event_id");--> statement-breakpoint
 REVOKE ALL ON jejak.chain_events, jejak.chain_portfolio_positions,
   jejak.chain_reconciliation_expectations, jejak.chain_reconciliation_results
   FROM PUBLIC, anon, authenticated, service_role;--> statement-breakpoint
@@ -134,6 +145,8 @@ REVOKE UPDATE, DELETE, TRUNCATE ON jejak.chain_events,
   jejak.chain_reconciliation_expectations, jejak.chain_reconciliation_results
   FROM jejak_api, jejak_worker;--> statement-breakpoint
 REVOKE DELETE, TRUNCATE ON jejak.chain_portfolio_positions FROM jejak_api, jejak_worker;--> statement-breakpoint
+REVOKE UPDATE, DELETE, TRUNCATE ON jejak.settlement_events, jejak.waterfall_results
+  FROM jejak_api, jejak_worker;--> statement-breakpoint
 DO $$
 DECLARE
   table_name text;
@@ -161,7 +174,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  RAISE EXCEPTION 'chain events and reconciliation records are append-only' USING ERRCODE = '55000';
+  RAISE EXCEPTION 'canonical chain and settlement records are append-only' USING ERRCODE = '55000';
 END
 $$;--> statement-breakpoint
 CREATE TRIGGER chain_events_append_only
@@ -172,4 +185,10 @@ BEFORE UPDATE OR DELETE ON jejak.chain_reconciliation_expectations
 FOR EACH ROW EXECUTE FUNCTION jejak.reject_chain_immutable_mutation();--> statement-breakpoint
 CREATE TRIGGER chain_reconciliation_results_append_only
 BEFORE UPDATE OR DELETE ON jejak.chain_reconciliation_results
+FOR EACH ROW EXECUTE FUNCTION jejak.reject_chain_immutable_mutation();--> statement-breakpoint
+CREATE TRIGGER settlement_events_append_only
+BEFORE UPDATE OR DELETE ON jejak.settlement_events
+FOR EACH ROW EXECUTE FUNCTION jejak.reject_chain_immutable_mutation();--> statement-breakpoint
+CREATE TRIGGER waterfall_results_append_only
+BEFORE UPDATE OR DELETE ON jejak.waterfall_results
 FOR EACH ROW EXECUTE FUNCTION jejak.reject_chain_immutable_mutation();

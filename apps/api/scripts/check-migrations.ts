@@ -55,9 +55,16 @@ requireText(chainReadModels, /current_setting\(''jejak\.tenant_id'', true\)/, "c
 requireText(chainReadModels, /reject_chain_immutable_mutation/, "chain immutable event trigger is missing");
 requireText(chainReadModels, /REVOKE UPDATE, DELETE, TRUNCATE ON jejak\.chain_events/, "canonical events must be immutable by grant");
 requireText(chainReadModels, /audit_events_tenant_page_idx/, "audit keyset pagination index is missing");
+requireText(chainReadModels, /chain_events_waterfall_result_hash_idx/, "waterfall result_hash reconciliation index is missing");
+requireText(chainReadModels, /settlement_events_claim_page_idx/, "settlement claim pagination index is missing");
+requireText(chainReadModels, /waterfall_results_result_hash_uq/, "waterfall replay constraint is missing");
+requireText(chainReadModels, /settlement_events_append_only/, "settlement event immutability is missing");
+requireText(chainReadModels, /waterfall_results_append_only/, "waterfall result immutability is missing");
 requireText(chainReadModels, /chain_reconciliation_expectations_submission_fk_idx/, "reconciliation submission FK index is missing");
 requireText(rollback6, /DROP TABLE IF EXISTS jejak\.chain_events/, "chain read-model rollback is missing");
 requireText(rollback6, /DROP COLUMN IF EXISTS contract_name/, "checkpoint rollback is missing");
+requireText(rollback6, /DROP TRIGGER IF EXISTS waterfall_results_append_only/, "waterfall immutability rollback is missing");
+requireText(rollback6, /DROP INDEX IF EXISTS jejak\.chain_events_waterfall_result_hash_idx/, "waterfall hash index rollback is missing");
 if (/\b(real|double precision)\b/i.test(chainReadModels)) failures.push("floating-point chain Money type found");
 if (/SECURITY\s+DEFINER/i.test(chainReadModels)) failures.push("chain SECURITY DEFINER is forbidden");
 

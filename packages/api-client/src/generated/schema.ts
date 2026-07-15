@@ -690,6 +690,7 @@ export interface components {
             eventType: "SETTLEMENT" | "REFUND" | "CHARGEBACK" | "ADJUSTMENT";
             amount: components["schemas"]["money.schema"];
             occurredAt: components["schemas"]["timestamp.schema"];
+            source: string;
             sourceHash: components["schemas"]["sha256Hex"];
         };
         ReconcileClaim: {
@@ -697,6 +698,9 @@ export interface components {
         };
         ExecuteWaterfall: {
             settlementEventId: components["schemas"]["uuidV7"];
+            servicingFeeDue: components["schemas"]["money.schema"];
+            financingFeeDue: components["schemas"]["money.schema"];
+            finalSettlement: boolean;
         };
         ResolveClaim: {
             /** @enum {string} */

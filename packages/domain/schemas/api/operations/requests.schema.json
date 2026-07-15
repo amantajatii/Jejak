@@ -126,13 +126,14 @@
     },
     "CreateSettlementEvent": {
       "type": "object", "additionalProperties": false,
-      "required": ["claimId", "externalEventId", "eventType", "amount", "occurredAt", "sourceHash"],
+      "required": ["claimId", "externalEventId", "eventType", "amount", "occurredAt", "source", "sourceHash"],
       "properties": {
         "claimId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
         "externalEventId": { "type": "string", "minLength": 1, "maxLength": 255 },
         "eventType": { "type": "string", "enum": ["SETTLEMENT", "REFUND", "CHARGEBACK", "ADJUSTMENT"] },
         "amount": { "$ref": "../../common/money.schema.json" },
         "occurredAt": { "$ref": "../../common/timestamp.schema.json" },
+        "source": { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,64}$" },
         "sourceHash": { "$ref": "../../common/identifiers.schema.json#/$defs/sha256Hex" }
       }
     },
@@ -143,8 +144,13 @@
     },
     "ExecuteWaterfall": {
       "type": "object", "additionalProperties": false,
-      "required": ["settlementEventId"],
-      "properties": { "settlementEventId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" } }
+      "required": ["settlementEventId", "servicingFeeDue", "financingFeeDue", "finalSettlement"],
+      "properties": {
+        "settlementEventId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "servicingFeeDue": { "$ref": "../../common/money.schema.json" },
+        "financingFeeDue": { "$ref": "../../common/money.schema.json" },
+        "finalSettlement": { "type": "boolean" }
+      }
     },
     "ResolveClaim": {
       "type": "object", "additionalProperties": false,

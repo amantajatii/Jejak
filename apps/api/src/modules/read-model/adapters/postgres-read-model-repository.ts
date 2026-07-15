@@ -53,11 +53,14 @@ export class PostgresReadModelRepository implements ReadModelRepository {
           eq(chainReconciliationResults.tenantId, input.tenantId),
           eq(chainReconciliationResults.outcome, "MISMATCH"),
         ));
-      const [checkpoint] = await database.select({ updatedAt: sql<Date>`max(${chainEventCheckpoints.updatedAt})` })
+      const [checkpoint] = await database.select({
+        count: sql<number>`count(distinct ${chainEventCheckpoints.contractId})::integer`,
+        updatedAt: sql<Date>`min(${chainEventCheckpoints.updatedAt})`,
+      })
         .from(chainEventCheckpoints)
         .where(eq(chainEventCheckpoints.tenantId, input.tenantId));
       return {
-        ...(checkpoint?.updatedAt === null || checkpoint?.updatedAt === undefined ? {} : { checkpointUpdatedAt: checkpoint.updatedAt }),
+        ...(checkpoint?.count !== 6 || checkpoint.updatedAt === null || checkpoint.updatedAt === undefined ? {} : { checkpointUpdatedAt: checkpoint.updatedAt }),
         mismatchedSubmissions: mismatched?.count ?? 0,
         money: money.map((row) => ({ ...row, ...(row.issuer === null ? { issuer: undefined } : {}) })) as PortfolioMoneyRow[],
         pendingSubmissions: pending?.count ?? 0,

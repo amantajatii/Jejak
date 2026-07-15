@@ -2006,6 +2006,7 @@
           "eventType",
           "amount",
           "occurredAt",
+          "source",
           "sourceHash"
         ],
         "properties": {
@@ -2032,6 +2033,10 @@
           "occurredAt": {
             "$ref": "#/components/schemas/timestamp.schema"
           },
+          "source": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{1,64}$"
+          },
           "sourceHash": {
             "$ref": "#/components/schemas/sha256Hex"
           }
@@ -2053,11 +2058,23 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "settlementEventId"
+          "settlementEventId",
+          "servicingFeeDue",
+          "financingFeeDue",
+          "finalSettlement"
         ],
         "properties": {
           "settlementEventId": {
             "$ref": "#/components/schemas/uuidV7"
+          },
+          "servicingFeeDue": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "financingFeeDue": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "finalSettlement": {
+            "type": "boolean"
           }
         }
       },

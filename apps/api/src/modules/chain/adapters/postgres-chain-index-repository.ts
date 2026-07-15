@@ -11,6 +11,7 @@ import {
   chainReconciliationResults,
   chainSubmissions,
   claims,
+  outboxEvents,
 } from "../../../db/schema/index.js";
 import { canonicalHash } from "../../../reliability/canonical-json.js";
 import type { CanonicalChainEvent, ContractName } from "../domain/events.js";
@@ -210,14 +211,25 @@ export class PostgresChainIndexRepository implements ChainIndexRepository, Chain
       const [record] = await database.select({
         expectation: chainReconciliationExpectations,
         eventRowId: chainEvents.id,
+        submissionStatus: chainSubmissions.status,
       }).from(chainReconciliationExpectations).innerJoin(
+        chainSubmissions,
+        and(
+          eq(chainSubmissions.tenantId, input.tenantId),
+          eq(chainSubmissions.id, chainReconciliationExpectations.chainSubmissionId),
+        ),
+      ).innerJoin(
         chainEvents,
         and(eq(chainEvents.tenantId, input.tenantId), eq(chainEvents.eventId, input.eventId)),
       ).where(and(
         eq(chainReconciliationExpectations.tenantId, input.tenantId),
         eq(chainReconciliationExpectations.id, input.expectationId),
-      )).limit(1);
+      )).limit(1).for("update");
       if (record === undefined) throw new Error("Reconciliation expectation or event is missing.");
+      if (record.submissionStatus === "RECONCILED") return;
+      if (record.submissionStatus === "MISMATCH") {
+        throw new Error("A terminal reconciliation mismatch cannot be changed to reconciled.");
+      }
       await database.insert(chainReconciliationResults).values({
         chainEventId: record.eventRowId,
         claimKey: record.expectation.claimKey,
@@ -235,14 +247,36 @@ export class PostgresChainIndexRepository implements ChainIndexRepository, Chain
       ));
       if (record.expectation.claimKey !== null) {
         await database.update(chainPortfolioPositions).set({
-          ...(record.expectation.expectedFinancingFeePaid === null ? {} : { financingFeePaidBaseUnits: record.expectation.expectedFinancingFeePaid }),
+          ...(record.expectation.expectedFinancingFeePaid === null ? {} : {
+            financingFeePaidBaseUnits: sql`${chainPortfolioPositions.financingFeePaidBaseUnits} + ${record.expectation.expectedFinancingFeePaid}`,
+          }),
           reconciledAt: new Date(),
-          ...(record.expectation.expectedServicingFeePaid === null ? {} : { servicingFeePaidBaseUnits: record.expectation.expectedServicingFeePaid }),
+          ...(record.expectation.expectedServicingFeePaid === null ? {} : {
+            servicingFeePaidBaseUnits: sql`${chainPortfolioPositions.servicingFeePaidBaseUnits} + ${record.expectation.expectedServicingFeePaid}`,
+          }),
           updatedAt: new Date(),
         }).where(and(
           eq(chainPortfolioPositions.tenantId, input.tenantId),
           eq(chainPortfolioPositions.claimKey, record.expectation.claimKey),
         ));
+      }
+      if (record.expectation.expectedClaimState === "SHORTFALL" && record.expectation.claimKey !== null) {
+        await database.insert(outboxEvents).values({
+          aggregateId: record.expectation.id,
+          aggregateType: "CHAIN_RECONCILIATION",
+          aggregateVersion: 1,
+          eventType: "resolution.required",
+          eventVersion: 1,
+          id: this.#id(),
+          idempotencyKey: `chain-reconciliation:${record.expectation.id}`,
+          payload: {
+            claimKey: record.expectation.claimKey,
+            eventId: input.eventId,
+            expectationId: record.expectation.id,
+            resultHash: record.expectation.expectedResultHash,
+          },
+          tenantId: input.tenantId,
+        }).onConflictDoNothing();
       }
     });
   }
@@ -327,7 +361,6 @@ function projectionValues(event: CanonicalChainEvent) {
     case "waterfall.executed": return {
       ...common,
       firstLossConsumedBaseUnits: event.payload.firstLossApplied,
-      seniorLossBaseUnits: event.payload.seniorLoss,
       settlementBaseUnits: event.payload.settlementAmount,
     };
     default: return common;
@@ -362,7 +395,6 @@ function projectionUpdate(event: CanonicalChainEvent) {
     case "waterfall.executed": return {
       ...common,
       firstLossConsumedBaseUnits: sql`${chainPortfolioPositions.firstLossConsumedBaseUnits} + ${event.payload.firstLossApplied}`,
-      seniorLossBaseUnits: sql`${chainPortfolioPositions.seniorLossBaseUnits} + ${event.payload.seniorLoss}`,
       settlementBaseUnits: sql`${chainPortfolioPositions.settlementBaseUnits} + ${event.payload.settlementAmount}`,
     };
     default: return common;

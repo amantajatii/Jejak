@@ -16,6 +16,9 @@ describe("chain/read-model migration security and query indexes", () => {
     expect(migration).toContain("REVOKE UPDATE, DELETE, TRUNCATE ON jejak.chain_events");
     expect(migration).toContain("chain_reconciliation_expectations_submission_fk_idx");
     expect(migration).toContain("chain_reconciliation_results_expectation_fk_idx");
+    expect(migration).toContain("settlement_events_append_only");
+    expect(migration).toContain("waterfall_results_append_only");
+    expect(migration).toContain("REVOKE UPDATE, DELETE, TRUNCATE ON jejak.settlement_events");
     expect(migration).not.toMatch(/SECURITY\s+DEFINER/i);
   });
 
@@ -25,13 +28,18 @@ describe("chain/read-model migration security and query indexes", () => {
     expect(migration).toContain('"tenant_id", "action", "created_at" DESC, "id" DESC');
     expect(migration).toContain('"tenant_id", "resource_type", "created_at" DESC, "id" DESC');
     expect(migration).toContain('"tenant_id","currency","scale","issuer","state"');
+    expect(migration).toContain("chain_events_waterfall_result_hash_idx");
+    expect(migration).toContain("settlement_events_claim_page_idx");
+    expect(migration).toContain("waterfall_results_result_hash_uq");
   });
 
   it("rolls back triggers, policies, tables, indexes, and checkpoint columns", async () => {
     const rollback = await readFile(rollbackPath, "utf8");
     expect(rollback).toContain("DROP TRIGGER IF EXISTS chain_events_append_only");
+    expect(rollback).toContain("DROP TRIGGER IF EXISTS waterfall_results_append_only");
     expect(rollback).toContain("DROP POLICY IF EXISTS chain_events_tenant_isolation");
     expect(rollback).toContain("DROP TABLE IF EXISTS jejak.chain_events");
     expect(rollback).toContain("DROP COLUMN IF EXISTS contract_name");
+    expect(rollback).toContain("DROP INDEX IF EXISTS jejak.chain_events_waterfall_result_hash_idx");
   });
 });
