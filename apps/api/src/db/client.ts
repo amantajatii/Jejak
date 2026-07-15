@@ -11,6 +11,22 @@ export type DatabaseHandle = {
   sql: Sql;
 };
 
+export function resolveMigrationDatabaseUrl(databaseUrl: string, supabaseUrl?: string): string {
+  const url = new URL(databaseUrl);
+  if (url.hostname.endsWith(".pooler.supabase.com")) {
+    const projectHost = supabaseUrl === undefined ? undefined : new URL(supabaseUrl).hostname;
+    const match = projectHost?.match(/^([a-z0-9]{20})\.supabase\.co$/);
+    if (match?.[1] !== undefined) {
+      url.hostname = `db.${match[1]}.supabase.co`;
+      url.port = "5432";
+      url.username = "postgres";
+    } else if (url.port === "6543") {
+      url.port = "5432";
+    }
+  }
+  return url.toString();
+}
+
 export function createDatabase(databaseUrl: string): DatabaseHandle {
   const client = postgres(databaseUrl, {
     max: 10,

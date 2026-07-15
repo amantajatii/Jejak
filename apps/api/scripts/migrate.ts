@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 
 import { loadConfig } from "../src/config/env.js";
-import { createMigrationClient } from "../src/db/client.js";
+import { createMigrationClient, resolveMigrationDatabaseUrl } from "../src/db/client.js";
 import { assertDedicatedTestProject } from "./migration-guard.js";
 
 try {
@@ -21,7 +21,7 @@ if (direction !== "up" && direction !== "down") throw new Error("Migration direc
 if (direction === "down") assertDedicatedTestProject(config);
 
 const migrationsFolder = resolve(process.cwd(), "../../infrastructure/migrations");
-const handle = createMigrationClient(url);
+const handle = createMigrationClient(resolveMigrationDatabaseUrl(url, config.supabaseUrl));
 
 try {
   await handle.sql`select pg_advisory_lock(hashtext('jejak:migrations'))`;

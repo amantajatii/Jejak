@@ -8,6 +8,7 @@
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "tsx scripts/migrate.ts up",
+    "db:migrate:test-project": "tsx scripts/migrate-test-project.ts",
     "db:migrations:check": "tsx scripts/check-migrations.ts",
     "db:rollback": "tsx scripts/migrate.ts down",
     "dev": "tsx watch src/server.ts",
@@ -17,6 +18,7 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:integration:supabase": "node scripts/run-supabase-integration.mjs",
+    "test:integration:supabase-anchor": "node scripts/run-anchor-supabase-integration.mjs",
     "test:integration:supabase-storage": "node scripts/run-supabase-storage-integration.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

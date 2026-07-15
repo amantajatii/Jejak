@@ -7,11 +7,13 @@ const security = await readFile(resolve(root, "0001_security_foundation.sql"), "
 const lifecycle = await readFile(resolve(root, "0002_lucky_molly_hayes.sql"), "utf8");
 const settlementMoneyGuard = await readFile(resolve(root, "0003_orange_maginty.sql"), "utf8");
 const claimEncumbranceGuard = await readFile(resolve(root, "0004_hot_doctor_faustus.sql"), "utf8");
+const anchor = await readFile(resolve(root, "0005_lame_ultron.sql"), "utf8");
 const rollback0 = await readFile(resolve(root, "rollbacks/0000_keen_shiver_man.down.sql"), "utf8");
 const rollback1 = await readFile(resolve(root, "rollbacks/0001_security_foundation.down.sql"), "utf8");
 const rollback2 = await readFile(resolve(root, "rollbacks/0002_lucky_molly_hayes.down.sql"), "utf8");
 const rollback3 = await readFile(resolve(root, "rollbacks/0003_orange_maginty.down.sql"), "utf8");
 const rollback4 = await readFile(resolve(root, "rollbacks/0004_hot_doctor_faustus.down.sql"), "utf8");
+const rollback5 = await readFile(resolve(root, "rollbacks/0005_lame_ultron.down.sql"), "utf8");
 
 const failures: string[] = [];
 const requireText = (text: string, pattern: RegExp, message: string) => {
@@ -36,6 +38,13 @@ requireText(rollback2, /DROP TABLE IF EXISTS jejak\.risk_evaluations/, "lifecycl
 requireText(rollback3, /DROP CONSTRAINT IF EXISTS settlement_streams_expected_settlement_scale/, "Money guard rollback is missing");
 requireText(claimEncumbranceGuard, /claims_active_snapshot_uq/, "active snapshot encumbrance guard is missing");
 requireText(rollback4, /DROP INDEX IF EXISTS jejak\.claims_active_snapshot_uq/, "encumbrance guard rollback is missing");
+requireText(anchor, /CREATE TABLE "jejak"\."anchor_payout_receipts"/, "anchor receipt table is missing");
+requireText(anchor, /numeric\(38, 0\)/, "anchor Money must use numeric(38,0)");
+requireText(anchor, /FORCE ROW LEVEL SECURITY/, "anchor receipt RLS must be forced");
+requireText(anchor, /current_setting\('jejak\.tenant_id', true\)/, "anchor tenant policy context is missing");
+requireText(anchor, /REVOKE UPDATE, DELETE, TRUNCATE/, "anchor receipts must be immutable");
+requireText(rollback5, /DROP TABLE IF EXISTS jejak\.anchor_payout_receipts/, "anchor rollback is missing");
+if (/\b(real|double precision)\b/i.test(anchor)) failures.push("floating-point anchor Money type found");
 
 const tenantTables = [...initial.matchAll(/CREATE TABLE "jejak"\."([^"]+)" \([\s\S]*?\n\);/g)]
   .filter((match) => match[0].includes('"tenant_id" uuid NOT NULL'))
@@ -55,7 +64,16 @@ for (const table of lifecycleTenantTables) {
   }
 }
 
+const anchorTenantTables = [...anchor.matchAll(/CREATE TABLE "jejak"\."([^"]+)" \([\s\S]*?\n\);/g)]
+  .filter((match) => match[0].includes('"tenant_id" uuid NOT NULL'))
+  .map((match) => match[1]);
+for (const table of anchorTenantTables) {
+  if (table !== undefined && !anchor.includes(`CREATE POLICY ${table}_tenant_isolation`)) {
+    failures.push(`anchor tenant table ${table} is absent from its RLS policy migration`);
+  }
+}
+
 if (failures.length > 0) throw new Error(`Migration security check failed:\n- ${failures.join("\n- ")}`);
 console.log(
-  `Migration security check passed for ${tenantTables.length + lifecycleTenantTables.length} tenant tables.`,
+  `Migration security check passed for ${tenantTables.length + lifecycleTenantTables.length + anchorTenantTables.length} tenant tables.`,
 );
