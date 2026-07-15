@@ -354,6 +354,7 @@ h1.hero-headline {
   width: auto;
   max-width: none;
   margin-inline: clamp(16px, 3vw, 48px);
+  margin-bottom: clamp(28px, 4vw, 48px);
   border-radius: 28px;
   padding: 0;
   background: #1b1b1b;
