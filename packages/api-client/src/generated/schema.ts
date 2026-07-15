@@ -1647,6 +1647,11 @@ export interface operations {
             query?: {
                 cursor?: components["parameters"]["Cursor"];
                 limit?: components["parameters"]["Limit"];
+                action?: string;
+                resourceType?: string;
+                result?: "SUCCESS" | "FAILURE";
+                from?: string;
+                to?: string;
             };
             header: {
                 /** @description Explicit active tenant selected by the authenticated actor. */

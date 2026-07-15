@@ -116,7 +116,8 @@ export const chainSubmissions = jejak.table("chain_submissions", {
 
 export const chainEventCheckpoints = jejak.table(
   "chain_event_checkpoints",
-  { id: idColumn(), tenantId: tenant(), network: text("network").notNull(), contractId: text("contract_id").notNull(),
-    lastLedger: integer("last_ledger").notNull(), lastEventId: text("last_event_id"), updatedAt: updatedAtColumn() },
+  { id: idColumn(), tenantId: tenant(), network: text("network").notNull(), contractName: text("contract_name").notNull(),
+    contractId: text("contract_id").notNull(), lastLedger: integer("last_ledger").notNull(), lastEventId: text("last_event_id"),
+    rpcCursor: text("rpc_cursor"), createdAt: createdAtColumn(), updatedAt: updatedAtColumn() },
   (table) => [uniqueIndex("chain_event_checkpoints_scope_uq").on(table.tenantId, table.network, table.contractId)],
 );

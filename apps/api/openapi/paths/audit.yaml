@@ -10,6 +10,26 @@ auditEvents:
       - { $ref: ../components/parameters.yaml#/Cursor }
       - { $ref: ../components/parameters.yaml#/Limit }
       - { $ref: ../components/parameters.yaml#/CorrelationId }
+      - name: action
+        in: query
+        required: false
+        schema: { type: string, pattern: "^[A-Za-z0-9._-]{1,100}$" }
+      - name: resourceType
+        in: query
+        required: false
+        schema: { type: string, pattern: "^[A-Z0-9_]{1,64}$" }
+      - name: result
+        in: query
+        required: false
+        schema: { type: string, enum: [SUCCESS, FAILURE] }
+      - name: from
+        in: query
+        required: false
+        schema: { type: string, format: date-time }
+      - name: to
+        in: query
+        required: false
+        schema: { type: string, format: date-time }
     responses:
       "200": { $ref: ../components/responses.yaml#/Ok }
       "400": { $ref: ../components/responses.yaml#/BadRequest }

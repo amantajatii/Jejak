@@ -8,12 +8,14 @@ const lifecycle = await readFile(resolve(root, "0002_lucky_molly_hayes.sql"), "u
 const settlementMoneyGuard = await readFile(resolve(root, "0003_orange_maginty.sql"), "utf8");
 const claimEncumbranceGuard = await readFile(resolve(root, "0004_hot_doctor_faustus.sql"), "utf8");
 const anchor = await readFile(resolve(root, "0005_lame_ultron.sql"), "utf8");
+const chainReadModels = await readFile(resolve(root, "0006_broken_the_anarchist.sql"), "utf8");
 const rollback0 = await readFile(resolve(root, "rollbacks/0000_keen_shiver_man.down.sql"), "utf8");
 const rollback1 = await readFile(resolve(root, "rollbacks/0001_security_foundation.down.sql"), "utf8");
 const rollback2 = await readFile(resolve(root, "rollbacks/0002_lucky_molly_hayes.down.sql"), "utf8");
 const rollback3 = await readFile(resolve(root, "rollbacks/0003_orange_maginty.down.sql"), "utf8");
 const rollback4 = await readFile(resolve(root, "rollbacks/0004_hot_doctor_faustus.down.sql"), "utf8");
 const rollback5 = await readFile(resolve(root, "rollbacks/0005_lame_ultron.down.sql"), "utf8");
+const rollback6 = await readFile(resolve(root, "rollbacks/0006_broken_the_anarchist.down.sql"), "utf8");
 
 const failures: string[] = [];
 const requireText = (text: string, pattern: RegExp, message: string) => {
@@ -45,6 +47,19 @@ requireText(anchor, /current_setting\('jejak\.tenant_id', true\)/, "anchor tenan
 requireText(anchor, /REVOKE UPDATE, DELETE, TRUNCATE/, "anchor receipts must be immutable");
 requireText(rollback5, /DROP TABLE IF EXISTS jejak\.anchor_payout_receipts/, "anchor rollback is missing");
 if (/\b(real|double precision)\b/i.test(anchor)) failures.push("floating-point anchor Money type found");
+requireText(chainReadModels, /CREATE TABLE "jejak"\."chain_events"/, "canonical chain event table is missing");
+requireText(chainReadModels, /CREATE TABLE "jejak"\."chain_portfolio_positions"/, "chain portfolio projection is missing");
+requireText(chainReadModels, /numeric\(38, 0\)/, "chain projection Money must use numeric(38,0)");
+requireText(chainReadModels, /FORCE ROW LEVEL SECURITY/, "chain read-model RLS must be forced");
+requireText(chainReadModels, /current_setting\(''jejak\.tenant_id'', true\)/, "chain tenant policy context is missing");
+requireText(chainReadModels, /reject_chain_immutable_mutation/, "chain immutable event trigger is missing");
+requireText(chainReadModels, /REVOKE UPDATE, DELETE, TRUNCATE ON jejak\.chain_events/, "canonical events must be immutable by grant");
+requireText(chainReadModels, /audit_events_tenant_page_idx/, "audit keyset pagination index is missing");
+requireText(chainReadModels, /chain_reconciliation_expectations_submission_fk_idx/, "reconciliation submission FK index is missing");
+requireText(rollback6, /DROP TABLE IF EXISTS jejak\.chain_events/, "chain read-model rollback is missing");
+requireText(rollback6, /DROP COLUMN IF EXISTS contract_name/, "checkpoint rollback is missing");
+if (/\b(real|double precision)\b/i.test(chainReadModels)) failures.push("floating-point chain Money type found");
+if (/SECURITY\s+DEFINER/i.test(chainReadModels)) failures.push("chain SECURITY DEFINER is forbidden");
 
 const tenantTables = [...initial.matchAll(/CREATE TABLE "jejak"\."([^"]+)" \([\s\S]*?\n\);/g)]
   .filter((match) => match[0].includes('"tenant_id" uuid NOT NULL'))
@@ -73,7 +88,16 @@ for (const table of anchorTenantTables) {
   }
 }
 
+const chainTenantTables = [...chainReadModels.matchAll(/CREATE TABLE "jejak"\."([^"]+)" \([\s\S]*?\n\);/g)]
+  .filter((match) => match[0].includes('"tenant_id" uuid NOT NULL'))
+  .map((match) => match[1]);
+for (const table of chainTenantTables) {
+  if (table !== undefined && !chainReadModels.includes(`('${table}')`)) {
+    failures.push(`chain tenant table ${table} is absent from its RLS policy migration`);
+  }
+}
+
 if (failures.length > 0) throw new Error(`Migration security check failed:\n- ${failures.join("\n- ")}`);
 console.log(
-  `Migration security check passed for ${tenantTables.length + lifecycleTenantTables.length + anchorTenantTables.length} tenant tables.`,
+  `Migration security check passed for ${tenantTables.length + lifecycleTenantTables.length + anchorTenantTables.length + chainTenantTables.length} tenant tables.`,
 );

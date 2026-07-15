@@ -43,6 +43,13 @@
       "when": 1784110989871,
       "tag": "0005_lame_ultron",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784120304904,
+      "tag": "0006_broken_the_anarchist",
+      "breakpoints": true
     }
   ]
 }
