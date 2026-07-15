@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/api/operations/requests.schema.json",
+  "title": "OperationRequests",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "CreateSeller": {
+      "type": "object", "additionalProperties": false,
+      "required": ["displayName", "country", "baseCurrency", "consentVersion"],
+      "properties": {
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+        "baseCurrency": { "$ref": "../../common/identifiers.schema.json#/$defs/currency" },
+        "consentVersion": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "CreateMarketplaceConnection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sellerId", "provider", "mode", "externalAccountRef", "credentialHandle"],
+      "properties": {
+        "sellerId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "provider": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "mode": { "$ref": "../../enums/partner-mode.schema.json" },
+        "externalAccountRef": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "credentialHandle": { "type": "string", "minLength": 1, "maxLength": 255, "description": "Opaque handle; never a raw credential." }
+      }
+    },
+    "SyncMarketplaceConnection": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "force": { "type": "boolean", "default": false } }
+    },
+    "CreateCsvIngestion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sellerId", "storageObjectKey", "contentHash"],
+      "properties": {
+        "sellerId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "storageObjectKey": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "contentHash": { "$ref": "../../common/identifiers.schema.json#/$defs/sha256Hex" }
+      }
+    },
+    "CreateClaim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sellerId", "settlementStreamId", "facilityId", "requestedAdvance"],
+      "properties": {
+        "sellerId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "settlementStreamId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "facilityId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "requestedAdvance": { "$ref": "../../common/money.schema.json" }
+      }
+    },
+    "AnalyzeClaim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["snapshotCutoffAt"],
+      "properties": { "snapshotCutoffAt": { "$ref": "../../common/timestamp.schema.json" } }
+    },
+    "SubmitControlEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidenceHash", "evidenceType"],
+      "properties": {
+        "evidenceHash": { "$ref": "../../common/identifiers.schema.json#/$defs/sha256Hex" },
+        "evidenceType": { "type": "string", "enum": ["ASSIGNMENT_NOTICE", "ACCOUNT_CONTROL", "MARKETPLACE_ACKNOWLEDGEMENT"] }
+      }
+    },
+    "ControlDecision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decision", "reasonCodes"],
+      "properties": {
+        "decision": { "type": "string", "enum": ["VERIFY", "REJECT", "REVOKE"] },
+        "reasonCodes": { "type": "array", "items": { "$ref": "../../enums/reason-code.schema.json" }, "uniqueItems": true }
+      }
+    },
+    "CreateOffer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["principal", "fee", "annualizedRateBps", "advanceRateBps", "expiresAt", "termsHash"],
+      "properties": {
+        "principal": { "$ref": "../../common/money.schema.json" },
+        "fee": { "$ref": "../../common/money.schema.json" },
+        "annualizedRateBps": { "type": "integer", "minimum": 0 },
+        "advanceRateBps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "expiresAt": { "$ref": "../../common/timestamp.schema.json" },
+        "termsHash": { "$ref": "../../common/identifiers.schema.json#/$defs/sha256Hex" }
+      }
+    },
+    "AcceptOffer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["acceptedTermsHash"],
+      "properties": { "acceptedTermsHash": { "$ref": "../../common/identifiers.schema.json#/$defs/sha256Hex" } }
+    },
+    "IssueClaim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["attestationId", "controlEvidenceId"],
+      "properties": {
+        "attestationId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "controlEvidenceId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" }
+      }
+    },
+    "FundClaim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["offerId", "maximumAmount"],
+      "properties": {
+        "offerId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "maximumAmount": { "$ref": "../../common/money.schema.json" }
+      }
+    },
+    "CreateSettlementEvent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["claimId", "externalEventId", "eventType", "amount", "occurredAt", "sourceHash"],
+      "properties": {
+        "claimId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "externalEventId": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "eventType": { "type": "string", "enum": ["SETTLEMENT", "REFUND", "CHARGEBACK", "ADJUSTMENT"] },
+        "amount": { "$ref": "../../common/money.schema.json" },
+        "occurredAt": { "$ref": "../../common/timestamp.schema.json" },
+        "sourceHash": { "$ref": "../../common/identifiers.schema.json#/$defs/sha256Hex" }
+      }
+    },
+    "ReconcileClaim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["through"],
+      "properties": { "through": { "$ref": "../../common/timestamp.schema.json" } }
+    },
+    "ExecuteWaterfall": {
+      "type": "object", "additionalProperties": false,
+      "required": ["settlementEventId"],
+      "properties": { "settlementEventId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" } }
+    },
+    "ResolveClaim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action", "reasonCodes"],
+      "properties": {
+        "action": { "type": "string", "enum": ["OPEN", "UPDATE", "CLOSE"] },
+        "reasonCodes": { "type": "array", "items": { "$ref": "../../enums/reason-code.schema.json" }, "uniqueItems": true },
+        "recoveryRealized": { "$ref": "../../common/money.schema.json" },
+        "evidenceHashes": { "type": "array", "items": { "$ref": "../../common/identifiers.schema.json#/$defs/sha256Hex" }, "uniqueItems": true }
+      }
+    },
+    "PauseClaim": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reasonCodes"],
+      "properties": { "reasonCodes": { "type": "array", "minItems": 1, "items": { "$ref": "../../enums/reason-code.schema.json" }, "uniqueItems": true } }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+RequestId:
+  description: UUIDv7 request identifier used for support and tracing.
+  schema:
+    type: string
+    format: uuid-v7
+Sandbox:
+  description: Whether this response was produced using sandbox behavior.
+  schema:
+    type: boolean

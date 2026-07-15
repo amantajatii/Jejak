@@ -1,0 +1,104 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: Jejak API
+  version: 0.1.0
+  description: Contract-first business API for consent-bound settlement receivable financing.
+servers:
+  - url: http://localhost:3001
+    description: Local sandbox
+tags:
+  - name: Operations
+    description: Process health and dependency readiness.
+  - name: Sellers
+    description: Seller identity and consent records.
+  - name: Marketplace
+    description: Consent-bound marketplace connections and synchronization.
+  - name: Ingestions
+    description: Private object ingestion status and quality.
+  - name: Claims
+    description: Claim analysis, control, issuance, and funding lifecycle.
+  - name: Offers
+    description: Financing offer creation and acceptance.
+  - name: Settlement
+    description: Settlement, waterfall, pause, and resolution commands.
+  - name: Portfolio
+    description: Institutional exposure read models.
+  - name: Audit
+    description: Tenant-scoped append-only audit search.
+paths:
+  /health:
+    $ref: ./paths/health.yaml#/health
+  /ready:
+    $ref: ./paths/health.yaml#/ready
+  /v1/sellers:
+    $ref: ./paths/sellers.yaml#/sellers
+  /v1/sellers/{sellerId}:
+    $ref: ./paths/sellers.yaml#/sellerById
+  /v1/marketplace-connections:
+    $ref: ./paths/marketplace-connections.yaml#/connections
+  /v1/marketplace-connections/{id}/sync:
+    $ref: ./paths/marketplace-connections.yaml#/connectionSync
+  /v1/ingestions/csv:
+    $ref: ./paths/ingestions.yaml#/csvIngestion
+  /v1/ingestions/{id}:
+    $ref: ./paths/ingestions.yaml#/ingestionById
+  /v1/claims:
+    $ref: ./paths/claims.yaml#/claims
+  /v1/claims/{id}:
+    $ref: ./paths/claims.yaml#/claimById
+  /v1/claims/{id}/analyze:
+    $ref: ./paths/claims.yaml#/analyze
+  /v1/claims/{id}/control-evidence:
+    $ref: ./paths/claims.yaml#/controlEvidence
+  /v1/claims/{id}/control-decision:
+    $ref: ./paths/claims.yaml#/controlDecision
+  /v1/claims/{id}/offers:
+    $ref: ./paths/offers.yaml#/claimOffers
+  /v1/offers/{id}/accept:
+    $ref: ./paths/offers.yaml#/acceptOffer
+  /v1/claims/{id}/issue:
+    $ref: ./paths/claims.yaml#/issue
+  /v1/claims/{id}/fund:
+    $ref: ./paths/claims.yaml#/fund
+  /v1/settlement-events:
+    $ref: ./paths/settlement.yaml#/settlementEvents
+  /v1/claims/{id}/reconcile:
+    $ref: ./paths/settlement.yaml#/reconcile
+  /v1/claims/{id}/waterfall:
+    $ref: ./paths/settlement.yaml#/waterfall
+  /v1/claims/{id}/resolution:
+    $ref: ./paths/settlement.yaml#/resolution
+  /v1/claims/{id}/pause:
+    $ref: ./paths/settlement.yaml#/pause
+  /v1/portfolio/summary:
+    $ref: ./paths/portfolio.yaml#/summary
+  /v1/audit-events:
+    $ref: ./paths/audit.yaml#/auditEvents
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: ./components/security.yaml#/bearerAuth
+  schemas:
+    Money:
+      $ref: ../../../packages/domain/schemas/common/money.schema.json
+    Seller:
+      $ref: ../../../packages/domain/schemas/entities/seller.schema.json
+    MarketplaceConnection:
+      $ref: ../../../packages/domain/schemas/entities/marketplace-connection.schema.json
+    Claim:
+      $ref: ../../../packages/domain/schemas/entities/claim.schema.json
+    FinancingOffer:
+      $ref: ../../../packages/domain/schemas/entities/financing-offer.schema.json
+    SettlementEvent:
+      $ref: ../../../packages/domain/schemas/entities/settlement-event.schema.json
+    WaterfallResult:
+      $ref: ../../../packages/domain/schemas/entities/waterfall-result.schema.json
+    ResolutionCase:
+      $ref: ../../../packages/domain/schemas/entities/resolution-case.schema.json
+    ApiSuccess:
+      $ref: ../../../packages/domain/schemas/api/success-envelope.schema.json
+    ApiError:
+      $ref: ../../../packages/domain/schemas/api/error-envelope.schema.json
+security:
+  - bearerAuth: []

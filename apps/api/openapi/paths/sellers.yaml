@@ -1,0 +1,31 @@
+sellers:
+  post:
+    operationId: createSeller
+    summary: Create a seller and record consent
+    tags: [Sellers]
+    x-jejak-roles: [SELLER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/CreateSeller }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/Created }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+sellerById:
+  get:
+    operationId: getSeller
+    summary: Read a seller profile
+    tags: [Sellers]
+    x-jejak-roles: [SELLER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/SellerId }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }

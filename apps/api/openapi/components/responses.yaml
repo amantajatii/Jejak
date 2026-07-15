@@ -1,0 +1,81 @@
+Ok:
+  description: Successful operation.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/RequestId
+    X-Jejak-Sandbox:
+      $ref: ./headers.yaml#/Sandbox
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/success-envelope.schema.json
+Created:
+  description: Resource created.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/RequestId
+    X-Jejak-Sandbox:
+      $ref: ./headers.yaml#/Sandbox
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/success-envelope.schema.json
+Accepted:
+  description: Command accepted for asynchronous processing.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/RequestId
+    X-Jejak-Sandbox:
+      $ref: ./headers.yaml#/Sandbox
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/success-envelope.schema.json
+BadRequest:
+  description: Invalid input.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json
+Unauthorized:
+  description: Authentication is required or invalid.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json
+Forbidden:
+  description: The authenticated actor lacks the required tenant, role, or object permission.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json
+NotFound:
+  description: The requested resource does not exist or is not visible to the actor.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json
+Conflict:
+  description: Idempotency, encumbrance, or state conflict.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json
+PreconditionFailed:
+  description: Aggregate version or domain precondition did not match.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json
+InternalError:
+  description: Unexpected server failure with no sensitive implementation details.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json
+Unavailable:
+  description: A required dependency is unavailable.
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/error-envelope.schema.json

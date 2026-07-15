@@ -1,0 +1,20 @@
+health:
+  get:
+    operationId: getHealth
+    summary: Process liveness
+    tags: [Operations]
+    security: []
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "500": { $ref: ../components/responses.yaml#/InternalError }
+ready:
+  get:
+    operationId: getReadiness
+    summary: Required dependency readiness
+    tags: [Operations]
+    security: []
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "503": { $ref: ../components/responses.yaml#/Unavailable }

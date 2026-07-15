@@ -1,0 +1,32 @@
+csvIngestion:
+  post:
+    operationId: createCsvIngestion
+    summary: Submit a previously authorized CSV object for ingestion
+    description: The request carries a private storage object key and content hash, never raw CSV content.
+    tags: [Ingestions]
+    x-jejak-roles: [SELLER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/CreateCsvIngestion }
+    responses:
+      "202": { $ref: ../components/responses.yaml#/Accepted }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+ingestionById:
+  get:
+    operationId: getIngestion
+    summary: Read ingestion status and quality report
+    tags: [Ingestions]
+    x-jejak-roles: [SELLER, ORIGINATOR, ADMIN, SYSTEM]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }

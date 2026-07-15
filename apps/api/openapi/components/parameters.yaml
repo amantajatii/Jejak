@@ -1,0 +1,60 @@
+ResourceId:
+  name: id
+  in: path
+  required: true
+  schema:
+    type: string
+    format: uuid-v7
+SellerId:
+  name: sellerId
+  in: path
+  required: true
+  schema:
+    type: string
+    format: uuid-v7
+IdempotencyKey:
+  name: Idempotency-Key
+  in: header
+  required: true
+  description: Stable caller-generated key; replaying the same key and payload returns the original result.
+  schema:
+    type: string
+    minLength: 16
+    maxLength: 255
+IfMatch:
+  name: If-Match
+  in: header
+  required: true
+  description: Decimal aggregate version expected by the caller.
+  schema:
+    type: integer
+    minimum: 1
+CorrelationId:
+  name: X-Correlation-Id
+  in: header
+  required: false
+  schema:
+    type: string
+    maxLength: 255
+Cursor:
+  name: cursor
+  in: query
+  required: false
+  schema:
+    type: string
+    minLength: 1
+Limit:
+  name: limit
+  in: query
+  required: false
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 100
+    default: 50
+ClaimState:
+  name: state
+  in: query
+  required: false
+  schema:
+    $ref: ../../../../packages/domain/schemas/enums/claim-state.schema.json

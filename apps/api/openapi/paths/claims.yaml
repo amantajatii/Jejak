@@ -1,0 +1,141 @@
+claims:
+  post:
+    operationId: createClaim
+    summary: Create a claim from an unencumbered settlement stream
+    tags: [Claims]
+    x-jejak-roles: [ORIGINATOR, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/CreateClaim }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/Created }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+  get:
+    operationId: listClaims
+    summary: List authorized claims with cursor pagination
+    tags: [Claims]
+    x-jejak-roles: [SELLER, ORIGINATOR, ISSUER, FACILITY, SERVICER, RESOLVER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/Cursor }
+      - { $ref: ../components/parameters.yaml#/Limit }
+      - { $ref: ../components/parameters.yaml#/ClaimState }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+claimById:
+  get:
+    operationId: getClaim
+    summary: Read an authorized claim
+    tags: [Claims]
+    x-jejak-roles: [SELLER, ORIGINATOR, ISSUER, FACILITY, SERVICER, RESOLVER, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+analyze:
+  post:
+    operationId: analyzeClaim
+    summary: Freeze a decision snapshot and request evaluation
+    tags: [Claims]
+    x-jejak-roles: [ORIGINATOR, SYSTEM]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/AnalyzeClaim }
+    responses:
+      "202": { $ref: ../components/responses.yaml#/Accepted }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
+controlEvidence:
+  post:
+    operationId: submitControlEvidence
+    summary: Submit control evidence metadata and hash
+    tags: [Claims]
+    x-jejak-roles: [ORIGINATOR]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/SubmitControlEvidence }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/Created }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
+controlDecision:
+  post:
+    operationId: decideControlEvidence
+    summary: Verify, reject, or revoke claim control
+    tags: [Claims]
+    x-jejak-roles: [ORIGINATOR, ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/ControlDecision }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
+issue:
+  post:
+    operationId: issueClaim
+    summary: Authorize on-chain issuance
+    tags: [Claims]
+    x-jejak-roles: [ISSUER]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/IssueClaim }
+    responses:
+      "202": { $ref: ../components/responses.yaml#/Accepted }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
+fund:
+  post:
+    operationId: fundClaim
+    summary: Fund an accepted facility position
+    tags: [Claims]
+    x-jejak-roles: [FACILITY]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/FundClaim }
+    responses:
+      "202": { $ref: ../components/responses.yaml#/Accepted }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }

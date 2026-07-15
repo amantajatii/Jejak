@@ -1,0 +1,102 @@
+CreateSeller:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateSeller
+CreateMarketplaceConnection:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateMarketplaceConnection
+SyncMarketplaceConnection:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/SyncMarketplaceConnection
+CreateCsvIngestion:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateCsvIngestion
+CreateClaim:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateClaim
+AnalyzeClaim:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/AnalyzeClaim
+SubmitControlEvidence:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/SubmitControlEvidence
+ControlDecision:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/ControlDecision
+CreateOffer:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateOffer
+AcceptOffer:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/AcceptOffer
+IssueClaim:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/IssueClaim
+FundClaim:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/FundClaim
+CreateSettlementEvent:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/CreateSettlementEvent
+ReconcileClaim:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/ReconcileClaim
+ExecuteWaterfall:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/ExecuteWaterfall
+ResolveClaim:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/ResolveClaim
+PauseClaim:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../packages/domain/schemas/api/operations/requests.schema.json#/$defs/PauseClaim

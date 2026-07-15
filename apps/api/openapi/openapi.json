@@ -1,0 +1,2672 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Jejak API",
+    "version": "0.1.0",
+    "description": "Contract-first business API for consent-bound settlement receivable financing."
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Local sandbox"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Operations",
+      "description": "Process health and dependency readiness."
+    },
+    {
+      "name": "Sellers",
+      "description": "Seller identity and consent records."
+    },
+    {
+      "name": "Marketplace",
+      "description": "Consent-bound marketplace connections and synchronization."
+    },
+    {
+      "name": "Ingestions",
+      "description": "Private object ingestion status and quality."
+    },
+    {
+      "name": "Claims",
+      "description": "Claim analysis, control, issuance, and funding lifecycle."
+    },
+    {
+      "name": "Offers",
+      "description": "Financing offer creation and acceptance."
+    },
+    {
+      "name": "Settlement",
+      "description": "Settlement, waterfall, pause, and resolution commands."
+    },
+    {
+      "name": "Portfolio",
+      "description": "Institutional exposure read models."
+    },
+    {
+      "name": "Audit",
+      "description": "Tenant-scoped append-only audit search."
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Process liveness",
+        "tags": [
+          "Operations"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "summary": "Required dependency readiness",
+        "tags": [
+          "Operations"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/sellers": {
+      "post": {
+        "operationId": "createSeller",
+        "summary": "Create a seller and record consent",
+        "tags": [
+          "Sellers"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateSeller"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/v1/sellers/{sellerId}": {
+      "get": {
+        "operationId": "getSeller",
+        "summary": "Read a seller profile",
+        "tags": [
+          "Sellers"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SellerId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/marketplace-connections": {
+      "post": {
+        "operationId": "createMarketplaceConnection",
+        "summary": "Create a sandbox or production marketplace connector",
+        "tags": [
+          "Marketplace"
+        ],
+        "x-jejak-roles": [
+          "SELLER"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateMarketplaceConnection"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/v1/marketplace-connections/{id}/sync": {
+      "post": {
+        "operationId": "syncMarketplaceConnection",
+        "summary": "Enqueue marketplace ingestion",
+        "tags": [
+          "Marketplace"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "SYSTEM"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SyncMarketplaceConnection"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/ingestions/csv": {
+      "post": {
+        "operationId": "createCsvIngestion",
+        "summary": "Submit a previously authorized CSV object for ingestion",
+        "description": "The request carries a private storage object key and content hash, never raw CSV content.",
+        "tags": [
+          "Ingestions"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateCsvIngestion"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/v1/ingestions/{id}": {
+      "get": {
+        "operationId": "getIngestion",
+        "summary": "Read ingestion status and quality report",
+        "tags": [
+          "Ingestions"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ORIGINATOR",
+          "ADMIN",
+          "SYSTEM"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/claims": {
+      "post": {
+        "operationId": "createClaim",
+        "summary": "Create a claim from an unencumbered settlement stream",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "ORIGINATOR",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateClaim"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "get": {
+        "operationId": "listClaims",
+        "summary": "List authorized claims with cursor pagination",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ORIGINATOR",
+          "ISSUER",
+          "FACILITY",
+          "SERVICER",
+          "RESOLVER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/ClaimState"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}": {
+      "get": {
+        "operationId": "getClaim",
+        "summary": "Read an authorized claim",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ORIGINATOR",
+          "ISSUER",
+          "FACILITY",
+          "SERVICER",
+          "RESOLVER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/analyze": {
+      "post": {
+        "operationId": "analyzeClaim",
+        "summary": "Freeze a decision snapshot and request evaluation",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "ORIGINATOR",
+          "SYSTEM"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/AnalyzeClaim"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/control-evidence": {
+      "post": {
+        "operationId": "submitControlEvidence",
+        "summary": "Submit control evidence metadata and hash",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "ORIGINATOR"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SubmitControlEvidence"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/control-decision": {
+      "post": {
+        "operationId": "decideControlEvidence",
+        "summary": "Verify, reject, or revoke claim control",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "ORIGINATOR",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ControlDecision"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/offers": {
+      "post": {
+        "operationId": "createFinancingOffer",
+        "summary": "Create a financing offer",
+        "tags": [
+          "Offers"
+        ],
+        "x-jejak-roles": [
+          "ORIGINATOR"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateOffer"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/offers/{id}/accept": {
+      "post": {
+        "operationId": "acceptFinancingOffer",
+        "summary": "Accept the exact hashed financing terms",
+        "tags": [
+          "Offers"
+        ],
+        "x-jejak-roles": [
+          "SELLER"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/AcceptOffer"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/issue": {
+      "post": {
+        "operationId": "issueClaim",
+        "summary": "Authorize on-chain issuance",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "ISSUER"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/IssueClaim"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/fund": {
+      "post": {
+        "operationId": "fundClaim",
+        "summary": "Fund an accepted facility position",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "FACILITY"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/FundClaim"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Accepted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/settlement-events": {
+      "post": {
+        "operationId": "createSettlementEvent",
+        "summary": "Ingest a verified settlement event",
+        "tags": [
+          "Settlement"
+        ],
+        "x-jejak-roles": [
+          "SERVICER",
+          "SYSTEM"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/CreateSettlementEvent"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/reconcile": {
+      "post": {
+        "operationId": "reconcileClaim",
+        "summary": "Calculate realized claim position",
+        "tags": [
+          "Settlement"
+        ],
+        "x-jejak-roles": [
+          "SERVICER",
+          "SYSTEM"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ReconcileClaim"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/waterfall": {
+      "post": {
+        "operationId": "executeClaimWaterfall",
+        "summary": "Execute a guarded settlement waterfall",
+        "tags": [
+          "Settlement"
+        ],
+        "x-jejak-roles": [
+          "SERVICER"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ExecuteWaterfall"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/resolution": {
+      "post": {
+        "operationId": "resolveClaim",
+        "summary": "Open, update, or close an authorized resolution",
+        "tags": [
+          "Settlement"
+        ],
+        "x-jejak-roles": [
+          "RESOLVER"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/ResolveClaim"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/claims/{id}/pause": {
+      "post": {
+        "operationId": "pauseClaim",
+        "summary": "Trigger a claim-level circuit breaker",
+        "tags": [
+          "Settlement"
+        ],
+        "x-jejak-roles": [
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/PauseClaim"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/v1/portfolio/summary": {
+      "get": {
+        "operationId": "getPortfolioSummary",
+        "summary": "Read tenant-scoped exposure and performance",
+        "tags": [
+          "Portfolio"
+        ],
+        "x-jejak-roles": [
+          "FACILITY",
+          "ORIGINATOR"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/v1/audit-events": {
+      "get": {
+        "operationId": "listAuditEvents",
+        "summary": "Search the append-only tenant audit log",
+        "tags": [
+          "Audit"
+        ],
+        "x-jejak-roles": [
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase access token. Authorization is resolved from backend memberships, not JWT user metadata."
+      }
+    },
+    "schemas": {
+      "Money": {
+        "$ref": "#/components/schemas/money.schema"
+      },
+      "Seller": {
+        "$ref": "#/components/schemas/seller.schema"
+      },
+      "MarketplaceConnection": {
+        "$ref": "#/components/schemas/marketplace-connection.schema"
+      },
+      "Claim": {
+        "$ref": "#/components/schemas/claim.schema"
+      },
+      "FinancingOffer": {
+        "$ref": "#/components/schemas/financing-offer.schema"
+      },
+      "SettlementEvent": {
+        "$ref": "#/components/schemas/settlement-event.schema"
+      },
+      "WaterfallResult": {
+        "$ref": "#/components/schemas/waterfall-result.schema"
+      },
+      "ResolutionCase": {
+        "$ref": "#/components/schemas/resolution-case.schema"
+      },
+      "ApiSuccess": {
+        "$ref": "#/components/schemas/success-envelope.schema"
+      },
+      "ApiError": {
+        "$ref": "#/components/schemas/error-envelope.schema"
+      },
+      "uuidV7": {
+        "type": "string",
+        "format": "uuid-v7"
+      },
+      "timestamp.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/common/timestamp.schema.json",
+        "title": "UtcTimestamp",
+        "type": "string",
+        "format": "utc-rfc3339"
+      },
+      "success-envelope.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/api/success-envelope.schema.json",
+        "title": "ApiSuccess",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {},
+          "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "requestId",
+              "timestamp",
+              "sandbox"
+            ],
+            "properties": {
+              "requestId": {
+                "$ref": "#/components/schemas/uuidV7"
+              },
+              "timestamp": {
+                "$ref": "#/components/schemas/timestamp.schema"
+              },
+              "sandbox": {
+                "type": "boolean"
+              },
+              "nextCursor": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "error-code.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/enums/error-code.schema.json",
+        "title": "ErrorCode",
+        "type": "string",
+        "enum": [
+          "AUTH_REQUIRED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "VALIDATION_FAILED",
+          "VERSION_CONFLICT",
+          "IDEMPOTENCY_CONFLICT",
+          "INVALID_STATE_TRANSITION",
+          "ATTESTATION_MISSING",
+          "ATTESTATION_EXPIRED",
+          "ATTESTATION_REVOKED",
+          "CONTROL_NOT_VERIFIED",
+          "CLAIM_ALREADY_ENCUMBERED",
+          "INSUFFICIENT_FACILITY_LIQUIDITY",
+          "HOLDER_NOT_AUTHORIZED",
+          "ASSET_OPERATION_FAILED",
+          "PARTNER_TIMEOUT",
+          "PARTNER_REJECTED",
+          "SETTLEMENT_DUPLICATE",
+          "WATERFALL_INVARIANT_FAILED",
+          "CIRCUIT_BREAKER_ACTIVE",
+          "INTERNAL_ERROR"
+        ]
+      },
+      "error-envelope.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/api/error-envelope.schema.json",
+        "title": "ApiError",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message",
+              "requestId",
+              "retryable"
+            ],
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/error-code.schema"
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "requestId": {
+                "$ref": "#/components/schemas/uuidV7"
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "currency": {
+        "type": "string",
+        "pattern": "^[A-Z0-9]{3,12}$"
+      },
+      "CreateSeller": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "displayName",
+          "country",
+          "baseCurrency",
+          "consentVersion"
+        ],
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "baseCurrency": {
+            "$ref": "#/components/schemas/currency"
+          },
+          "consentVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      },
+      "partner-mode.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/enums/partner-mode.schema.json",
+        "title": "PartnerMode",
+        "type": "string",
+        "enum": [
+          "SANDBOX",
+          "PRODUCTION"
+        ]
+      },
+      "CreateMarketplaceConnection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sellerId",
+          "provider",
+          "mode",
+          "externalAccountRef",
+          "credentialHandle"
+        ],
+        "properties": {
+          "sellerId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "provider": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "$ref": "#/components/schemas/partner-mode.schema"
+          },
+          "externalAccountRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "credentialHandle": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Opaque handle; never a raw credential."
+          }
+        }
+      },
+      "SyncMarketplaceConnection": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "sha256Hex": {
+        "type": "string",
+        "format": "sha256-hex"
+      },
+      "CreateCsvIngestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sellerId",
+          "storageObjectKey",
+          "contentHash"
+        ],
+        "properties": {
+          "sellerId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "storageObjectKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "contentHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          }
+        }
+      },
+      "claim-state.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/enums/claim-state.schema.json",
+        "title": "ClaimState",
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "DATA_PENDING",
+          "ANALYZED",
+          "ELIGIBLE",
+          "CONTROLLED",
+          "ISSUED",
+          "FUNDED",
+          "SETTLING",
+          "REPAID",
+          "REDEEMED",
+          "CLOSED",
+          "SHORTFALL",
+          "RESOLUTION",
+          "CLOSED_WITH_LOSS",
+          "REVIEW",
+          "REJECTED",
+          "FROZEN",
+          "SUSPENDED",
+          "PAUSED",
+          "CANCELLED"
+        ]
+      },
+      "integerString": {
+        "type": "string",
+        "pattern": "^-?(0|[1-9][0-9]*)$"
+      },
+      "stellarAddress": {
+        "type": "string",
+        "format": "stellar-address"
+      },
+      "money.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/common/money.schema.json",
+        "title": "Money",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "amountMinor",
+          "currency",
+          "scale"
+        ],
+        "properties": {
+          "amountMinor": {
+            "$ref": "#/components/schemas/integerString"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/currency"
+          },
+          "scale": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 18
+          },
+          "issuer": {
+            "$ref": "#/components/schemas/stellarAddress"
+          }
+        }
+      },
+      "CreateClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sellerId",
+          "settlementStreamId",
+          "facilityId",
+          "requestedAdvance"
+        ],
+        "properties": {
+          "sellerId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "settlementStreamId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "facilityId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "requestedAdvance": {
+            "$ref": "#/components/schemas/money.schema"
+          }
+        }
+      },
+      "AnalyzeClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "snapshotCutoffAt"
+        ],
+        "properties": {
+          "snapshotCutoffAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          }
+        }
+      },
+      "SubmitControlEvidence": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidenceHash",
+          "evidenceType"
+        ],
+        "properties": {
+          "evidenceHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "evidenceType": {
+            "type": "string",
+            "enum": [
+              "ASSIGNMENT_NOTICE",
+              "ACCOUNT_CONTROL",
+              "MARKETPLACE_ACKNOWLEDGEMENT"
+            ]
+          }
+        }
+      },
+      "reason-code.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/enums/reason-code.schema.json",
+        "title": "ReasonCode",
+        "type": "string",
+        "enum": [
+          "HIGH_REFUND_RATE",
+          "HIGH_RTO_RATE",
+          "CHARGEBACK_SPIKE",
+          "ACCOUNT_HOLD",
+          "MISSING_PAYOUT_HISTORY",
+          "DATA_INCONSISTENT",
+          "CONCENTRATION_HIGH",
+          "STALE_SNAPSHOT",
+          "CONTROL_NOT_VERIFIED",
+          "POLICY_LIMIT",
+          "MODEL_UNAVAILABLE",
+          "MANUAL_REVIEW_REQUIRED",
+          "SETTLEMENT_SHORTFALL",
+          "PARTNER_UNAVAILABLE"
+        ]
+      },
+      "ControlDecision": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision",
+          "reasonCodes"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "VERIFY",
+              "REJECT",
+              "REVOKE"
+            ]
+          },
+          "reasonCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/reason-code.schema"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "CreateOffer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "principal",
+          "fee",
+          "annualizedRateBps",
+          "advanceRateBps",
+          "expiresAt",
+          "termsHash"
+        ],
+        "properties": {
+          "principal": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "fee": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "annualizedRateBps": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "advanceRateBps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "expiresAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "termsHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          }
+        }
+      },
+      "AcceptOffer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "acceptedTermsHash"
+        ],
+        "properties": {
+          "acceptedTermsHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          }
+        }
+      },
+      "IssueClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "attestationId",
+          "controlEvidenceId"
+        ],
+        "properties": {
+          "attestationId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "controlEvidenceId": {
+            "$ref": "#/components/schemas/uuidV7"
+          }
+        }
+      },
+      "FundClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "offerId",
+          "maximumAmount"
+        ],
+        "properties": {
+          "offerId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "maximumAmount": {
+            "$ref": "#/components/schemas/money.schema"
+          }
+        }
+      },
+      "CreateSettlementEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claimId",
+          "externalEventId",
+          "eventType",
+          "amount",
+          "occurredAt",
+          "sourceHash"
+        ],
+        "properties": {
+          "claimId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "externalEventId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "SETTLEMENT",
+              "REFUND",
+              "CHARGEBACK",
+              "ADJUSTMENT"
+            ]
+          },
+          "amount": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "occurredAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "sourceHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          }
+        }
+      },
+      "ReconcileClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "through"
+        ],
+        "properties": {
+          "through": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          }
+        }
+      },
+      "ExecuteWaterfall": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "settlementEventId"
+        ],
+        "properties": {
+          "settlementEventId": {
+            "$ref": "#/components/schemas/uuidV7"
+          }
+        }
+      },
+      "ResolveClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action",
+          "reasonCodes"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "UPDATE",
+              "CLOSE"
+            ]
+          },
+          "reasonCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/reason-code.schema"
+            },
+            "uniqueItems": true
+          },
+          "recoveryRealized": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "evidenceHashes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sha256Hex"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "PauseClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reasonCodes"
+        ],
+        "properties": {
+          "reasonCodes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/reason-code.schema"
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "seller.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/entities/seller.schema.json",
+        "title": "Seller",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "tenantId",
+          "publicSubjectHash",
+          "displayName",
+          "country",
+          "baseCurrency",
+          "consentVersion",
+          "consentedAt",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "tenantId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "publicSubjectHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "baseCurrency": {
+            "$ref": "#/components/schemas/currency"
+          },
+          "consentVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "consentedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "marketplace-connection.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/entities/marketplace-connection.schema.json",
+        "title": "MarketplaceConnection",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "tenantId",
+          "sellerId",
+          "provider",
+          "mode",
+          "status",
+          "externalAccountRef",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "tenantId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "sellerId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "provider": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "mode": {
+            "$ref": "#/components/schemas/partner-mode.schema"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "ERROR",
+              "REVOKED"
+            ]
+          },
+          "externalAccountRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "credentialSecretRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "lastSuccessfulSyncAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "claim.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/entities/claim.schema.json",
+        "title": "Claim",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "claimKey",
+          "tenantId",
+          "sellerId",
+          "settlementStreamId",
+          "facilityId",
+          "state",
+          "sourceCurrency",
+          "grossUnsettled",
+          "eligibleSettlementValue",
+          "advanceAmount",
+          "outstandingPrincipal",
+          "stateReasonCodes",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "claimKey": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "tenantId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "sellerId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "settlementStreamId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "facilityId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "state": {
+            "$ref": "#/components/schemas/claim-state.schema"
+          },
+          "sourceCurrency": {
+            "$ref": "#/components/schemas/currency"
+          },
+          "grossUnsettled": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "eligibleSettlementValue": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "advanceAmount": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "outstandingPrincipal": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "latestAttestationId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "controlEvidenceId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "onchainContractId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "onchainTxHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "expectedSettlementAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "stateReasonCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/reason-code.schema"
+            },
+            "uniqueItems": true
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "financing-offer.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/entities/financing-offer.schema.json",
+        "title": "FinancingOffer",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "claimId",
+          "originatorId",
+          "principal",
+          "fee",
+          "annualizedRateBps",
+          "advanceRateBps",
+          "expiresAt",
+          "termsHash",
+          "status",
+          "createdAt",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "claimId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "originatorId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "principal": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "fee": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "annualizedRateBps": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "advanceRateBps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "expiresAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "termsHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "OFFERED",
+              "ACCEPTED",
+              "EXPIRED",
+              "CANCELLED"
+            ]
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "settlement-event.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/entities/settlement-event.schema.json",
+        "title": "SettlementEvent",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "claimId",
+          "externalEventId",
+          "source",
+          "type",
+          "amount",
+          "occurredAt",
+          "receivedAt",
+          "payloadHash",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "claimId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "externalEventId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PAYOUT",
+              "REFUND",
+              "RETURN",
+              "CHARGEBACK",
+              "FEE",
+              "ADJUSTMENT"
+            ]
+          },
+          "amount": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "occurredAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "receivedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "payloadHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          }
+        }
+      },
+      "waterfall-result.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/entities/waterfall-result.schema.json",
+        "title": "WaterfallResult",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "claimId",
+          "runNumber",
+          "inputSettlement",
+          "principalPaid",
+          "feesPaid",
+          "firstLossApplied",
+          "seniorLoss",
+          "sellerResidual",
+          "resultHash",
+          "executedAt"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "claimId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "runNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "inputSettlement": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "principalPaid": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "feesPaid": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "firstLossApplied": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "seniorLoss": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "sellerResidual": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "resultHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "onchainTxHash": {
+            "$ref": "#/components/schemas/sha256Hex"
+          },
+          "executedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          }
+        }
+      },
+      "resolution-status.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/enums/resolution-status.schema.json",
+        "title": "ResolutionStatus",
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "RECOVERING",
+          "SETTLED",
+          "WRITTEN_OFF"
+        ]
+      },
+      "resolution-case.schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "https://jejak.finance/schemas/entities/resolution-case.schema.json",
+        "title": "ResolutionCase",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "claimId",
+          "status",
+          "resolverAddress",
+          "openedReasonCodes",
+          "recoveryExpected",
+          "recoveryRealized",
+          "finalLoss",
+          "evidenceHashes",
+          "openedAt",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "claimId": {
+            "$ref": "#/components/schemas/uuidV7"
+          },
+          "status": {
+            "$ref": "#/components/schemas/resolution-status.schema"
+          },
+          "resolverAddress": {
+            "$ref": "#/components/schemas/stellarAddress"
+          },
+          "openedReasonCodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/reason-code.schema"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "recoveryExpected": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "recoveryRealized": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "finalLoss": {
+            "$ref": "#/components/schemas/money.schema"
+          },
+          "evidenceHashes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/sha256Hex"
+            },
+            "uniqueItems": true
+          },
+          "openedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "closedAt": {
+            "$ref": "#/components/schemas/timestamp.schema"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "headers": {
+      "RequestId": {
+        "description": "UUIDv7 request identifier used for support and tracing.",
+        "schema": {
+          "type": "string",
+          "format": "uuid-v7"
+        }
+      },
+      "Sandbox": {
+        "description": "Whether this response was produced using sandbox behavior.",
+        "schema": {
+          "type": "boolean"
+        }
+      }
+    },
+    "responses": {
+      "Ok": {
+        "description": "Successful operation.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "X-Jejak-Sandbox": {
+            "$ref": "#/components/headers/Sandbox"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/success-envelope.schema"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Invalid input.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Unexpected server failure with no sensitive implementation details.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      },
+      "Unavailable": {
+        "description": "A required dependency is unavailable.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      },
+      "Created": {
+        "description": "Resource created.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "X-Jejak-Sandbox": {
+            "$ref": "#/components/headers/Sandbox"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/success-envelope.schema"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication is required or invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The authenticated actor lacks the required tenant, role, or object permission.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Idempotency, encumbrance, or state conflict.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource does not exist or is not visible to the actor.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      },
+      "Accepted": {
+        "description": "Command accepted for asynchronous processing.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          },
+          "X-Jejak-Sandbox": {
+            "$ref": "#/components/headers/Sandbox"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/success-envelope.schema"
+            }
+          }
+        }
+      },
+      "PreconditionFailed": {
+        "description": "Aggregate version or domain precondition did not match.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-envelope.schema"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "description": "Stable caller-generated key; replaying the same key and payload returns the original result.",
+        "schema": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 255
+        }
+      },
+      "CorrelationId": {
+        "name": "X-Correlation-Id",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "maxLength": 255
+        }
+      },
+      "SellerId": {
+        "name": "sellerId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid-v7"
+        }
+      },
+      "ResourceId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid-v7"
+        }
+      },
+      "IfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "description": "Decimal aggregate version expected by the caller.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 50
+        }
+      },
+      "ClaimState": {
+        "name": "state",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/claim-state.schema"
+        }
+      }
+    },
+    "requestBodies": {
+      "CreateSeller": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateSeller"
+            }
+          }
+        }
+      },
+      "CreateMarketplaceConnection": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateMarketplaceConnection"
+            }
+          }
+        }
+      },
+      "SyncMarketplaceConnection": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SyncMarketplaceConnection"
+            }
+          }
+        }
+      },
+      "CreateCsvIngestion": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateCsvIngestion"
+            }
+          }
+        }
+      },
+      "CreateClaim": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateClaim"
+            }
+          }
+        }
+      },
+      "AnalyzeClaim": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AnalyzeClaim"
+            }
+          }
+        }
+      },
+      "SubmitControlEvidence": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SubmitControlEvidence"
+            }
+          }
+        }
+      },
+      "ControlDecision": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ControlDecision"
+            }
+          }
+        }
+      },
+      "CreateOffer": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateOffer"
+            }
+          }
+        }
+      },
+      "AcceptOffer": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AcceptOffer"
+            }
+          }
+        }
+      },
+      "IssueClaim": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/IssueClaim"
+            }
+          }
+        }
+      },
+      "FundClaim": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/FundClaim"
+            }
+          }
+        }
+      },
+      "CreateSettlementEvent": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CreateSettlementEvent"
+            }
+          }
+        }
+      },
+      "ReconcileClaim": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ReconcileClaim"
+            }
+          }
+        }
+      },
+      "ExecuteWaterfall": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ExecuteWaterfall"
+            }
+          }
+        }
+      },
+      "ResolveClaim": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ResolveClaim"
+            }
+          }
+        }
+      },
+      "PauseClaim": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PauseClaim"
+            }
+          }
+        }
+      }
+    }
+  }
+}

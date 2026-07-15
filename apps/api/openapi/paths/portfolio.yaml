@@ -1,0 +1,13 @@
+summary:
+  get:
+    operationId: getPortfolioSummary
+    summary: Read tenant-scoped exposure and performance
+    tags: [Portfolio]
+    x-jejak-roles: [FACILITY, ORIGINATOR]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }

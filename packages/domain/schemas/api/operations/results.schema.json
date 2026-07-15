@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jejak.finance/schemas/api/operations/results.schema.json",
+  "title": "OperationResults",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "AcceptedJob": {
+      "type": "object", "additionalProperties": false,
+      "required": ["jobId", "status"],
+      "properties": {
+        "jobId": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "status": { "type": "string", "enum": ["QUEUED", "PROCESSING", "COMPLETED", "FAILED"] }
+      }
+    },
+    "PortfolioSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["totalExposure", "outstandingPrincipal", "claimCount"],
+      "properties": {
+        "totalExposure": { "$ref": "../../common/money.schema.json" },
+        "outstandingPrincipal": { "$ref": "../../common/money.schema.json" },
+        "claimCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "AuditEvent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "actorRole", "action", "occurredAt", "resourceType", "resourceId"],
+      "properties": {
+        "id": { "$ref": "../../common/identifiers.schema.json#/$defs/uuidV7" },
+        "actorRole": { "$ref": "../../enums/actor-role.schema.json" },
+        "action": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "occurredAt": { "$ref": "../../common/timestamp.schema.json" },
+        "resourceType": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "resourceId": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    }
+  }
+}

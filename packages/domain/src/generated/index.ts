@@ -21,6 +21,8 @@ export type { FinancingOffer } from "./entities/financing-offer.js";
 export type { JejakIdentifiers } from "./common/identifiers.js";
 export type { MarketplaceConnection } from "./entities/marketplace-connection.js";
 export type { Money } from "./common/money.js";
+export type { OperationRequests } from "./api/operations/requests.js";
+export type { OperationResults } from "./api/operations/results.js";
 export type { PartnerMode } from "./enums/partner-mode.js";
 export type { ReasonCode } from "./enums/reason-code.js";
 export type { ResolutionCase } from "./entities/resolution-case.js";

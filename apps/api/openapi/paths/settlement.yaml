@@ -1,0 +1,92 @@
+settlementEvents:
+  post:
+    operationId: createSettlementEvent
+    summary: Ingest a verified settlement event
+    tags: [Settlement]
+    x-jejak-roles: [SERVICER, SYSTEM]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/CreateSettlementEvent }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/Created }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+reconcile:
+  post:
+    operationId: reconcileClaim
+    summary: Calculate realized claim position
+    tags: [Settlement]
+    x-jejak-roles: [SERVICER, SYSTEM]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/ReconcileClaim }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
+waterfall:
+  post:
+    operationId: executeClaimWaterfall
+    summary: Execute a guarded settlement waterfall
+    tags: [Settlement]
+    x-jejak-roles: [SERVICER]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/ExecuteWaterfall }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
+resolution:
+  post:
+    operationId: resolveClaim
+    summary: Open, update, or close an authorized resolution
+    tags: [Settlement]
+    x-jejak-roles: [RESOLVER]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/ResolveClaim }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
+pause:
+  post:
+    operationId: pauseClaim
+    summary: Trigger a claim-level circuit breaker
+    tags: [Settlement]
+    x-jejak-roles: [ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/PauseClaim }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }

@@ -1,0 +1,10 @@
+extends:
+  - recommended
+
+rules:
+  info-license: off
+  no-server-example.com: off
+  operation-4xx-response: error
+  operation-operationId-unique: error
+  operation-parameters-unique: error
+  security-defined: error

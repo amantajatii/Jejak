@@ -1,0 +1,15 @@
+auditEvents:
+  get:
+    operationId: listAuditEvents
+    summary: Search the append-only tenant audit log
+    tags: [Audit]
+    x-jejak-roles: [ADMIN]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/Cursor }
+      - { $ref: ../components/parameters.yaml#/Limit }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    responses:
+      "200": { $ref: ../components/responses.yaml#/Ok }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }

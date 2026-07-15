@@ -1,0 +1,5 @@
+bearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: Supabase access token. Authorization is resolved from backend memberships, not JWT user metadata.

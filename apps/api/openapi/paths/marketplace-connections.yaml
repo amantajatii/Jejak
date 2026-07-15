@@ -1,0 +1,35 @@
+connections:
+  post:
+    operationId: createMarketplaceConnection
+    summary: Create a sandbox or production marketplace connector
+    tags: [Marketplace]
+    x-jejak-roles: [SELLER]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/CreateMarketplaceConnection }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/Created }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
+connectionSync:
+  post:
+    operationId: syncMarketplaceConnection
+    summary: Enqueue marketplace ingestion
+    tags: [Marketplace]
+    x-jejak-roles: [SELLER, SYSTEM]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/IfMatch }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody: { $ref: ../components/requests.yaml#/SyncMarketplaceConnection }
+    responses:
+      "202": { $ref: ../components/responses.yaml#/Accepted }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "412": { $ref: ../components/responses.yaml#/PreconditionFailed }
