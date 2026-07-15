@@ -1,0 +1,397 @@
+/* Shared operational styling for institution and resolver workspaces. */
+.institution-shell,
+.app-shell {
+  background: #1b1b1b;
+}
+
+.institution-shell .sidebar,
+.app-shell .sidebar {
+  width: 230px;
+  flex-basis: 230px;
+  background: #1b1b1b;
+  color: #faf9f5;
+  border: 0;
+}
+
+.institution-shell .wordmark,
+.app-shell .brand {
+  color: #faf9f5;
+}
+
+.institution-shell .wordmark span,
+.app-shell .brand span {
+  color: #ff4b2b;
+}
+
+.institution-shell .sandbox-note,
+.app-shell .sandbox-note,
+.app-shell .sandbox-badge {
+  background: #797676;
+  color: #faf9f5;
+}
+
+.institution-shell .sandbox-note small {
+  color: #faf9f5;
+  opacity: .76;
+}
+
+.institution-shell .sandbox-dot {
+  background: #faf9f5;
+}
+
+.workspace-primary-nav {
+  --active-nav: 0;
+  position: relative;
+  display: grid;
+  gap: 4px;
+}
+
+.workspace-primary-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: 40px;
+  border-radius: 9px;
+  background: #faf9f5;
+  transform: translateY(calc(var(--active-nav) * 44px));
+  transition: transform .24s cubic-bezier(.2, .8, .2, 1);
+}
+
+.workspace-primary-nav .nav-link {
+  position: relative;
+  z-index: 1;
+  height: 40px;
+  padding-block: 0;
+  border-radius: 9px;
+  background: transparent !important;
+  color: #bdbaba;
+  transition: color .18s ease, background-color .18s ease;
+}
+
+.workspace-primary-nav .nav-link.active {
+  color: #1b1b1b;
+}
+
+.workspace-primary-nav .nav-link:hover:not(.active) {
+  background: rgba(250, 249, 245, .08) !important;
+  color: #faf9f5;
+}
+
+.institution-shell .sidebar-footer,
+.app-shell .sidebar-footer {
+  padding: 12px;
+  background: #faf9f5;
+  color: #1b1b1b;
+  border: 0;
+  border-radius: 14px;
+}
+
+.institution-shell .sidebar-footer small,
+.institution-shell .sidebar-footer button,
+.app-shell .sidebar-footer small {
+  color: #797676;
+}
+
+.institution-shell .workspace,
+.app-shell .main-content {
+  margin: 12px 12px 12px 0;
+  background: #faf9f5;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.institution-shell .topbar,
+.app-shell .topbar {
+  background: #faf9f5;
+  border-color: #e6e3df;
+}
+
+.institution-shell .page {
+  width: min(100%, 1320px);
+  padding: 44px clamp(28px, 4vw, 56px) 72px;
+}
+
+.institution-shell .page h1,
+.institution-shell .detail-heading h1,
+.app-shell .page-header h1,
+.app-shell .detail-header h1 {
+  font-size: 2.5rem;
+  letter-spacing: -.035em;
+}
+
+.institution-shell .metric-grid,
+.app-shell .metrics,
+.app-shell .detail-metrics {
+  gap: 14px;
+  background: transparent;
+  border: 0;
+}
+
+.institution-shell .metric,
+.app-shell .metric {
+  background: #fff;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgb(23 19 13 / 9%);
+}
+
+.institution-shell .panel,
+.app-shell .panel,
+.app-shell .shortfall-alert,
+.app-shell .search {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgb(23 19 13 / 10%);
+}
+
+.institution-shell .status-monitor,
+.institution-shell .status-review,
+.institution-shell .status-stale,
+.institution-shell .status-funded,
+.institution-shell .status-low,
+.institution-shell .status-fresh,
+.institution-shell .status-closed,
+.institution-shell .status-settling,
+.app-shell .status-open,
+.app-shell .status-in_review,
+.app-shell .status-recovered,
+.app-shell .status-closed {
+  background: #1b1b1b;
+  color: #faf9f5;
+}
+
+.institution-shell .status-shortfall,
+.institution-shell .status-high,
+.app-shell .shortfall-alert,
+.app-shell .text-risk,
+.app-shell .metric-risk strong,
+.app-shell .negative-cell {
+  color: #ff4b2b !important;
+}
+
+.app-shell .shortfall-alert {
+  background: #ffe1da;
+}
+
+.institution-shell .text-link,
+.institution-shell .claim-link,
+.institution-shell .attention-item a,
+.app-shell .text-link,
+.app-shell .case-link,
+.app-shell .row-arrow {
+  color: #ff4b2b;
+}
+
+.institution-shell .primary-button,
+.app-shell .button-primary {
+  background: #1b1b1b;
+  border-color: #1b1b1b;
+}
+
+.institution-shell .progress span {
+  background: #1b1b1b;
+}
+
+.workspace-menu-button {
+  display: none;
+}
+
+.workspace-mobile-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  padding: 0 10px;
+  background: #1b1b1b;
+  transition: max-height .24s cubic-bezier(.2, .8, .2, 1), padding .24s ease, visibility 0s linear .24s;
+}
+
+.workspace-mobile-nav.is-open {
+  max-height: 400px;
+  visibility: visible;
+  padding: 12px 10px 16px;
+  transition: max-height .24s cubic-bezier(.2, .8, .2, 1), padding .24s ease, visibility 0s linear 0s;
+}
+
+@media (max-width: 760px) {
+  .institution-shell,
+  .app-shell {
+    display: block;
+    min-height: 100svh;
+    padding: 8px;
+    background: #1b1b1b;
+  }
+
+  .institution-shell .sidebar,
+  .app-shell .sidebar {
+    display: none;
+  }
+
+  .institution-shell .workspace,
+  .app-shell .main-content {
+    width: auto;
+    max-width: calc(100vw - 16px);
+    margin: 0;
+    padding: 8px;
+    background: #1b1b1b;
+    border-radius: 22px;
+  }
+
+  .institution-shell .topbar,
+  .app-shell .topbar {
+    position: relative;
+    height: 64px;
+    padding: 0 10px;
+    background: #1b1b1b;
+    color: #faf9f5;
+    border: 0;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .institution-shell .mobile-brand,
+  .app-shell .mobile-brand {
+    color: #faf9f5;
+  }
+
+  .institution-shell .crumb,
+  .institution-shell .top-actions,
+  .app-shell .topbar-spacer,
+  .app-shell .topbar .sandbox-badge,
+  .app-shell .topbar .avatar-dark,
+  .app-shell .topbar .icon-button {
+    display: none;
+  }
+
+  .workspace-menu-button {
+    position: absolute;
+    right: 18px;
+    transform: translateX(-36px);
+    display: grid;
+    place-content: center;
+    gap: 4px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #5e5c5b;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .workspace-menu-button i {
+    display: block;
+    width: 15px;
+    height: 1.5px;
+    background: #faf9f5;
+    border-radius: 99px;
+  }
+
+  .workspace-mobile-nav a {
+    padding: 11px 12px;
+    border-radius: 9px;
+    background: #292929;
+    color: #bdbaba;
+    font-size: .8125rem;
+  }
+
+  .workspace-mobile-nav a.active {
+    background: #ff4b2b;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .institution-shell .page,
+  .app-shell .page-header,
+  .app-shell .detail-header,
+  .app-shell .toolbar,
+  .app-shell .list-heading,
+  .app-shell .breadcrumbs,
+  .app-shell .shortfall-alert,
+  .app-shell .detail-grid {
+    margin-inline: 0;
+  }
+
+  .institution-shell .page,
+  .app-shell .page-header,
+  .app-shell .detail-header,
+  .app-shell .toolbar,
+  .app-shell .list-heading,
+  .app-shell .breadcrumbs,
+  .app-shell .shortfall-alert,
+  .app-shell .detail-grid,
+  .app-shell .metrics,
+  .app-shell .detail-metrics,
+  .app-shell .table-wrap {
+    background: #faf9f5;
+  }
+
+  .institution-shell .page {
+    padding: 30px 16px 48px;
+    border-radius: 16px;
+  }
+}
+
+/* Legacy tint cleanup: align remaining base-sheet colors to the dark/neutral/coral vocabulary. */
+.institution-shell .metric-mark,
+.institution-shell .metric-mark.green,
+.institution-shell .metric-mark.yellow,
+.institution-shell .metric-mark.pink {
+  background: #797676;
+  border: 0;
+}
+
+.institution-shell .evidence-icon.blue,
+.institution-shell .evidence-icon.yellow,
+.institution-shell .evidence-icon.green {
+  background: #e9e7e5;
+  color: #1b1b1b;
+}
+
+.institution-shell .timeline .done i {
+  background: #1b1b1b;
+}
+
+.institution-shell .back-row,
+.institution-shell .state-block button,
+.institution-shell .demo-controls button {
+  color: #ff4b2b;
+}
+
+.institution-shell .danger,
+.institution-shell .state-error {
+  color: #ff4b2b !important;
+}
+
+.institution-shell .loader {
+  border-top-color: #1b1b1b;
+}
+
+.institution-shell .notice {
+  background: #e9e7e5;
+  color: #1b1b1b !important;
+}
+
+.app-shell .alert-icon {
+  border-color: #ff4b2b;
+  color: #ff4b2b;
+}
+
+.app-shell .section-band {
+  max-width: 1440px;
+  margin: 0 auto 28px;
+  padding: 0 48px;
+}
+
+@media (max-width: 1000px) {
+  .app-shell .section-band {
+    padding-inline: 28px;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-shell .section-band {
+    margin-inline: 18px;
+    padding-inline: 0;
+  }
+}

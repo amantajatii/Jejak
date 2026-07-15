@@ -52,3 +52,7 @@ jejak_master_brief_v1.md
 .venv/
 __pycache__/
 AI_ML_PROGRESS_LIVE_DOC.md
+
+./graphify-out
+
+graphify-out
