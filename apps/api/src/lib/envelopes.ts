@@ -1,4 +1,5 @@
 type EnvelopeMetaInput = {
+  nextCursor?: string;
   requestId: string;
   sandbox: boolean;
   timestamp?: string;
@@ -11,6 +12,7 @@ export function successEnvelope<T>(data: T, meta: EnvelopeMetaInput) {
       requestId: meta.requestId,
       sandbox: meta.sandbox,
       timestamp: meta.timestamp ?? new Date().toISOString(),
+      ...(meta.nextCursor === undefined ? {} : { nextCursor: meta.nextCursor }),
     },
   };
 }

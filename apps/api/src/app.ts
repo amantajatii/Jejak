@@ -9,6 +9,9 @@ import { loadConfig, type AppConfig } from "./config/env.js";
 import { errorEnvelope } from "./lib/envelopes.js";
 import { InvitationError } from "./invitations/service.js";
 import { createRequestId } from "./plugins/request-context.js";
+import { IdempotencyConflictError } from "./reliability/mutation-coordinator.js";
+import { registerClaimRoutes, type ClaimRouteDependencies } from "./modules/claims/routes.js";
+import { registerIngestionRoutes, type IngestionRouteDependencies } from "./modules/ingestion/routes.js";
 import { DomainError } from "./modules/shared/errors.js";
 import {
   createDeferredProbe,
@@ -17,11 +20,15 @@ import {
 import type { ReadinessProbe } from "./readiness/types.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerInvitationRoutes, type InvitationRouteDependencies } from "./routes/invitations.js";
+import { registerReadModelRoutes, type ReadModelRouteDependencies } from "./routes/read-models.js";
 
 export type BuildAppOptions = {
+  claimDependencies?: ClaimRouteDependencies;
   config?: AppConfig;
+  ingestionDependencies?: IngestionRouteDependencies;
   logger?: boolean;
   invitationDependencies?: InvitationRouteDependencies;
+  readModelDependencies?: ReadModelRouteDependencies;
   readinessProbes?: ReadinessProbe[];
 };
 
@@ -52,6 +59,9 @@ function publicError(error: unknown): {
   if (error instanceof InvitationError) {
     const statusCode = error.code === "INVITATION_EMAIL_MISMATCH" ? 409 : 404;
     return { code: error.code, message: error.message, retryable: false, statusCode };
+  }
+  if (error instanceof IdempotencyConflictError) {
+    return { code: error.code, message: error.message, retryable: false, statusCode: 409 };
   }
   if (error instanceof DomainError) {
     const statusCode =
@@ -110,8 +120,17 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   ];
 
   await registerHealthRoutes(app, { config, probes });
+  if (options.claimDependencies !== undefined) {
+    await registerClaimRoutes(app, options.claimDependencies);
+  }
+  if (options.ingestionDependencies !== undefined) {
+    await registerIngestionRoutes(app, options.ingestionDependencies);
+  }
   if (options.invitationDependencies !== undefined) {
     await registerInvitationRoutes(app, options.invitationDependencies);
+  }
+  if (options.readModelDependencies !== undefined) {
+    await registerReadModelRoutes(app, options.readModelDependencies);
   }
 
   app.setNotFoundHandler(async (request, reply) =>

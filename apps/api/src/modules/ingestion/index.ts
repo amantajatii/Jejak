@@ -3,6 +3,7 @@ export {
   sandboxMarketplaceSourceNamespace,
 } from "./adapters/deterministic-sandbox.js";
 export { PostgresIngestionRepository } from "./adapters/postgres-repository.js";
+export { StorageCsvObjectReader } from "./adapters/storage-object-reader.js";
 export {
   CsvIngestionApplication,
   csvSourceNamespace,

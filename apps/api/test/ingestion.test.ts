@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ingestCanonicalCsv } from "../src/modules/ingestion/application/ingest-csv.js";
+import { StorageCsvObjectReader } from "../src/modules/ingestion/adapters/storage-object-reader.js";
 import { parseCanonicalCsv } from "../src/modules/ingestion/domain/canonical-csv.js";
 import { DomainError } from "../src/modules/shared/errors.js";
 import { sha256Hex } from "../src/modules/shared/hash.js";
@@ -13,6 +14,27 @@ function bytes(value: string): Uint8Array {
 }
 
 describe("canonical marketplace CSV", () => {
+  it("reads bounded private-storage objects without trusting streamed byte counts", async () => {
+    const body = bytes("abc");
+    const reader = new StorageCsvObjectReader({
+      readObject: async () => ({
+        bytes: (async function* () { yield body.slice(0, 1); yield body.slice(1); })(),
+        sizeBytes: body.byteLength,
+      }),
+    }, 3);
+    await expect(reader.read("private/source.csv")).resolves.toEqual(body);
+
+    const truncated = new StorageCsvObjectReader({
+      readObject: async () => ({
+        bytes: (async function* () { yield body.slice(0, 2); })(),
+        sizeBytes: body.byteLength,
+      }),
+    }, 3);
+    await expect(truncated.read("private/source.csv")).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+    });
+  });
+
   it("normalizes quoted rows and produces deterministic hashes", () => {
     const csv = `${header}\r\nevent-1,order_settled,2026-07-15T00:00:00Z,10000,tidr,2,"order,one"\r\n`;
     const first = parseCanonicalCsv(bytes(csv));

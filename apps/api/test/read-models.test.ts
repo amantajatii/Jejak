@@ -104,7 +104,7 @@ describe("read route registrar institutional RBAC", () => {
     let active = membership("FACILITY");
     await registerReadModelRoutes(app, {
       findMembership: async () => active,
-      service: new ReadModelService(repository),
+      serviceForActor: () => new ReadModelService(repository),
       verifier: { verify: async () => ({ subject: actorId }) },
     });
     const headers = { authorization: "Bearer test", "x-jejak-tenant-id": tenantId };

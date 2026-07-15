@@ -22,14 +22,14 @@ const auditQuery = z.object({
 
 export type ReadModelRouteDependencies = {
   findMembership(input: { authSubject: string; requestId: string; tenantId: string }): Promise<ActiveMembership | undefined>;
-  service: ReadModelService;
+  serviceForActor(actorId: string): ReadModelService;
   verifier: Pick<SupabaseJwtVerifier, "verify">;
 };
 
 export async function registerReadModelRoutes(app: FastifyInstance, dependencies: ReadModelRouteDependencies): Promise<void> {
   app.get("/v1/portfolio/summary", async (request) => {
     const context = await institutionalContext(request, dependencies, ["FACILITY", "ORIGINATOR"]);
-    return successEnvelope(await dependencies.service.portfolio({ requestId: request.id, tenantId: context.tenantId }), {
+    return successEnvelope(await dependencies.serviceForActor(context.actorId).portfolio({ requestId: request.id, tenantId: context.tenantId }), {
       requestId: request.id,
       sandbox: true,
     });
@@ -40,7 +40,7 @@ export async function registerReadModelRoutes(app: FastifyInstance, dependencies
     const parsed = auditQuery.safeParse(request.query);
     if (!parsed.success) validationError("Audit query is invalid.");
     const query = parsed.data as AuditQuery;
-    return successEnvelope(await dependencies.service.audit({ query, requestId: request.id, tenantId: context.tenantId }), {
+    return successEnvelope(await dependencies.serviceForActor(context.actorId).audit({ query, requestId: request.id, tenantId: context.tenantId }), {
       requestId: request.id,
       sandbox: true,
     });
