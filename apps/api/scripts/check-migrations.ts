@@ -9,6 +9,7 @@ const settlementMoneyGuard = await readFile(resolve(root, "0003_orange_maginty.s
 const claimEncumbranceGuard = await readFile(resolve(root, "0004_hot_doctor_faustus.sql"), "utf8");
 const anchor = await readFile(resolve(root, "0005_lame_ultron.sql"), "utf8");
 const chainReadModels = await readFile(resolve(root, "0006_broken_the_anarchist.sql"), "utf8");
+const activeOfferGuard = await readFile(resolve(root, "0007_lively_bloodstrike.sql"), "utf8");
 const rollback0 = await readFile(resolve(root, "rollbacks/0000_keen_shiver_man.down.sql"), "utf8");
 const rollback1 = await readFile(resolve(root, "rollbacks/0001_security_foundation.down.sql"), "utf8");
 const rollback2 = await readFile(resolve(root, "rollbacks/0002_lucky_molly_hayes.down.sql"), "utf8");
@@ -16,6 +17,7 @@ const rollback3 = await readFile(resolve(root, "rollbacks/0003_orange_maginty.do
 const rollback4 = await readFile(resolve(root, "rollbacks/0004_hot_doctor_faustus.down.sql"), "utf8");
 const rollback5 = await readFile(resolve(root, "rollbacks/0005_lame_ultron.down.sql"), "utf8");
 const rollback6 = await readFile(resolve(root, "rollbacks/0006_broken_the_anarchist.down.sql"), "utf8");
+const rollback7 = await readFile(resolve(root, "rollbacks/0007_lively_bloodstrike.down.sql"), "utf8");
 
 const failures: string[] = [];
 const requireText = (text: string, pattern: RegExp, message: string) => {
@@ -67,6 +69,9 @@ requireText(rollback6, /DROP TRIGGER IF EXISTS waterfall_results_append_only/, "
 requireText(rollback6, /DROP INDEX IF EXISTS jejak\.chain_events_waterfall_result_hash_idx/, "waterfall hash index rollback is missing");
 if (/\b(real|double precision)\b/i.test(chainReadModels)) failures.push("floating-point chain Money type found");
 if (/SECURITY\s+DEFINER/i.test(chainReadModels)) failures.push("chain SECURITY DEFINER is forbidden");
+requireText(activeOfferGuard, /financing_offers_active_claim_uq/, "active financing-offer guard is missing");
+requireText(activeOfferGuard, /status.*in \('OFFERED', 'ACCEPTED'\)/i, "active financing-offer statuses are not constrained");
+requireText(rollback7, /DROP INDEX IF EXISTS jejak\.financing_offers_active_claim_uq/, "active financing-offer rollback is missing");
 
 const tenantTables = [...initial.matchAll(/CREATE TABLE "jejak"\."([^"]+)" \([\s\S]*?\n\);/g)]
   .filter((match) => match[0].includes('"tenant_id" uuid NOT NULL'))

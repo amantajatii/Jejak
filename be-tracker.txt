@@ -4,11 +4,13 @@ JEJAK BACKEND TRACKER
 Owner       : BE / Integration Steward
 Source      : jejak-master-implementation-brief.md v2.0, Section 25
 Updated     : 15 July 2026
-Current wave: Wave 0 — Contract Freeze
-Design spec : docs/superpowers/specs/2026-07-15-jejak-backend-roadmap-wave-0-design.md
+Current wave: Wave 1 — Backend Foundation
+Design spec : docs/superpowers/specs/2026-07-15-jejak-wave-1-foundation-design.md
 Design state: APPROVED + SELF-REVIEWED
-Impl. plan  : docs/superpowers/plans/2026-07-15-jejak-backend-wave-0-implementation-plan.md
-Plan state  : WAVE 0 BE-OWNED IMPLEMENTATION COMPLETE; Gate A handoffs open
+Impl. plan  : docs/superpowers/plans/2026-07-15-jejak-wave-1-foundation-implementation-plan.md
+Plan state  : IMPLEMENTED; GUARDED SUPABASE ACCEPTANCE PASSED
+Lifecycle   : docs/superpowers/specs/2026-07-15-jejak-data-risk-claim-lifecycle-design.md
+Lifecycle plan: docs/superpowers/plans/2026-07-15-jejak-data-risk-claim-lifecycle-implementation-plan.md
 
 STATUS
 ------
@@ -20,7 +22,7 @@ STATUS
 
 SUMMARY
 -------
-DONE: 1  |  DOING: 2  |  TODO: 17  |  BLOCKED: 0  |  DEFERRED: 1
+DONE: 10  |  DOING: 9  |  TODO: 1  |  BLOCKED: 0  |  DEFERRED: 1
 
 INITIAL BASELINE — HISTORICAL
 -----------------------------
@@ -78,71 +80,306 @@ WAVE 0 — FOUNDATION AND FROZEN CONTRACTS
     Evidence: schemas, fixtures, vectors, OpenAPI, generated client,
               drift check, and Python consumer tests all pass.
 
-[ ] BE-02  MUST  Add PostgreSQL/Drizzle schema and migrations
-    Done: a fresh database migrates up and down safely.
+[x] BE-02  MUST  Add PostgreSQL/Drizzle schema and migrations
+    Implemented: 26 private-schema tables, 11 canonical entities,
+    numeric Money, reversible Drizzle SQL, roles/grants, forced RLS,
+    guarded migration runner, and static security checks.
+    Evidence: guarded dedicated Supabase UP/check/DOWN/UP passed, including
+    catalog, grants, forced RLS, two-tenant isolation, and append-only audit;
+    static migration security checks now cover all 32 tenant tables.
 
-[ ] BE-03  MUST  Implement auth, tenant isolation, and RBAC
-    Done: object-level authorization tests pass for every role.
+[~] BE-03  MUST  Implement auth, tenant isolation, and RBAC
+    Implemented: Supabase JWKS/legacy verification, mandatory UUIDv7 tenant
+    selection, multi-active-tenant membership lookup, role grants, resource
+    assignment policy, admin bootstrap, and institutional invitation flow.
+    Added: valid-from enforcement, tenant-scoped active-assignment repository,
+           nine-role canonical authorization matrix (FACILITY is the frozen
+           capital-provider role), suspended membership/future-grant coverage,
+           and proof that JWT user/app metadata cannot manufacture a role.
+    Evidence: focused auth/reliability 23 tests, combined API 22 files / 101
+              tests, scoped strict TypeScript, and diff checks pass; guarded
+              runtime-role RLS/every-role acceptance is committed in 54cd8df.
+    Runtime: institutional invitation routes are composed through app/server;
+             authorization still derives from verified identity, selected tenant,
+             active membership/grants, and resource assignments—not JWT metadata.
+    Open: current root .env has empty database/Supabase entries, so the guarded
+          cloud suite stopped at config validation before any database mutation.
 
-[ ] BE-04  MUST  Implement audit, idempotency, and transactional outbox
-    Done: duplicate requests/events are safe and fully auditable.
+[~] BE-04  MUST  Implement audit, idempotency, and transactional outbox
+    Implemented: canonical payload hashing, tenant/actor/operation key scope,
+    atomic mutation coordinator, append-only audit, transactional invitation
+    outbox, SKIP LOCKED worker claim, lease recovery, and bounded backoff.
+    Added: tenant-scoped worker claims that install local RLS context, signed-URL
+           redaction, and guarded live acceptance for concurrent duplicates,
+           conflicting payloads, atomic rollback, exact audit/outbox cardinality,
+           distinct SKIP LOCKED claims, expired-lease recovery, and safe replay.
+    Evidence: focused auth/reliability 23 tests, combined API 22 files / 101
+              tests, scoped strict TypeScript, and diff checks pass; acceptance
+              runner and verification harness are committed in 54cd8df.
+    Open: restore dedicated-test credentials in root .env, then run the guarded
+          database acceptance serially; no cloud mutation occurred in the attempt.
 
 
 DATA, RISK, AND CLAIM LIFECYCLE
 -------------------------------
-[ ] BE-05  MUST  Marketplace sandbox adapter and CSV ingestion
+[~] BE-05  MUST  Marketplace sandbox adapter and CSV ingestion
     Done: raw hashes, normalized events, and quality reports persist.
+    Implemented: provider-neutral canonical CSV parser, exact byte/row hashes,
+    deterministic malformed-row evidence, connection/seller-namespaced identities,
+    deterministic marketplace SANDBOX adapter, concurrent duplicate/conflict
+    handling, and atomic run/source/event/issue/report persistence through the
+    mutation coordinator. Exported dependency-injected authenticated tenant/RBAC
+    routes for marketplace sync, CSV ingestion, and ingestion status; private
+    object references stay out of idempotency payloads, audit, and outbox.
+    Evidence: focused BE-05/BE-06 suite passes 19 tests with one guarded live test
+              skipped; full API passes 128 tests, typecheck, build, and diff check.
+              Commit: 485fd1a.
+    Runtime: authenticated marketplace sync, CSV ingestion, and ingestion-status
+             routes are composed through the API app/server dependency graph.
+    Open: run the guarded live PostgreSQL ingestion/replay/isolation test serially
+          when exclusive access to the dedicated test project is confirmed.
 
-[ ] BE-06  MUST  Reconciliation ledger and decision-time snapshot
+[~] BE-06  MUST  Reconciliation ledger and decision-time snapshot
     Done: immutable, cutoff-bound settlement snapshots are created.
+    Implemented: transactional decision-snapshot application over persisted,
+    tenant/seller/source-scoped events; ingestion high-water and cutoff enforcement;
+    deterministic namespaced ordering; checked integer Money; incremental predecessor
+    baselines; quality identity/reason evidence; canonical hashes; insert-or-replay;
+    immutable successor lineage; and hash/payload reconciliation on repository reads.
+    Evidence: focused BE-05/BE-06 suite passes 19 tests with one guarded live test
+              skipped; full API passes 128 tests, typecheck, build, and diff check.
+              Commit: 485fd1a.
+    Open: run guarded live insert/replay/isolation/metadata-immutability acceptance
+          serially. Integration migration owner must also revoke UPDATE/DELETE and
+          add the immutable trigger to settlement_streams; existing migration guards
+          decision_snapshot_metadata but not the canonical settlement-stream row.
 
-[ ] BE-07  MUST  Claim and financing-offer lifecycle APIs
+[~] BE-07  MUST  Claim and financing-offer lifecycle APIs
     Done: invalid transitions and version conflicts are rejected.
+    Implemented: authorized create/list/read/analyze claim and create/accept offer
+    HTTP APIs; mandatory selected tenant; seller ownership plus institutional
+    resource-assignment checks; exact Money/terms handling; If-Match optimistic
+    concurrency; idempotency; bounded pagination; and safe not-found/conflict errors.
+    Runtime: claim and offer routes are composed through app/server using the
+             tenant-aware PostgreSQL repository. Commit: 197c14c.
+    Reliability: migration 0007 adds a partial unique guard preventing concurrent
+                 active OFFERED/ACCEPTED offers for one tenant claim; PostgreSQL
+                 unique races map to a safe invalid-transition response.
+    Evidence: focused claim/lifecycle/integration checkpoint passes 25/25 tests;
+              the integrated API checkpoint passes 187 tests with 2 guarded skips;
+              scoped strict TypeScript and the 36-table migration check pass.
+    Open: run guarded live PostgreSQL route/concurrency acceptance and apply/verify
+          migration 0007 on the dedicated test project; rerun final full typecheck
+          and build after the parallel worktree stabilizes.
 
-[ ] BE-08  MUST  Risk-service client and orchestration
+[~] BE-08  MUST  Risk-service client and orchestration
     Done: snapshot hashes/results reconcile; failures remain safe.
+    Implemented: ICP-0002 identity echoes, generated schemas, feature hash,
+    response/Money validation, bounded HTTP client, retry classification,
+    deterministic timeout/mismatch stub, route-independent durable worker,
+    tenant-scoped snapshot/input reconstruction, safe attempt journal, stale-work
+    recovery, and atomic evaluation/claim/audit/outbox/operation commit.
+    Evidence: focused retry/replay/terminal-failure worker tests pass; guarded live
+              operation claim/retry acceptance is prepared for serial execution.
+    Open: RISK owner acknowledgement of ICP-0002 and serial live acceptance.
 
-[ ] BE-09  MUST  JCC persistence and registry orchestration
+[~] BE-09  MUST  JCC persistence and registry orchestration
     Done: JCC signature/hash and on-chain result reconcile.
+    Implemented: canonical JEJAK_JCC_V1 payload/key/payload/envelope hashes;
+    injected signer and public-verifier consumption; PostgreSQL signed-envelope
+    repository; generated Eligibility Registry register/read/revoke adapter with
+    injected transaction submitter; durable chain-submission idempotency; indexed
+    plus live-state reconciliation; and immutable revocation/expiry status handling.
+    Evidence: focused canonical/replay/no-fake-success/revoke/expiry tests pass;
+              guarded live repository/isolation/immutability/submission acceptance
+              is prepared. RISK signer/ICP-0002 handoff is documented.
+    Open: real RISK signer/verifier acknowledgement and serial signer + Testnet
+          register/read/revoke/expiry reconciliation; do not mark DONE before both.
 
 
 PARTNER AND STELLAR ORCHESTRATION
 --------------------------------
-[ ] BE-10  MUST  Originator/control-evidence adapter
-    Done: deterministic sandbox evidence; raw documents stay off-chain.
+[x] BE-10  MUST  Originator/control-evidence adapter
+    Implemented: partner-neutral control-evidence port, deterministic SANDBOX
+    outcomes VERIFIED/REJECTED/PENDING/EXPIRED/TIMEOUT/PROTOCOL_MISMATCH,
+    canonical receipts, bounded retry, lost-response lookup, replay/conflict
+    protection, audit, outbox, and reconciliation.
+    BE-19 boundary: exported upload/finalize/download handler; only finalized
+    documentSecretRef, SHA-256, size, content type, version, and allowlisted safe
+    metadata reach the adapter. Raw bytes, signed URLs, tokens, and proofs are
+    excluded from audit/outbox.
+    Evidence: exact receipt/scenario/security suite passes 10/10 tests; clean
+              committed API snapshot passes 121 tests, typecheck, build, and
+              git diff --check. Commit: c9771c9.
+    Boundary: SANDBOX only; VERIFIED is not proof of legal enforceability.
+    Added: PostgreSQL operation/step/partner-attempt journal and atomic finalized
+           evidence lifecycle attachment using existing canonical, idempotency,
+           audit, and outbox tables.
+    Integration: Session 1 must compose authorization and the exported durable
+                 service; no public control route is registered here.
 
-[ ] BE-11  MUST  Issuer and SEP-8-shaped adapter
-    Done: approve/revise/pending/action/reject paths are testable.
+[x] BE-11  MUST  Issuer and SEP-8-shaped adapter
+    Implemented: partner-neutral issuer approval port and deterministic SANDBOX
+    states APPROVED/REVISED/PENDING/ACTION_REQUIRED/REJECTED plus timeout and
+    protocol-mismatch failures, stable correlation/idempotency IDs, bounded
+    retry, lost-response lookup, replay/conflict protection, audit, and outbox.
+    Safety: REVISED intent/hash is validated before approved=true;
+            PENDING/ACTION_REQUIRED remain non-success; production fails closed
+            without a real configured issuer.
+    Evidence: exact APPROVED/REVISED and adverse/reconciliation suite passes
+              10/10 tests; clean committed API snapshot passes 121 tests,
+              typecheck, build, and git diff --check. Commit: c9771c9.
+    Boundary: production-shaped SEP-8 SANDBOX only; not a production SEP service
+              and does not authorize JCC or Soroban calls.
+    Added: PostgreSQL operation/step/partner-attempt journal with durable receipt
+           replay, terminal failure persistence, audit, and outbox.
+    Integration: transaction-builder/SAC orchestration remains owner wiring.
 
-[ ] BE-12  MUST  Facility/funding orchestrator
-    Done: persisted saga safely resumes after RPC/response failure.
+[x] BE-12  MUST  Facility/funding orchestrator
+    Implemented: durable operation/step saga with CONTROLLED claim, verified
+    evidence, active attestation, and accepted-offer preconditions; issuer
+    approval; separate or atomic issuance/funding; anchor payout; and facility
+    position persistence using the existing reliability/domain tables.
+    Recovery: stable chain idempotency, lookup-before-submit, deterministic
+              receipts, replay, and resume after timeout/lost response. Pending
+              and action-required issuer outcomes never fund the claim.
+    Compensation: terminal funding failure after confirmed issuance enters
+                  COMPENSATION_REQUIRED; retryable/ambiguous responses pause for
+                  reconciliation and cannot compensate. Explicit redeem/burn
+                  compensation returns the claim to CONTROLLED. Confirmed funding
+                  followed by payout failure remains PAUSED for operator recovery.
+    Boundary: all issuer, chain, and anchor paths are labeled SANDBOX; production
+              chain mode fails closed without a configured real implementation.
+    Exports: FundingChainPort, FundingSagaRepository, FacilityFundingSagaService,
+             FacilityFundingCompensationService, deterministic/in-memory/
+             PostgreSQL adapters, and registerFacilityFundingRoutes.
+    Evidence: focused partner/funding suite passes 38 tests; full API passes 194
+              tests with 2 guarded skips; API build and git diff --check pass.
 
-[ ] BE-13  MUST  Anchor adapter and local-payout receipt
-    Done: sandbox conversion receipt is labeled and reconciled.
+[x] BE-13  MUST  Anchor adapter and local-payout receipt
+    Implemented: partner-neutral payout port, deterministic USDC -> TIDR
+    sandbox conversion, exact integer Money/rate/fee arithmetic, validated
+    sandbox receipts, retry/error classification, lost-response reconciliation,
+    tenant-scoped idempotency, audit, transactional outbox, and PostgreSQL journal.
+    Evidence: focused 2 files / 12 tests, combined 22 files / 90 tests,
+              API typecheck/build, 32-table migration security check, guarded
+              Supabase anchor acceptance, and foundation UP/check/DOWN/UP pass.
+    Boundary: SANDBOX only; no real fiat payout, SEP, or production partner claim.
 
-[ ] BE-14  MUST  Settlement ingestion and waterfall orchestration
-    Done: duplicates are safe; shortfall enters the correct path.
+[x] BE-14  MUST  Settlement ingestion and waterfall orchestration
+    Implemented: tenant-scoped canonical settlement ingestion; source/external-ID
+    and payload-hash replay protection; exact integer Money waterfall ordering
+    (servicing fee -> principal -> financing fee -> seller residual); explicit
+    partial/final settlement; first-loss and senior-loss calculation; and typed
+    generated-client submission without changing the contract or generated files.
+    Safety: ambiguous/lost RPC responses are never blindly resubmitted and recover
+            only through canonical result_hash lookup. Submission remains pending
+            until BE-15 reconciles event, amount, split fees, final_settlement,
+            result_hash, and contract state. Reconciliation replay is idempotent;
+            terminal mismatch cannot become reconciled; resolution.required is
+            emitted only after a reconciled SHORTFALL.
+    Projection: BE-15 accumulates reconciled split fees, avoids double-counting
+                senior loss across waterfall/write-off events, and feeds BE-16.
+    Handoff: registerSettlementRoutes is exported but intentionally not composed
+             into app.ts; Session 1 owns dependency construction/registration.
+    Evidence: post-merge focused BE-14/15/16 suite 39/39, full API 196 passed /
+              2 skipped, API typecheck/build, workspace build, OpenAPI lint,
+              schema validation, generated Stellar client build/drift checks,
+              and git diff --check pass.
+              Commit: 08ff43335c58c76631f8363c477760d9e7a17c5f
+              (included by a concurrent main merge).
 
-[ ] BE-15  MUST  Chain event indexer and reconciliation
-    Done: reindex from checkpoint works and mismatches are detected.
+[x] BE-15  MUST  Chain event indexer and reconciliation
+    Implemented: typed fail-closed Stellar RPC event decoding for all canonical
+    events from the six Testnet contracts; tenant/network/contract checkpoints,
+    overlap reindex, canonical event identity, idempotent duplicate replay, and
+    database projections. Submission success remains pending until canonical
+    event and generated-client state reconciliation complete.
+    Reconciliation: detects missing/malformed events, stale checkpoints, amount,
+                    approved-principal, split servicing/financing fee, result_hash,
+                    final_settlement, and state mismatches; transport timeout is
+                    retryable while contract/protocol mismatch is terminal.
+    Evidence: focused BE-15/BE-16 suite 32/32, full API 160 passed / 1 skipped,
+              workspace typecheck 7/7, build 6/6, six generated-client drift
+              checks, and read-only Testnet decode of 31 events all pass.
+              Commit: d798a10.
 
 
 READ MODELS, OPERATIONS, AND INTEGRATION
 ---------------------------------------
-[ ] BE-16  MUST  Portfolio and audit query APIs
-    Done: institutional queries are correct, authorized, and tested.
+[x] BE-16  MUST  Portfolio and audit query APIs
+    Implemented: database-only portfolio projection with exact integer Money and
+    explicit currency/scale/issuer; reconciliation status; and an allowlisted,
+    redacted audit query with deterministic (created_at, id) keyset pagination,
+    safe filters, and bounded limit 100.
+    Authorization: mandatory verified JWT, tenant context, active institutional
+                   membership, FACILITY/ORIGINATOR portfolio access, and ADMIN-only
+                   audit access. Raw evidence, private payloads, signed URLs,
+                   tokens, references, and idempotency keys are never returned.
+    Migration: reversible 0006 adds chain events, reconciliation expectations/
+               results, portfolio projection, checkpoint metadata, query indexes,
+               minimal grants, forced tenant RLS, and immutable event rules;
+               security checker passes for all 36 tenant tables.
+    Runtime: registerReadModelRoutes is composed through app/server with a
+             request-scoped service so tenant and actor authorization cannot leak
+             across requests. BE-14 feeds the existing chain projection without
+             changing this read contract. Registration commit: 197c14c.
+    Evidence: OpenAPI lint, API-client generation/typecheck/tests, API typecheck/
+              build/tests, migration security check, and git diff --check pass.
+              Commit: d798a10.
 
 [~] BE-17  MUST  Docker Compose, CI, OpenTelemetry, and health checks
     Done: fresh clone starts successfully with health/traces visible.
     Evidence: health/readiness, CI workflow, Dockerfile, Compose config,
               secret scan, and smoke runner exist.
-    Open: container smoke evidence and OpenTelemetry implementation.
+    Added: optional OTLP HTTP trace/metric exporters, HTTP spans/metrics,
+           attribute allowlist/redaction, in-memory exporter test, and clean shutdown.
+    Evidence: telemetry safety tests and API build pass; no local collector or
+              Docker is required for the backend development flow.
+    Added: conditional private-evidence Storage readiness, redacted evidence
+           spans/metrics, adapter shutdown, and Docker-free Storage runbook.
+    Evidence: combined API typecheck/build and 20 files / 76 tests pass;
+              evidence telemetry allowlist and readiness states are tested.
+    Local smoke: the real API process starts without Docker; /health returns 200,
+                 while /ready returns a safe 503 with unconfigured dependencies
+                 labeled not_configured and without secret URLs or tokens.
+    Hardening: blank optional database/Supabase/OTLP/evidence environment values
+               normalize to unset/default; focused config/health checks pass 10/10.
+    Open: deployment-visible trace evidence; container smoke remains optional
+          under the team's Docker-avoidance decision.
 
 [ ] BE-18  MUST  Integration and failure-injection tests
     Done: happy, adverse, replay, timeout, and reconciliation tests pass.
 
-[ ] BE-19  SHOULD  Encrypted evidence object-storage adapter
-    Done: local MinIO/sandbox and production-shaped interface work.
+[x] BE-19  SHOULD  Encrypted evidence object-storage adapter
+    Implemented: framework-neutral storage port, deterministic in-memory sandbox,
+    private Supabase adapter, canonical immutable object keys, signed upload and
+    download intents, HMAC finalization proof, streaming SHA-256 verification,
+    cross-tenant reference rejection, cleanup, readiness, and redacted telemetry.
+    Security: raw bytes/tokens/URLs never enter DB, events, or telemetry;
+              Supabase's fixed two-hour upload validity is distinct from Jejak's
+              signed 15-minute finalization deadline; Docker/MinIO are not required.
+    Evidence: focused 4 files / 16 tests plus combined API typecheck/build and
+              20 files / 76 tests pass; guarded private Supabase Storage cloud
+              acceptance passes signed upload/download, integrity, immutability,
+              tenant binding, and unconditional synthetic-object cleanup.
+    Added: BE-10 now exports ControlEvidenceHandler and composes upload,
+           finalization, partner verification, and authorized download services.
+    Evidence: composition/security test proves raw bytes, signed URLs, upload
+              tokens, finalization proofs, and documentSecretRef do not enter
+              partner audit/outbox records.
+    Finalized: PostgreSQL EvidenceReferenceRegistry reconstructs canonical
+               finalized metadata from control_evidence. DurableControlEvidenceService
+               atomically attaches hash/reference/content type/size/version/time
+               and the control result, advances an eligible claim only on VERIFIED,
+               and emits allowlisted audit/outbox payloads.
+    Durability: control and issuer PostgreSQL journals use existing operations,
+                operation_steps, partner_attempts, idempotency, audit, and outbox;
+                no schema or migration change was introduced by Session 3.
+    Security: raw bytes, upload tokens, finalization proofs, and signed URLs remain
+              outside canonical records, journals, audit, and outbox.
+    Integration: Session 1 must instantiate the request-scoped registry/lifecycle
+                 repository and register the exported application boundaries.
 
 [-] BE-20  LATER  Real partner implementations
     Resume only when real partners and credentials exist; never claim now.
@@ -154,21 +391,32 @@ INTEGRATION-STEWARD CHECKLIST
 [~] FE handoff published; generated-client adoption acknowledgement pending.
 [~] RISK Python proof exists; owner JCS/Ed25519 acknowledgement pending.
 [~] SC vector handoff published; Rust ABI/event acknowledgement pending.
-[ ] Breaking frozen-contract changes use an approved ICP.
+[~] Breaking frozen-contract changes use an approved ICP; ICP-0002 is accepted
+    for BE implementation and awaits RISK acknowledgement.
 [x] Generated artifacts are reproducible and checked for drift in CI.
-[ ] External calls have timeout, retry class, correlation, and reconciliation.
-[ ] Chain state is reconciled; submission success is never assumed final.
-[ ] Migrations include safe up/down and rollback instructions.
+[~] RISK, anchor, originator-control, issuer, and facility sandbox calls have
+    timeout,
+    retry class, correlation, identity/hash or receipt reconciliation, and safe
+    failure behavior; settlement partner calls remain open.
+[~] BE-15 chain state reconciliation and BE-12 lookup/resume are implemented;
+    Session 1 must wire funding submission to canonical event/state reconciliation.
+[x] Migrations include explicit rollback; guarded lifecycle UP -> DOWN -> UP and
+    final Supabase restore passed on the dedicated test project.
 [x] docs/status/be.md contains current Wave 0 evidence and open gates.
 
 
 NEXT ACTIONS
 ------------
-1. FE: validate @jejak/api-client and approve removal of apps/web/package-lock.json.
-2. RISK: validate shared Python schemas/fixtures and independently verify JCS/Ed25519.
-3. SC: validate Rust key/hash/amount vectors and freeze ABI/event mappings.
-4. CI/local Docker: run the API image smoke where a Docker daemon is available.
-5. Reach Gate A before starting the happy-path vertical slice.
+1. Session 1: compose authorization and register the exported facility funding
+   registrar plus durable control/issuer application services without claiming
+   production partner or SEP integration.
+2. Connect the funding chain port to transaction construction and BE-15 canonical
+   event/state reconciliation; keep production mode fail closed until configured.
+3. Run guarded PostgreSQL acceptance for resume, compensation, and evidence
+   lifecycle rollback when the dedicated test project is exclusively available.
+4. Restore the dedicated-test Supabase configuration and run the prepared
+   BE-03/BE-04 runtime RLS/concurrency acceptance serially.
+5. Provision production runtime login credentials outside committed SQL.
 
 
 IMPORTANT BOUNDARIES

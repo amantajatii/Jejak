@@ -5,12 +5,14 @@ import { describe, expect, it } from "vitest";
 import {
   ControlAdapterError,
   ControlEvidenceHandler,
+  DurableControlEvidenceService,
   ControlEvidenceOrchestrator,
   DeterministicControlEvidenceSandbox,
   InMemoryControlOperationJournal,
   type ControlOperationContext,
   type ControlSandboxScenario,
   type SafeControlMetadata,
+  type ControlEvidenceLifecycleRepository,
 } from "../src/modules/control/index.js";
 import {
   CreateEvidenceDownloadIntent,
@@ -21,6 +23,7 @@ import {
   InMemoryEvidenceStorage,
   type EvidenceReferenceRegistry,
   type FinalizedEvidence,
+  buildEvidenceObjectKey,
 } from "../src/modules/evidence/index.js";
 import { IdempotencyConflictError } from "../src/reliability/mutation-coordinator.js";
 
@@ -215,17 +218,17 @@ describe("BE-19 control-evidence application composition", () => {
 
     const upload = await handler.createUploadIntent(context, expectation);
     await storage.putObjectForTest({ body, contentType: expectation.contentType, objectKey: upload.objectKey });
-    const result = await handler.finalizeAndVerify(context, {
+    const durable = new DurableControlEvidenceService(handler, registry);
+    const result = await durable.finalizeAndVerify(context, {
       finalizationProof: upload.finalizationProof,
       safeMetadata,
       structure: "CONTROLLED_ACCOUNT",
     });
-    registry.finalized.set(upload.objectKey, result.evidence);
     const download = await handler.createDownloadIntent(context, result.evidence.documentSecretRef);
     expect(result.receipt.status).toBe("VERIFIED");
     expect(download.signedUrl).toContain("memory://jejak-evidence-test/");
 
-    const journalText = JSON.stringify({ audit: journal.audit, outbox: journal.outbox });
+    const journalText = JSON.stringify({ audit: [...journal.audit, ...registry.audit], outbox: [...journal.outbox, ...registry.outbox] });
     for (const forbidden of [
       new TextDecoder().decode(body),
       upload.finalizationProof,
@@ -240,6 +243,13 @@ describe("BE-19 control-evidence application composition", () => {
 
 class MemoryRegistry implements EvidenceReferenceRegistry {
   readonly finalized = new Map<string, FinalizedEvidence>();
+  readonly audit: Record<string, unknown>[] = [];
+  readonly outbox: Record<string, unknown>[] = [];
   async findFinalized(objectKey: string) { return this.finalized.get(objectKey) ?? null; }
   async isFinalized(objectKey: string) { return this.finalized.has(objectKey); }
+  async attachFinalizedDecision(input: Parameters<ControlEvidenceLifecycleRepository["attachFinalizedDecision"]>[0]) {
+    this.finalized.set(buildEvidenceObjectKey(input.evidence), input.evidence);
+    this.audit.push({ evidenceHash: input.evidence.sha256, evidenceVersion: input.evidence.version, receiptHash: input.receipt.receiptHash, sandbox: true });
+    this.outbox.push({ evidenceHash: input.evidence.sha256, receiptHash: input.receipt.receiptHash, sandbox: true, status: input.receipt.status });
+  }
 }

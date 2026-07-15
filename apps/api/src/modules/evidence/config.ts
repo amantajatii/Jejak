@@ -10,19 +10,25 @@ import { EvidenceIntentSigner } from "./domain/intent-proof.js";
 import { EvidenceStorageError } from "./domain/types.js";
 import type { EvidenceStorage } from "./ports/evidence-storage.js";
 
+const blankToUndefined = (value: unknown) =>
+  typeof value === "string" && value.trim().length === 0 ? undefined : value;
+
 const schema = z.object({
   EVIDENCE_ABANDONED_AFTER_SECONDS: z.coerce.number().int().min(900).max(2_592_000).default(86_400),
   EVIDENCE_ALLOWED_CONTENT_TYPES: z.string().default("application/pdf,image/jpeg,image/png"),
   EVIDENCE_CLEANUP_BATCH_SIZE: z.coerce.number().int().min(1).max(1000).default(100),
   EVIDENCE_DOWNLOAD_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
   EVIDENCE_FINALIZATION_DEADLINE_SECONDS: z.coerce.number().int().min(60).max(3600).default(900),
-  EVIDENCE_INTENT_SIGNING_KEY: z.string().min(43).optional(),
+  EVIDENCE_INTENT_SIGNING_KEY: z.preprocess(blankToUndefined, z.string().min(43).optional()),
   EVIDENCE_MAX_BYTES: z.coerce.number().int().positive().max(100 * 1024 * 1024).default(10 * 1024 * 1024),
-  EVIDENCE_STORAGE_MODE: z.enum(["IN_MEMORY", "SUPABASE"]).optional(),
+  EVIDENCE_STORAGE_MODE: z.preprocess(
+    blankToUndefined,
+    z.enum(["IN_MEMORY", "SUPABASE"]).optional(),
+  ),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  SUPABASE_SECRET_KEY: z.string().min(1).optional(),
+  SUPABASE_SECRET_KEY: z.preprocess(blankToUndefined, z.string().min(1).optional()),
   SUPABASE_STORAGE_EVIDENCE_BUCKET: z.string().min(3).default("jejak-evidence"),
-  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_URL: z.preprocess(blankToUndefined, z.string().url().optional()),
 });
 
 export type EvidenceModuleConfig = {

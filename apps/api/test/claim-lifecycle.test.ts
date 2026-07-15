@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { JejakDatabase } from "../src/db/client.js";
+import { PostgresOfferRepository } from "../src/modules/claims/adapters/postgres-repository.js";
 import {
   applyRiskDecision,
   createClaim,
@@ -146,5 +148,33 @@ describe("financing offers", () => {
         now,
       }),
     ).toThrow(/verified advance/);
+  });
+
+  it("classifies the active-offer unique race as a safe state conflict", async () => {
+    const offer = createFinancingOffer({
+      id: "offer-race",
+      originatorId: "originator-1",
+      claim: eligibleClaim(),
+      principal: { ...money, amountMinor: "6000" },
+      fee: { ...money, amountMinor: "100" },
+      annualizedRateBps: 1200,
+      advanceRateBps: 6000,
+      expiresAt: "2026-07-16T00:00:00Z",
+      termsHash: "d".repeat(64),
+      hasActiveOffer: false,
+      now,
+    });
+    const database = {
+      insert: () => ({
+        values: async () => {
+          throw { code: "23505", constraint_name: "financing_offers_active_claim_uq" };
+        },
+      }),
+    } as unknown as JejakDatabase;
+
+    await expect(new PostgresOfferRepository(database).insert("tenant-1", offer)).rejects.toMatchObject({
+      code: "INVALID_STATE_TRANSITION",
+      retryable: false,
+    });
   });
 });

@@ -163,7 +163,12 @@ export const financingOffers = jejak.table(
     principalIssuer: text("principal_issuer"),
     expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
   },
-  (table) => [check("financing_offers_principal_scale", sql`${table.principalScale} between 0 and 18`)],
+  (table) => [
+    uniqueIndex("financing_offers_active_claim_uq")
+      .on(table.tenantId, table.claimId)
+      .where(sql`${table.status} in ('OFFERED', 'ACCEPTED')`),
+    check("financing_offers_principal_scale", sql`${table.principalScale} between 0 and 18`),
+  ],
 );
 
 export const facilityPositions = jejak.table(

@@ -70,21 +70,38 @@ export class PostgresOfferRepository {
   constructor(private readonly transaction: JejakDatabase) {}
 
   async insert(tenantId: string, offer: LifecycleOffer): Promise<void> {
-    await this.transaction.insert(financingOffers).values({
-      id: offer.id,
-      tenantId,
-      claimId: offer.claimId,
-      status: offer.status,
-      principalAmountMinor: offer.principal.amountMinor,
-      principalCurrency: offer.principal.currency,
-      principalScale: offer.principal.scale,
-      ...(offer.principal.issuer === undefined ? {} : { principalIssuer: offer.principal.issuer }),
-      expiresAt: new Date(offer.expiresAt),
-      canonicalPayload: offer,
-      createdAt: new Date(offer.createdAt),
-      updatedAt: new Date(offer.createdAt),
-      version: offer.version,
-    });
+    try {
+      await this.transaction.insert(financingOffers).values({
+        id: offer.id,
+        tenantId,
+        claimId: offer.claimId,
+        status: offer.status,
+        principalAmountMinor: offer.principal.amountMinor,
+        principalCurrency: offer.principal.currency,
+        principalScale: offer.principal.scale,
+        ...(offer.principal.issuer === undefined ? {} : { principalIssuer: offer.principal.issuer }),
+        expiresAt: new Date(offer.expiresAt),
+        canonicalPayload: offer,
+        createdAt: new Date(offer.createdAt),
+        updatedAt: new Date(offer.createdAt),
+        version: offer.version,
+      });
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "23505" &&
+        "constraint_name" in error &&
+        error.constraint_name === "financing_offers_active_claim_uq"
+      ) {
+        throw new DomainError(
+          "INVALID_STATE_TRANSITION",
+          "Claim already has an active financing offer.",
+        );
+      }
+      throw error;
+    }
   }
 
   async update(tenantId: string, offer: LifecycleOffer, previousVersion: number): Promise<void> {

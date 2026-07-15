@@ -1,4 +1,5 @@
 export * from "./adapters/in-memory-evidence-storage.js";
+export * from "./adapters/postgres-evidence-reference-registry.js";
 export * from "./adapters/supabase-evidence-storage.js";
 export * from "./application/cleanup-abandoned-evidence.js";
 export * from "./application/create-download-intent.js";

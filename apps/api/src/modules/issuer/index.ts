@@ -1,5 +1,6 @@
 export * from "./adapters/deterministic-sandbox.js";
 export * from "./adapters/in-memory-issuer-journal.js";
+export * from "./adapters/postgres-issuer-journal.js";
 export * from "./application/orchestrate-issuer-approval.js";
 export * from "./domain/errors.js";
 export * from "./domain/receipt.js";

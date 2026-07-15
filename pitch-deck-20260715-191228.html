@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Jejak — APAC Stellar Hackathon Pitch Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #050505;
+      --paper: #f7f7f5;
+      --white: #ffffff;
+      --muted: #6f6f6f;
+      --line: #dedee8;
+      --lavender: #dedeff;
+      --periwinkle: #8588ff;
+      --navy: #02063f;
+      --navy-card: #17164d;
+      --navy-line: #3d3d73;
+      --navy-muted: #b9b9d0;
+      --warn: #c96b4b;
+      --ok: #235b52;
+      --radius-lg: 3.2cqw;
+      --radius-md: 2cqw;
+      --shadow: 0 0.6cqw 2cqw rgb(2 6 63 / 0.08);
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      overflow: hidden;
+      background: #e8e8e5;
+      color: var(--ink);
+      font-family: var(--font);
+      font-variant-numeric: tabular-nums lining-nums;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a { font: inherit; }
+    button { min-width: 44px; min-height: 44px; }
+    button:focus-visible, a:focus-visible {
+      outline: 3px solid var(--periwinkle);
+      outline-offset: 3px;
+    }
+
+    .viewport {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+
+    .deck {
+      position: relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      overflow: hidden;
+      background: var(--paper);
+      container-type: size;
+      box-shadow: 0 16px 80px rgb(2 6 63 / 0.12);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 2.2cqw;
+      padding: 4.7cqw 5.6cqw 3.4cqw;
+      opacity: 0;
+      pointer-events: none;
+      background: var(--paper);
+      transform: translateX(1.5cqw);
+      transition: opacity 360ms var(--ease), transform 480ms var(--ease);
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+      z-index: 2;
+    }
+
+    .slide.navy {
+      color: var(--white);
+      background: var(--navy);
+    }
+
+    .slide.white { background: var(--white); }
+
+    .slide-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 3cqw;
+    }
+
+    .eyebrow {
+      margin: 0 0 0.65cqw;
+      color: var(--muted);
+      font-size: 0.82cqw;
+      font-weight: 600;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+    }
+
+    .navy .eyebrow { color: var(--navy-muted); }
+
+    h1, h2, h3, p { margin: 0; }
+    h1 {
+      max-width: 72cqw;
+      font-size: 3.35cqw;
+      font-weight: 300;
+      letter-spacing: -0.045em;
+      line-height: 1.06;
+    }
+    h2 {
+      font-size: 1.7cqw;
+      font-weight: 400;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+    }
+    h3 {
+      font-size: 1.13cqw;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .slide-index {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 0.85cqw;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+    .navy .slide-index { color: var(--navy-muted); }
+
+    .visual {
+      min-height: 0;
+      display: grid;
+      align-items: stretch;
+    }
+
+    .source-row {
+      min-height: 1.5cqw;
+      display: flex;
+      gap: 0.55cqw;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.66cqw;
+      line-height: 1.3;
+    }
+    .source-row::before { content: "SOURCE"; font-weight: 600; letter-spacing: 0.1em; }
+    .source-row a { color: inherit; text-decoration-color: var(--line); text-underline-offset: 0.2em; }
+    .navy .source-row { color: var(--navy-muted); }
+    .navy .source-row a { text-decoration-color: var(--navy-line); }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      width: max-content;
+      min-height: 2.1cqw;
+      padding: 0.5cqw 0.9cqw;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--white);
+      color: var(--ink);
+      font-size: 0.72cqw;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .pill.accent { border-color: transparent; background: var(--lavender); color: var(--navy); }
+    .navy .pill { border-color: var(--navy-line); background: var(--navy-card); color: var(--white); }
+    .navy .pill.accent { border-color: transparent; background: var(--lavender); color: var(--navy); }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--white);
+    }
+    .navy .panel { border-color: var(--navy-line); background: var(--navy-card); }
+
+    .micro {
+      color: var(--muted);
+      font-size: 0.72cqw;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+    .navy .micro { color: var(--navy-muted); }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.72cqw;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .navy .label { color: var(--navy-muted); }
+
+    .number { font-variant-numeric: tabular-nums lining-nums; }
+
+    /* Slide 1 */
+    .title-slide { padding-top: 4.2cqw; }
+    .title-slide .slide-header { align-items: center; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8cqw;
+      font-size: 1.08cqw;
+      font-weight: 600;
+    }
+    .mark {
+      width: 2.4cqw;
+      height: 2.4cqw;
+      display: grid;
+      place-items: center;
+      border-radius: 0.8cqw;
+      background: var(--navy);
+      color: var(--white);
+      font-size: 1cqw;
+    }
+    .title-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      align-items: center;
+      gap: 5cqw;
+    }
+    .hero-name {
+      font-size: 7.1cqw;
+      font-weight: 300;
+      letter-spacing: -0.07em;
+      line-height: 0.88;
+    }
+    .hero-line {
+      max-width: 34cqw;
+      margin-top: 1.7cqw;
+      color: var(--muted);
+      font-size: 1.55cqw;
+      font-weight: 400;
+      line-height: 1.35;
+    }
+    .capital-rail {
+      position: relative;
+      min-height: 29cqw;
+      padding: 2.3cqw;
+      overflow: hidden;
+      background: var(--navy);
+      color: var(--white);
+    }
+    .capital-rail::after {
+      content: "";
+      position: absolute;
+      width: 18cqw;
+      height: 18cqw;
+      right: -5cqw;
+      top: -7cqw;
+      border: 1px solid var(--navy-line);
+      border-radius: 50%;
+    }
+    .stream {
+      height: 5.8cqw;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: center;
+      gap: 0.65cqw;
+      margin-top: 3.5cqw;
+    }
+    .stream-node {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 0.9cqw;
+      border: 1px solid var(--navy-line);
+      border-radius: 1.35cqw;
+      background: var(--navy-card);
+      text-align: center;
+      font-size: 0.9cqw;
+      font-weight: 600;
+    }
+    .stream-node.final { border-color: transparent; background: var(--lavender); color: var(--navy); }
+    .arrow { color: var(--periwinkle); font-size: 1.7cqw; }
+    .rail-caption {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5.6cqw;
+      color: var(--navy-muted);
+      font-size: 0.72cqw;
+    }
+
+    /* Slide 2 */
+    .timeline-gap {
+      grid-template-columns: 0.72fr 1.28fr;
+      gap: 3cqw;
+      align-items: center;
+    }
+    .gap-callout {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 2.6cqw;
+      background: var(--lavender);
+      border-color: transparent;
+    }
+    .gap-callout strong { font-size: 4.1cqw; font-weight: 300; letter-spacing: -0.05em; }
+    .gap-callout span { max-width: 18cqw; margin-top: 1cqw; color: var(--navy); font-size: 1.2cqw; line-height: 1.35; }
+    .dual-lines { display: grid; align-content: center; gap: 3cqw; padding: 3cqw; }
+    .time-row { display: grid; grid-template-columns: 8cqw 1fr; align-items: center; gap: 1cqw; }
+    .time-label { font-size: 0.88cqw; font-weight: 600; }
+    .line-track { position: relative; height: 4.8cqw; display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; }
+    .line-track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: var(--line); }
+    .dot-step { position: relative; z-index: 1; display: grid; justify-items: center; gap: 0.55cqw; font-size: 0.67cqw; color: var(--muted); text-align: center; }
+    .dot-step::before { content: ""; width: 1.2cqw; height: 1.2cqw; border-radius: 50%; border: 0.25cqw solid var(--white); background: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+    .time-row.market .dot-step::before { background: var(--periwinkle); }
+    .delay-zone { position: absolute; left: 29%; right: 4%; top: 0.25cqw; bottom: 0.25cqw; border-radius: 1.2cqw; background: rgb(222 222 255 / 0.56); }
+
+    /* Slide 3 */
+    .value-stack { display: grid; align-content: center; gap: 1.35cqw; }
+    .mechanics { justify-self: start; }
+    .value-bar { display: grid; grid-template-columns: 1.25fr 0.95fr 0.78fr; min-height: 8.2cqw; overflow: hidden; border: 1px solid var(--line); border-radius: 2.3cqw; }
+    .value-segment { display: flex; flex-direction: column; justify-content: center; padding: 1.4cqw 1.8cqw; border-right: 1px solid var(--line); background: var(--white); }
+    .value-segment:last-child { border-right: 0; background: var(--navy); color: var(--white); }
+    .value-segment b { font-size: 2.65cqw; font-weight: 300; letter-spacing: -0.04em; }
+    .value-segment span { margin-top: 0.5cqw; color: var(--muted); font-size: 0.76cqw; font-weight: 600; text-transform: uppercase; }
+    .value-segment:last-child span { color: var(--navy-muted); }
+    .deductions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.85cqw; }
+    .deduction { padding: 1cqw; border: 1px solid var(--line); border-radius: 1.4cqw; color: var(--muted); font-size: 0.78cqw; text-align: center; }
+    .formula { display: flex; justify-content: flex-end; gap: 0.6cqw; align-items: center; color: var(--muted); font-size: 0.82cqw; }
+    .formula strong { color: var(--navy); font-size: 1.15cqw; }
+
+    /* Slide 4 */
+    .control-chain { grid-template-columns: repeat(4, 1fr); gap: 1.1cqw; align-items: center; }
+    .control-card { position: relative; min-height: 18cqw; display: flex; flex-direction: column; justify-content: space-between; padding: 1.7cqw; border: 1px solid var(--line); border-radius: 2.4cqw; background: var(--white); }
+    .control-card::after { content: "→"; position: absolute; right: -1.1cqw; top: 50%; z-index: 1; width: 1.5cqw; height: 1.5cqw; display: grid; place-items: center; border-radius: 50%; background: var(--paper); color: var(--periwinkle); font-size: 1.1cqw; transform: translateY(-50%); }
+    .control-card:last-child::after { display: none; }
+    .control-card:nth-child(3) { border: 0.18cqw solid var(--periwinkle); }
+    .control-card:nth-child(4) { background: var(--navy); color: var(--white); }
+    .control-icon { width: 3.2cqw; height: 3.2cqw; display: grid; place-items: center; border-radius: 1.1cqw; background: var(--lavender); color: var(--navy); font-size: 1.2cqw; font-weight: 600; }
+    .control-card p { margin-top: 0.8cqw; color: var(--muted); font-size: 0.78cqw; line-height: 1.4; }
+    .control-card:nth-child(4) p { color: var(--navy-muted); }
+    .gate-label { display: flex; align-items: center; gap: 0.5cqw; color: var(--periwinkle); font-size: 0.7cqw; font-weight: 600; text-transform: uppercase; }
+
+    /* Slide 5 */
+    .stellar-proof { display: grid; grid-template-rows: auto 1fr; gap: 1.4cqw; }
+    .proof-prereq { justify-self: center; min-width: 34cqw; justify-content: center; }
+    .stellar-rail { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; gap: 0.9cqw; padding: 3.2cqw 2cqw; border: 1px solid var(--navy-line); border-radius: var(--radius-lg); background: var(--navy-card); }
+    .stellar-rail::before { content: ""; position: absolute; left: 7%; right: 7%; top: 50%; height: 1px; background: var(--navy-line); }
+    .rail-action { position: relative; z-index: 1; min-height: 8.2cqw; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8cqw; padding: 1cqw; border: 1px solid var(--navy-line); border-radius: 1.7cqw; background: var(--navy); text-align: center; }
+    .rail-action b { font-size: 1cqw; }
+    .rail-action span { color: var(--navy-muted); font-size: 0.69cqw; line-height: 1.3; }
+    .rail-action.core { border-color: transparent; background: var(--lavender); color: var(--navy); }
+    .rail-action.core span { color: var(--navy); opacity: 0.72; }
+
+    /* Slide 6 */
+    .market-grid { grid-template-columns: 1.08fr 0.92fr; gap: 2.3cqw; }
+    .funnel { display: grid; align-content: center; justify-items: center; gap: 0.8cqw; padding: 2.1cqw; }
+    .funnel-layer { min-height: 4.6cqw; display: grid; place-items: center; border-radius: 1.3cqw; text-align: center; }
+    .funnel-layer strong { font-size: 2.1cqw; font-weight: 300; letter-spacing: -0.04em; }
+    .funnel-layer span { font-size: 0.7cqw; color: var(--muted); }
+    .funnel-layer.one { width: 100%; background: var(--navy); color: var(--white); }
+    .funnel-layer.one span { color: var(--navy-muted); }
+    .funnel-layer.two { width: 76%; background: var(--lavender); color: var(--navy); }
+    .funnel-layer.three { width: 51%; border: 1px dashed var(--periwinkle); background: var(--white); }
+    .network-value { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.9cqw; align-content: center; }
+    .measure { min-height: 7cqw; display: flex; flex-direction: column; justify-content: space-between; padding: 1.3cqw; border: 1px solid var(--line); border-radius: 1.6cqw; background: var(--white); }
+    .measure:last-child { grid-column: 1 / -1; min-height: 5.3cqw; flex-direction: row; align-items: center; background: var(--lavender); border-color: transparent; color: var(--navy); }
+    .measure strong { font-size: 1.05cqw; }
+
+    /* Slide 7 */
+    .lifecycle { display: grid; grid-template-columns: repeat(6, 1fr); align-items: center; gap: 0.65cqw; }
+    .phase { position: relative; min-height: 18.5cqw; display: flex; flex-direction: column; justify-content: space-between; padding: 1.25cqw; border: 1px solid var(--line); border-radius: 1.8cqw; background: var(--white); }
+    .phase::after { content: ""; position: absolute; right: -0.7cqw; top: 4cqw; width: 0.8cqw; height: 0.2cqw; background: var(--periwinkle); }
+    .phase:last-child::after { display: none; }
+    .phase:nth-child(4) { border-color: var(--periwinkle); border-width: 0.18cqw; }
+    .phase:nth-child(5), .phase:nth-child(6) { background: var(--navy); color: var(--white); }
+    .phase-no { width: 2cqw; height: 2cqw; display: grid; place-items: center; border-radius: 50%; background: var(--lavender); color: var(--navy); font-size: 0.75cqw; font-weight: 600; }
+    .phase p { color: var(--muted); font-size: 0.7cqw; line-height: 1.35; }
+    .phase:nth-child(5) p, .phase:nth-child(6) p { color: var(--navy-muted); }
+    .state { padding-top: 0.8cqw; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.63cqw; font-weight: 600; line-height: 1.35; text-transform: uppercase; }
+    .phase:nth-child(5) .state, .phase:nth-child(6) .state { border-color: var(--navy-line); color: var(--navy-muted); }
+
+    /* Slide 8 */
+    .engine { grid-template-columns: 0.8fr 1.05fr 0.85fr; gap: 1.4cqw; align-items: center; }
+    .event-stack { display: grid; gap: 0.65cqw; }
+    .event { padding: 0.8cqw 1cqw; border: 1px solid var(--line); border-radius: 1.1cqw; background: var(--white); font-size: 0.78cqw; font-weight: 600; }
+    .risk-core { min-height: 22cqw; display: flex; flex-direction: column; justify-content: space-between; padding: 2cqw; background: var(--navy); color: var(--white); }
+    .core-output { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7cqw; }
+    .output-cell { padding: 1cqw; border: 1px solid var(--navy-line); border-radius: 1.2cqw; }
+    .output-cell b { display: block; font-size: 1.05cqw; }
+    .output-cell span { color: var(--navy-muted); font-size: 0.65cqw; }
+    .decision-stack { display: grid; gap: 0.8cqw; }
+    .decision { min-height: 5.4cqw; display: flex; flex-direction: column; justify-content: center; padding: 1.1cqw 1.3cqw; border: 1px solid var(--line); border-radius: 1.4cqw; background: var(--white); }
+    .decision.primary { border-color: transparent; background: var(--lavender); color: var(--navy); }
+    .decision.review { border-style: dashed; }
+
+    /* Slide 9 */
+    .demo-grid { grid-template-columns: 1fr 1fr; gap: 1.3cqw; align-items: center; }
+    .app-window { min-height: 23cqw; overflow: hidden; border: 1px solid var(--line); border-radius: 2.2cqw; background: var(--white); box-shadow: var(--shadow); }
+    .window-bar { display: flex; align-items: center; justify-content: space-between; padding: 1cqw 1.3cqw; border-bottom: 1px solid var(--line); }
+    .window-title { display: flex; align-items: center; gap: 0.7cqw; font-size: 0.76cqw; font-weight: 600; }
+    .window-dot { width: 0.7cqw; height: 0.7cqw; border-radius: 50%; background: var(--ok); }
+    .window-dot.adverse { background: var(--warn); }
+    .screen { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 1cqw; padding: 1.2cqw; }
+    .screen-metric { padding: 1.2cqw; border-radius: 1.4cqw; background: var(--paper); }
+    .screen-metric strong { display: block; margin-top: 0.4cqw; font-size: 2.3cqw; font-weight: 300; letter-spacing: -0.05em; }
+    .screen-list { display: grid; gap: 0.55cqw; align-content: center; }
+    .screen-step { display: flex; align-items: center; gap: 0.6cqw; padding: 0.65cqw 0.8cqw; border: 1px solid var(--line); border-radius: 0.9cqw; font-size: 0.66cqw; font-weight: 600; }
+    .screen-step::before { content: ""; width: 0.65cqw; height: 0.65cqw; border-radius: 50%; background: var(--ok); }
+    .app-window.adverse .screen-step:nth-child(n+3)::before { background: var(--warn); }
+    .state-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.55cqw; padding: 0 1.2cqw 1.2cqw; }
+    .state-chip { padding: 0.7cqw; border-radius: 0.8cqw; background: var(--lavender); color: var(--navy); font-size: 0.59cqw; font-weight: 600; text-align: center; text-transform: uppercase; }
+    .app-window.adverse .state-chip:nth-child(n+2) { background: #f4e2dc; color: #71331e; }
+
+    /* Slide 10 */
+    .network { position: relative; min-height: 27cqw; }
+    .network::before { content: ""; position: absolute; inset: 2cqw 15cqw; border: 1px solid var(--navy-line); border-radius: 50%; }
+    .network-center { position: absolute; left: 50%; top: 50%; width: 18cqw; height: 9cqw; display: grid; place-items: center; padding: 1.2cqw; border-radius: 2.2cqw; background: var(--lavender); color: var(--navy); text-align: center; transform: translate(-50%, -50%); }
+    .network-center strong { font-size: 1.2cqw; }
+    .node { position: absolute; min-width: 10.5cqw; padding: 0.85cqw 1cqw; border: 1px solid var(--navy-line); border-radius: 1.1cqw; background: var(--navy-card); color: var(--white); font-size: 0.67cqw; font-weight: 600; text-align: center; }
+    .n1 { left: 4%; top: 11%; } .n2 { left: 4%; bottom: 11%; }
+    .n3 { left: 28%; top: 1%; } .n4 { right: 28%; top: 1%; }
+    .n5 { right: 4%; top: 11%; } .n6 { right: 4%; bottom: 11%; }
+    .n7 { left: 50%; bottom: 0; transform: translateX(-50%); }
+    .privacy { position: absolute; left: 50%; top: 50%; width: 39cqw; height: 18cqw; border: 1px dashed var(--periwinkle); border-radius: 50%; transform: translate(-50%, -50%); }
+    .privacy-label { position: absolute; left: 50%; bottom: 1.1cqw; color: var(--navy-muted); font-size: 0.65cqw; transform: translateX(-50%); }
+    .artifact-key { position: absolute; left: 50%; top: 67%; display: flex; gap: 0.6cqw; transform: translateX(-50%); }
+
+    /* Slide 11 */
+    .economics { grid-template-columns: 1.08fr 0.92fr; gap: 2cqw; }
+    .waterfall { display: grid; align-content: center; gap: 0.8cqw; padding: 2cqw; }
+    .cost-row { display: grid; grid-template-columns: 12cqw 1fr; align-items: center; gap: 1cqw; }
+    .cost-row span { font-size: 0.74cqw; font-weight: 600; }
+    .cost-bar { height: 2.25cqw; border-radius: 0.75cqw; background: var(--lavender); }
+    .cost-row:nth-child(2) .cost-bar { width: 84%; }
+    .cost-row:nth-child(3) .cost-bar { width: 68%; }
+    .cost-row:nth-child(4) .cost-bar { width: 51%; }
+    .cost-row:nth-child(5) .cost-bar { width: 36%; }
+    .cost-row:last-child .cost-bar { width: 23%; background: var(--navy); }
+    .responsibility { display: grid; grid-template-rows: 1fr 1fr; gap: 1cqw; }
+    .responsibility-card { display: flex; flex-direction: column; justify-content: center; padding: 2cqw; }
+    .responsibility-card.jejak { background: var(--lavender); border-color: transparent; color: var(--navy); }
+    .responsibility-card.partner { background: var(--navy); color: var(--white); }
+    .responsibility-card p { margin-top: 0.8cqw; color: inherit; opacity: 0.72; font-size: 0.78cqw; line-height: 1.45; }
+
+    /* Slide 12 */
+    .question-map { position: relative; min-height: 27cqw; }
+    .question-core { position: absolute; left: 50%; top: 50%; width: 18cqw; height: 10cqw; display: grid; place-items: center; padding: 1cqw; border-radius: 50%; background: var(--navy); color: var(--white); text-align: center; transform: translate(-50%, -50%); }
+    .question-core strong { font-size: 1.25cqw; letter-spacing: 0.04em; }
+    .question { position: absolute; width: 14cqw; min-height: 4.5cqw; display: grid; place-items: center; padding: 0.9cqw; border: 1px solid var(--line); border-radius: 1.4cqw; background: var(--white); font-size: 0.83cqw; font-weight: 600; text-align: center; }
+    .q1 { left: 3%; top: 7%; } .q2 { left: 3%; bottom: 7%; }
+    .q3 { left: 50%; top: 0; transform: translateX(-50%); }
+    .q4 { left: 50%; bottom: 0; transform: translateX(-50%); }
+    .q5 { right: 3%; top: 7%; } .q6 { right: 3%; bottom: 7%; }
+
+    /* Slide 13 */
+    .roadmap { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr auto; align-items: stretch; gap: 1cqw; }
+    .roadmap-card { position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 1.55cqw; border: 1px solid var(--line); border-radius: 2cqw; background: var(--white); }
+    .roadmap-card::after { content: ""; position: absolute; right: -1.05cqw; top: 3.2cqw; width: 1.1cqw; height: 0.2cqw; background: var(--periwinkle); }
+    .roadmap-card:last-child::after { display: none; }
+    .roadmap-card.current { border-color: transparent; background: var(--lavender); color: var(--navy); }
+    .roadmap-time { font-size: 0.75cqw; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+    .roadmap-card h3 { margin-top: 1cqw; }
+    .roadmap-card p { margin-top: 0.8cqw; color: var(--muted); font-size: 0.72cqw; line-height: 1.4; }
+    .roadmap-card.current p { color: var(--navy); opacity: 0.7; }
+    .milestone { margin-top: 1cqw; padding-top: 0.8cqw; border-top: 1px solid var(--line); font-size: 0.68cqw; font-weight: 600; line-height: 1.4; }
+    .ask-band { grid-column: 1 / -1; min-height: 5.2cqw; display: flex; align-items: center; justify-content: space-between; padding: 1.3cqw 1.6cqw; border-radius: 1.5cqw; background: var(--navy); color: var(--white); }
+    .ask-band b { font-size: 1cqw; }
+    .ask-band span { color: var(--navy-muted); font-size: 0.73cqw; }
+
+    /* Slide 14 */
+    .team-grid { grid-template-columns: repeat(4, 1fr); gap: 1.1cqw; align-items: center; }
+    .team-card { min-height: 20cqw; display: flex; flex-direction: column; justify-content: space-between; padding: 1.7cqw; border: 1px solid var(--navy-line); border-radius: 2.3cqw; background: var(--navy-card); }
+    .role-mark { width: 3.5cqw; height: 3.5cqw; display: grid; place-items: center; border-radius: 1.2cqw; background: var(--lavender); color: var(--navy); font-size: 1cqw; font-weight: 600; }
+    .team-card p { color: var(--navy-muted); font-size: 0.73cqw; line-height: 1.45; }
+    .team-footer { display: flex; justify-content: space-between; align-items: end; }
+    .team-footer strong { font-size: 1.25cqw; font-weight: 400; }
+
+    /* Navigation and notes */
+    .controls {
+      position: absolute;
+      left: 50%;
+      bottom: 0.8cqw;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 0.35cqw;
+      padding: 0.25cqw;
+      border: 1px solid rgb(222 222 232 / 0.9);
+      border-radius: 999px;
+      background: rgb(255 255 255 / 0.9);
+      box-shadow: 0 0.5cqw 1.5cqw rgb(2 6 63 / 0.08);
+      backdrop-filter: blur(12px);
+      transform: translateX(-50%);
+    }
+    .control-button {
+      width: 2.35cqw;
+      min-width: 34px;
+      height: 2.35cqw;
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--navy);
+      cursor: pointer;
+      transition: background-color 180ms var(--ease), color 180ms var(--ease);
+    }
+    .control-button:hover { background: var(--lavender); }
+    .counter { min-width: 4.7cqw; color: var(--muted); font-size: 0.7cqw; font-weight: 600; text-align: center; }
+    .progress { position: absolute; left: 0; right: 0; bottom: 0; z-index: 19; height: 0.22cqw; background: var(--line); }
+    .progress-fill { width: 7.1428%; height: 100%; background: var(--periwinkle); transition: width 260ms var(--ease); }
+
+    .notes-panel {
+      position: absolute;
+      left: 5.6cqw;
+      right: 5.6cqw;
+      bottom: 4.4cqw;
+      z-index: 30;
+      max-height: 17cqw;
+      overflow: auto;
+      padding: 1.5cqw 1.8cqw;
+      border: 1px solid var(--navy-line);
+      border-radius: 1.6cqw;
+      background: rgb(2 6 63 / 0.96);
+      color: var(--white);
+      box-shadow: 0 1cqw 3cqw rgb(2 6 63 / 0.26);
+    }
+    .notes-panel[hidden] { display: none; }
+    .notes-panel h2 { color: var(--lavender); font-size: 0.72cqw; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+    .notes-panel p { margin-top: 0.7cqw; color: #e7e7f1; font-size: 0.84cqw; line-height: 1.55; }
+    .speaker-notes { display: none; }
+
+    .shortcut-hint {
+      position: absolute;
+      right: 1.4cqw;
+      bottom: 1.1cqw;
+      z-index: 18;
+      color: var(--muted);
+      font-size: 0.58cqw;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+
+    @media print {
+      @page { size: 16in 9in; margin: 0; }
+      html, body { width: auto; height: auto; overflow: visible; background: var(--white); }
+      .viewport { display: block; width: auto; height: auto; }
+      .deck { width: auto; height: auto; overflow: visible; box-shadow: none; }
+      .slide { position: relative; width: 16in; height: 9in; opacity: 1; pointer-events: auto; transform: none; break-after: page; page-break-after: always; }
+      .controls, .progress, .notes-panel, .shortcut-hint { display: none !important; }
+    }
+
+    @media (max-width: 760px) {
+      .shortcut-hint { display: none; }
+      .controls { bottom: 1.3cqw; }
+    }
+  </style>
+</head>
+<body>
+  <main class="viewport">
+    <div class="deck" id="deck" aria-label="Jejak pitch deck">
+
+      <section class="slide white title-slide active" data-title="Jejak" aria-hidden="false">
+        <header class="slide-header">
+          <div class="brand"><span class="mark">J/</span><span>Team Mova</span></div>
+          <span class="pill accent">APAC Stellar Hackathon</span>
+        </header>
+        <div class="visual title-grid">
+          <div>
+            <p class="hero-name">Jejak</p>
+            <p class="hero-line">Turn earned revenue into financeable capital.</p>
+          </div>
+          <div class="panel capital-rail" aria-label="Evidence, control, and funding rail">
+            <span class="pill">Controlled lifecycle</span>
+            <div class="stream">
+              <div class="stream-node">Earned<br>revenue</div><span class="arrow">→</span>
+              <div class="stream-node">Evidence<br>+ control</div><span class="arrow">→</span>
+              <div class="stream-node final">Working<br>capital</div>
+            </div>
+            <div class="rail-caption"><span>Marketplace settlement</span><span>Stellar Testnet</span></div>
+          </div>
+        </div>
+        <footer class="source-row"><a href="jejak-master-implementation-brief.md">Jejak Master Implementation Brief</a></footer>
+        <div class="speaker-notes">Marketplace sellers can earn revenue today and still be unable to use it. Jejak turns an eligible unsettled settlement stream into a controlled financing lifecycle—from evidence, to funding, to repayment or resolution—on Stellar.</div>
+      </section>
+
+      <section class="slide" data-title="Earned, but still unavailable" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">The seller problem</p><h1>Earned, but still unavailable.</h1></div><span class="slide-index">02</span></header>
+        <div class="visual timeline-gap">
+          <div class="panel gap-callout"><strong>Now</strong><span>Inventory and growth cannot wait for settlement.</span></div>
+          <div class="panel dual-lines">
+            <div class="time-row"><span class="time-label">Seller clock</span><div class="line-track"><div class="dot-step">Sell</div><div class="dot-step">Restock</div><div class="dot-step">Grow</div><div class="dot-step">Repeat</div></div></div>
+            <div class="time-row market"><span class="time-label">Settlement clock</span><div class="line-track"><span class="delay-zone"></span><div class="dot-step">Delivered</div><div class="dot-step">Return window</div><div class="dot-step">Held</div><div class="dot-step">Paid</div></div></div>
+          </div>
+        </div>
+        <footer class="source-row"><a href="https://seller-ph.tiktok.com/university/course?content_id=7654210145928962&amp;lang=en&amp;learning_id=3292100784588545" target="_blank" rel="noreferrer">TikTok Shop</a><span>·</span><a href="https://marketplacelearn.walmart.com/guides/Taxes%20%26%20payments/Payments/new-seller-payment-hold-policy" target="_blank" rel="noreferrer">Walmart</a><span>·</span><a href="https://pay.amazon.com/help/201212470" target="_blank" rel="noreferrer">Amazon Pay</a></footer>
+        <div class="speaker-notes">The seller's operating clock and the marketplace's settlement clock do not match. Current platform policies show why: settlement can wait for completion, refund requests can delay it, and new-seller or risk reserves can extend access to cash. The revenue is visible—but its timing and final collectible amount are still uncertain.</div>
+      </section>
+
+      <section class="slide white" data-title="Gross is not collectible" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">The risk gap</p><h1>Rp100M shown ≠ Rp100M collectible.</h1></div><span class="slide-index">03</span></header>
+        <div class="visual value-stack">
+          <span class="pill mechanics">Illustrative mechanics</span>
+          <div class="value-bar">
+            <div class="value-segment"><b class="number">Rp100M</b><span>Gross dashboard balance</span></div>
+            <div class="value-segment"><b class="number">Rp80M</b><span>Eligible Settlement Value</span></div>
+            <div class="value-segment"><b class="number">Rp64M</b><span>Funded at 80%</span></div>
+          </div>
+          <div class="deductions"><div class="deduction">Refund</div><div class="deduction">Return / RTO</div><div class="deduction">Fee</div><div class="deduction">Dispute</div><div class="deduction">Hold</div></div>
+          <div class="formula"><span>Finance a specified settlement stream</span><span>→</span><strong>not a dashboard</strong></div>
+        </div>
+        <footer class="source-row"><a href="https://seller-ph.tiktok.com/university/course?content_id=7654210145928962&amp;lang=en&amp;learning_id=3292100784588545" target="_blank" rel="noreferrer">TikTok Shop settlement deductions</a><span>·</span><a href="https://pay.amazon.com/help/202070210" target="_blank" rel="noreferrer">Amazon Pay settlement reports</a></footer>
+        <div class="speaker-notes">A dashboard balance is not a legal receivable and it is not automatically collectible. Jejak reconciles marketplace events, removes known deductions, models remaining dilution, and computes Eligible Settlement Value. In this illustration, only Rp80 million is eligible; an 80 percent advance produces Rp64 million of funding. These numbers explain mechanics, not performance.</div>
+      </section>
+
+      <section class="slide" data-title="Four controls" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">The solution</p><h1>Four controls. One financeable claim.</h1></div><span class="slide-index">04</span></header>
+        <div class="visual control-chain">
+          <article class="control-card"><div><span class="control-icon">01</span><h3>Independent reconciliation</h3><p>Orders, payouts, refunds, fees, and disputes matched.</p></div><span class="label">Ground truth</span></article>
+          <article class="control-card"><div><span class="control-icon">02</span><h3>Portable JCC</h3><p>Seller-controlled evidence with expiring status.</p></div><span class="label">Credential</span></article>
+          <article class="control-card"><div><span class="control-icon">03</span><h3>Control evidence</h3><p>Assignment or controlled payout before capital.</p></div><span class="gate-label">Hard gate</span></article>
+          <article class="control-card"><div><span class="control-icon">04</span><h3>Restricted facility</h3><p>Institutional funding, servicing, and redemption.</p></div><span class="label">Stellar rail</span></article>
+        </div>
+        <footer class="source-row"><a href="https://storfund.com/how-it-works/" target="_blank" rel="noreferrer">Storfund</a><span>·</span><a href="https://www.payability.com/instant-access-2/" target="_blank" rel="noreferrer">Payability</a><span>·</span><a href="https://marketplace.walmart.com/solution-providers/dowsure/" target="_blank" rel="noreferrer">Dowsure</a></footer>
+        <div class="speaker-notes">Jejak's wedge is the combination. We independently reconcile the expected settlement, issue a seller-controlled collectibility credential, require legal assignment or controlled payout evidence, then coordinate institutional funding through a restricted facility. Scoring alone is insufficient. Tokenization alone is insufficient. The control sequence is the product.</div>
+      </section>
+
+      <section class="slide navy" data-title="Why Stellar" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Why Stellar</p><h1>Stellar is the controlled coordination rail.</h1></div><span class="slide-index">05</span></header>
+        <div class="visual stellar-proof">
+          <span class="pill accent proof-prereq">Evidence + legal control first</span>
+          <div class="stellar-rail">
+            <div class="rail-action"><b>Restricted JCLAIM</b><span>Authorized institutional holders</span></div>
+            <div class="rail-action core"><b>USDC funding</b><span>Principal moves on Stellar</span></div>
+            <div class="rail-action"><b>Facility state</b><span>Shared, permissioned lifecycle</span></div>
+            <div class="rail-action"><b>Waterfall</b><span>Deterministic servicing</span></div>
+            <div class="rail-action core"><b>Redeem</b><span>Issuer-controlled closure</span></div>
+          </div>
+        </div>
+        <footer class="source-row"><a href="https://developers.stellar.org/docs/build/smart-contracts/overview" target="_blank" rel="noreferrer">Smart contracts</a><span>·</span><a href="https://developers.stellar.org/docs/tokens/stellar-asset-contract" target="_blank" rel="noreferrer">SAC</a><span>·</span><a href="https://developers.stellar.org/docs/tokens/control-asset-access" target="_blank" rel="noreferrer">Asset controls</a><span>·</span><a href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0008.md" target="_blank" rel="noreferrer">SEP-8</a></footer>
+        <div class="speaker-notes">Stellar is not decorative anchoring. After evidence and legal control exist, Soroban contracts coordinate claim state, restricted facility participation, USDC funding, servicing, and redemption. The Stellar Asset Contract preserves issuer controls such as authorization and revocation. SEP-8 can add approval to supported classic-asset transaction flows, but it does not automatically govern every Soroban contract call—so Jejak enforces contract permissions directly.</div>
+      </section>
+
+      <section class="slide" data-title="Market and network value" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Market + ecosystem value</p><h1>Large commerce. Narrow, controlled entry.</h1></div><span class="slide-index">06</span></header>
+        <div class="visual market-grid">
+          <div class="panel funnel">
+            <div class="funnel-layer one"><div><strong class="number">$71B</strong><br><span>Indonesia e-commerce GMV, 2025</span></div></div>
+            <div class="funnel-layer two"><div><b>Unsettled earnings</b><br><span>Timing and dilution vary</span></div></div>
+            <div class="funnel-layer three"><div><b>Controlled claims</b><br><span>Measure in pilot</span></div></div>
+          </div>
+          <div class="network-value">
+            <div class="measure"><span class="label">Movement</span><strong>Principal funded</strong><span class="micro">Actual USDC only</span></div>
+            <div class="measure"><span class="label">Return</span><strong>Repayment</strong><span class="micro">Actual USDC only</span></div>
+            <div class="measure"><span class="label">Exposure</span><strong>Active financed ESV</strong><span class="micro">State, not payment volume</span></div>
+            <div class="measure"><span class="label">Activity</span><strong>Transactions</strong><span class="micro">Reported separately</span></div>
+            <div class="measure"><strong>No invented TAM. No multiplied TVL.</strong><span>Measure the financeable denominator in a controlled pilot.</span></div>
+          </div>
+        </div>
+        <footer class="source-row"><a href="https://services.google.com/fh/files/misc/indonesia_e_conomy_sea_2025_report.pdf" target="_blank" rel="noreferrer">e-Conomy SEA 2025</a><span>·</span><a href="https://stellar.org/resources/institutional-infrastructure-report" target="_blank" rel="noreferrer">Stellar institutional report</a></footer>
+        <div class="speaker-notes">Indonesia's 2025 e-commerce GMV reached 71 billion US dollars, while video commerce expanded to 800 thousand sellers and 2.6 billion annual transactions. That establishes commerce scale—not Jejak's financeable market. We will measure the eligible denominator in a controlled pilot. On Stellar, we report principal, repayments, local payout equivalent, active financed ESV, and transaction count separately—never multiply internal state changes into fake volume.</div>
+      </section>
+
+      <section class="slide white" data-title="Controlled lifecycle" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Product flow</p><h1>Every gate changes what is allowed next.</h1></div><span class="slide-index">07</span></header>
+        <div class="visual lifecycle">
+          <article class="phase"><span class="phase-no">1</span><div><h3>Ingest</h3><p>Marketplace and payout events.</p></div><span class="state">Raw events</span></article>
+          <article class="phase"><span class="phase-no">2</span><div><h3>Reconcile</h3><p>Match orders to expected settlement.</p></div><span class="state">Matched ledger</span></article>
+          <article class="phase"><span class="phase-no">3</span><div><h3>Assess</h3><p>Compute ESV and reason codes.</p></div><span class="state">ESV + JCC</span></article>
+          <article class="phase"><span class="phase-no">4</span><div><h3>Control</h3><p>Verify assignment or payout control.</p></div><span class="state">Legal gate</span></article>
+          <article class="phase"><span class="phase-no">5</span><div><h3>Fund</h3><p>Record USDC and restricted participation.</p></div><span class="state">USDC + JCLAIM</span></article>
+          <article class="phase"><span class="phase-no">6</span><div><h3>Settle</h3><p>Waterfall or authorized resolution.</p></div><span class="state">Closed lifecycle</span></article>
+        </div>
+        <footer class="source-row"><a href="jejak-master-implementation-brief.md">Jejak Master Implementation Brief</a></footer>
+        <div class="speaker-notes">The marketplace adapter ingests order, payout, refund, fee, and dispute events. Jejak reconciles them into one expected settlement, computes ESV and reason codes, and issues an expiring JCC. Only after a licensed partner records legal assignment or payout-control evidence can the facility fund. Settlement then closes through a deterministic waterfall—or an authorized resolution path.</div>
+      </section>
+
+      <section class="slide" data-title="Trust engine" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Jejak Intelligence</p><h1>Evidence becomes a bounded decision—not a promise.</h1></div><span class="slide-index">08</span></header>
+        <div class="visual engine">
+          <div class="event-stack"><span class="label">Source events</span><div class="event">Orders</div><div class="event">Payouts</div><div class="event">Refunds + RTO</div><div class="event">Fees + disputes</div></div>
+          <div class="panel risk-core"><div><span class="pill">Risk engine</span><h2>Reconcile before scoring.</h2></div><div class="core-output"><div class="output-cell"><b>SDS</b><span>Settlement dilution</span></div><div class="output-cell"><b>ESV</b><span>Eligible value</span></div><div class="output-cell"><b>Reasons</b><span>Explainable decision</span></div><div class="output-cell"><b>Quality</b><span>Evidence confidence</span></div></div></div>
+          <div class="decision-stack"><span class="label">Bounded outputs</span><div class="decision primary"><h3>Expiring JCC</h3><span class="micro">Seller-controlled evidence</span></div><div class="decision"><h3>Controlled facility</h3><span class="micro">Eligible claims only</span></div><div class="decision review"><h3>Abstain / review</h3><span class="micro">No autonomous legal claim</span></div></div>
+        </div>
+        <footer class="source-row"><a href="jejak-master-implementation-brief.md">Model, ESV, JCC, and JCLAIM boundaries</a></footer>
+        <div class="speaker-notes">Jejak Intelligence does not output a magic credit score. It quantifies settlement dilution, computes a conservative eligible value, explains the decision with reason codes, and can abstain or route the case to review. The JCC is portable evidence controlled by the seller. It is not the legal claim and it is not JCLAIM. The licensed partner remains accountable for the financing decision.</div>
+      </section>
+
+      <section class="slide white" data-title="Live demo" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Live demo</p><h1>Two paths. One auditable lifecycle.</h1></div><span class="slide-index">09</span></header>
+        <div class="visual demo-grid">
+          <article class="app-window"><div class="window-bar"><div class="window-title"><span class="window-dot"></span>Happy path</div><span class="pill accent">Stellar Testnet</span></div><div class="screen"><div class="screen-metric"><span class="label">Eligible value</span><strong class="number">Rp80M</strong><span class="micro">Control verified</span></div><div class="screen-list"><div class="screen-step">USDC funded</div><div class="screen-step">Settlement received</div><div class="screen-step">Waterfall applied</div><div class="screen-step">Lifecycle closed</div></div></div><div class="state-strip"><div class="state-chip">Eligible</div><div class="state-chip">Controlled</div><div class="state-chip">Funded</div><div class="state-chip">Closed</div></div></article>
+          <article class="app-window adverse"><div class="window-bar"><div class="window-title"><span class="window-dot adverse"></span>Adverse path</div><span class="pill">Sandbox adapter</span></div><div class="screen"><div class="screen-metric"><span class="label">ESV after shock</span><strong class="number">↓ Rp52M</strong><span class="micro">Refund / RTO spike</span></div><div class="screen-list"><div class="screen-step">Funding paused</div><div class="screen-step">Shortfall recorded</div><div class="screen-step">First loss used</div><div class="screen-step">Resolution authorized</div></div></div><div class="state-strip"><div class="state-chip">Repriced</div><div class="state-chip">Paused</div><div class="state-chip">Shortfall</div><div class="state-chip">Resolved</div></div></article>
+        </div>
+        <footer class="source-row"><a href="jejak-master-implementation-brief.md">Demo truth matrix and acceptance criteria</a></footer>
+        <div class="speaker-notes">Now I will switch to the live application. First, we run an eligible claim through control, funding, settlement, and closure on Stellar Testnet. Then we inject a refund and return spike. ESV falls, new funding pauses, the shortfall consumes configured first loss, and only an authorized resolver can close the lifecycle. External partners are sandbox adapters; the application and Testnet state transitions are the proof.</div>
+      </section>
+
+      <section class="slide navy" data-title="Composability map" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Composability</p><h1>Shared state. Separated responsibilities.</h1></div><span class="slide-index">10</span></header>
+        <div class="visual network">
+          <div class="privacy"></div>
+          <div class="network-center"><div><strong>Jejak lifecycle state</strong><br><span class="micro">permissions · status · settlement</span></div></div>
+          <div class="node n1">Seller</div><div class="node n2">Licensed originator / factor</div><div class="node n3">Issuer / redeemer</div><div class="node n4">Institutional facility</div><div class="node n5">Anchor / PJP</div><div class="node n6">Servicer</div><div class="node n7">Authorized resolver</div>
+          <div class="artifact-key"><span class="pill accent">JCC = portable evidence</span><span class="pill">JCLAIM = restricted participation</span></div>
+          <span class="privacy-label">Raw PII + legal documents remain off-chain</span>
+        </div>
+        <footer class="source-row"><a href="https://developers.stellar.org/docs/tokens/stellar-asset-contract" target="_blank" rel="noreferrer">Stellar Asset Contract</a><span>·</span><a href="https://developers.stellar.org/docs/tokens/control-asset-access" target="_blank" rel="noreferrer">Asset controls</a></footer>
+        <div class="speaker-notes">Composability does not mean exposing everything. A seller can carry the JCC to an authorized financing workflow, while institutional participants receive restricted facility participation. Raw PII and legal documents stay off-chain; hashes, status, permissions, and settlement state are shared. Each regulated role remains distinct.</div>
+      </section>
+
+      <section class="slide" data-title="Business and compliance" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Business + compliance</p><h1>Technology fees. Licensed financing.</h1></div><span class="slide-index">11</span></header>
+        <div class="visual economics">
+          <div class="panel waterfall"><span class="label">Economics to validate in pilot</span><div class="cost-row"><span>Facility / originator fee</span><div class="cost-bar"></div></div><div class="cost-row"><span>Data + reconciliation</span><div class="cost-bar"></div></div><div class="cost-row"><span>Servicing + chain</span><div class="cost-bar"></div></div><div class="cost-row"><span>Security + compliance ops</span><div class="cost-bar"></div></div><div class="cost-row"><span>Contribution margin</span><div class="cost-bar"></div></div><span class="micro">No price, yield, or margin claimed before real inputs.</span></div>
+          <div class="responsibility"><div class="panel responsibility-card jejak"><span class="label">Jejak</span><h2>SaaS/API · per-claim servicing · facility technology</h2><p>Reconciliation, orchestration, lifecycle software, reporting.</p></div><div class="panel responsibility-card partner"><span class="label">Licensed partner</span><h2>Financing · issuance · redemption · recovery</h2><p>Creates and controls the legal relationship.</p></div></div>
+        </div>
+        <footer class="source-row"><a href="https://www.ojk.go.id/id/regulasi/Documents/Pages/POJK-46-Tahun-2024-Pengembangan-dan-Penguatan-Perusahaan-Pembiayaan-Perusahaan-Pembiayaan-Infrastruktur-dan-PMV/Abstrak%20POJK%2046%20Tahun%202024%20Pengembangan%20dan%20Penguatan%20Perusahaan%20Pembiayaan%2C%20Perusahaan%20Pembiayaan%20Infrastruktur-dan-PMV.pdf" target="_blank" rel="noreferrer">OJK POJK 46/2024</a></footer>
+        <div class="speaker-notes">Jejak can charge a licensed originator, factor, or facility operator for software access, per-claim orchestration or servicing, and facility technology. We do not present pricing or margin as proven before pilot inputs exist. The legal financing relationship, issuance policy, holder authorization, redemption, and recovery remain with licensed and contractually appointed parties.</div>
+      </section>
+
+      <section class="slide white" data-title="Hard questions" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Risk posture</p><h1>Designed around the hard questions.</h1></div><span class="slide-index">12</span></header>
+        <div class="visual question-map">
+          <div class="question-core"><strong>CONTROL<br>BEFORE CAPITAL</strong></div>
+          <div class="question q1">Early payout already exists?</div><div class="question q2">Why blockchain?</div><div class="question q3">Who proves legal control?</div><div class="question q4">What if the model is wrong?</div><div class="question q5">Who absorbs loss?</div><div class="question q6">What is real vs sandbox?</div>
+        </div>
+        <footer class="source-row"><a href="https://storfund.com/how-it-works/" target="_blank" rel="noreferrer">Storfund</a><span>·</span><a href="https://www.payability.com/instant-access-2/" target="_blank" rel="noreferrer">Payability</a><span>·</span><a href="https://blocksec.com/blog/yieldblox-dao-incident-on-stellar-oracle-misconfiguration-enabled-a-10m-drain" target="_blank" rel="noreferrer">BlockSec incident analysis</a></footer>
+        <div class="speaker-notes">Yes, early payout exists; Storfund, Payability, and Dowsure validate demand. Jejak differentiates through portable collectibility evidence plus controlled facility state. Blockchain is used for restricted multi-party funding and servicing, not for legal enforceability. Models may abstain; rules, review, caps, and reason codes remain. Loss follows the contractual facility stack, including configured first loss—not an anonymous public pool. The application and Testnet lifecycle are real; unavailable partners remain clearly sandboxed.</div>
+      </section>
+
+      <section class="slide" data-title="Roadmap and ask" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">Roadmap + ask</p><h1>From Testnet proof to controlled pilot.</h1></div><span class="slide-index">13</span></header>
+        <div class="visual roadmap">
+          <article class="roadmap-card current"><div><span class="roadmap-time">Hackathon</span><h3>Full Testnet lifecycle</h3><p>Happy and adverse paths.</p></div><span class="milestone">Application + Testnet state</span></article>
+          <article class="roadmap-card"><div><span class="roadmap-time">0–3 months</span><h3>Pilot readiness</h3><p>Control validation, security review, connector, commitments.</p></div><span class="milestone">Ready to operate safely</span></article>
+          <article class="roadmap-card"><div><span class="roadmap-time">3–6 months</span><h3>Controlled live pilot</h3><p>One country, one facility, limited sellers.</p></div><span class="milestone">Real servicing evidence</span></article>
+          <article class="roadmap-card"><div><span class="roadmap-time">6–12 months</span><h3>Institutional network</h3><p>More ingestion, funders, reporting, portable JCC use.</p></div><span class="milestone">Evidence-led APAC expansion</span></article>
+          <div class="ask-band"><b>Our ask</b><span>One licensed originator / factor + one marketplace / authorized data partner</span><span>Stellar ecosystem support</span></div>
+        </div>
+        <footer class="source-row"><a href="https://www.risein.com/programs/apac-stellar-hackathon" target="_blank" rel="noreferrer">APAC Stellar Hackathon</a><span>·</span><a href="jejak-master-implementation-brief.md">Jejak roadmap</a></footer>
+        <div class="speaker-notes">At the hackathon, we demonstrate the full Testnet lifecycle and adverse path. In the next three months: validate assignment and payout control, complete security review, build the first production connector, and secure pilot commitments. Then run one country, one facility, and a limited seller cohort with real servicing. By twelve months, expand only from evidence. Our ask is Stellar ecosystem support and introductions to one licensed originator or factor and one marketplace or authorized data partner.</div>
+      </section>
+
+      <section class="slide navy" data-title="Team Mova" aria-hidden="true">
+        <header class="slide-header"><div><p class="eyebrow">The team</p><h1>Four builders. One controlled lifecycle.</h1></div><span class="slide-index">14</span></header>
+        <div class="visual team-grid">
+          <article class="team-card"><span class="role-mark">FE</span><div><h3>Frontend + Product</h3><p>Seller and institutional workflows, evidence, and demo experience.</p></div></article>
+          <article class="team-card"><span class="role-mark">BE</span><div><h3>Backend + Integration</h3><p>Lifecycle orchestration, partner adapters, APIs, and reliability.</p></div></article>
+          <article class="team-card"><span class="role-mark">SC</span><div><h3>Stellar Smart Contracts</h3><p>Restricted assets, facility state, waterfall, and resolution.</p></div></article>
+          <article class="team-card"><span class="role-mark">RI</span><div><h3>Risk Intelligence</h3><p>Reconciliation quality, SDS, ESV, reason codes, and review.</p></div></article>
+        </div>
+        <footer class="team-footer"><div><span class="label">Team Mova</span><br><strong>Turn earned revenue into financeable capital.</strong></div><span class="pill accent">Local Finance × Stellar</span></footer>
+        <div class="speaker-notes">We are Team Mova: four builders covering the seller and institutional product experience, backend orchestration and integration, Stellar smart contracts, and risk intelligence. We designed Jejak as one lifecycle because none of these layers is safe in isolation. Replace the role-only cards with supplied names and headshots before final submission.</div>
+      </section>
+
+      <nav class="controls" aria-label="Slide controls">
+        <button class="control-button" id="prevButton" type="button" aria-label="Previous slide">←</button>
+        <span class="counter" aria-live="polite"><span id="currentSlide">1</span> / <span id="totalSlides">14</span></span>
+        <button class="control-button" id="nextButton" type="button" aria-label="Next slide">→</button>
+        <button class="control-button" id="notesButton" type="button" aria-label="Toggle speaker notes" aria-pressed="false">N</button>
+        <button class="control-button" id="fullButton" type="button" aria-label="Toggle fullscreen">⛶</button>
+      </nav>
+      <div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+      <aside class="notes-panel" id="notesPanel" aria-live="polite" hidden><h2>Speaker notes</h2><p id="notesContent"></p></aside>
+      <div class="shortcut-hint">← → navigate · N notes · F fullscreen</div>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const deck = document.getElementById('deck');
+      const slides = [...document.querySelectorAll('.slide')];
+      const currentLabel = document.getElementById('currentSlide');
+      const totalLabel = document.getElementById('totalSlides');
+      const progress = document.getElementById('progressFill');
+      const notesPanel = document.getElementById('notesPanel');
+      const notesContent = document.getElementById('notesContent');
+      const notesButton = document.getElementById('notesButton');
+      let current = 0;
+      let notesOpen = false;
+
+      totalLabel.textContent = String(slides.length);
+
+      function render(index) {
+        current = Math.max(0, Math.min(index, slides.length - 1));
+        slides.forEach((slide, i) => {
+          const active = i === current;
+          slide.classList.toggle('active', active);
+          slide.setAttribute('aria-hidden', String(!active));
+        });
+        currentLabel.textContent = String(current + 1);
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        const title = slides[current].dataset.title || `Slide ${current + 1}`;
+        document.title = `${title} — Jejak Pitch Deck`;
+        updateNotes();
+      }
+
+      function updateNotes() {
+        const source = slides[current].querySelector('.speaker-notes');
+        notesContent.textContent = source ? source.textContent.trim() : 'No notes for this slide.';
+        notesPanel.hidden = !notesOpen;
+        notesButton.setAttribute('aria-pressed', String(notesOpen));
+      }
+
+      function next() { render(current + 1); }
+      function previous() { render(current - 1); }
+      function toggleNotes() { notesOpen = !notesOpen; updateNotes(); }
+      async function toggleFullscreen() {
+        if (!document.fullscreenElement) await deck.requestFullscreen?.();
+        else await document.exitFullscreen?.();
+      }
+
+      document.getElementById('nextButton').addEventListener('click', next);
+      document.getElementById('prevButton').addEventListener('click', previous);
+      notesButton.addEventListener('click', toggleNotes);
+      document.getElementById('fullButton').addEventListener('click', toggleFullscreen);
+
+      document.addEventListener('keydown', (event) => {
+        const tag = event.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); next(); }
+        else if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); previous(); }
+        else if (event.key === 'Home') { event.preventDefault(); render(0); }
+        else if (event.key === 'End') { event.preventDefault(); render(slides.length - 1); }
+        else if (event.key.toLowerCase() === 'n') { event.preventDefault(); toggleNotes(); }
+        else if (event.key.toLowerCase() === 'f') { event.preventDefault(); toggleFullscreen(); }
+        else if (event.key === 'Escape' && notesOpen) { notesOpen = false; updateNotes(); }
+      });
+
+      let touchStart = null;
+      deck.addEventListener('touchstart', (event) => { touchStart = event.changedTouches[0].clientX; }, { passive: true });
+      deck.addEventListener('touchend', (event) => {
+        if (touchStart === null) return;
+        const delta = event.changedTouches[0].clientX - touchStart;
+        if (Math.abs(delta) > 50) delta < 0 ? next() : previous();
+        touchStart = null;
+      }, { passive: true });
+
+      const requestedSlide = Number.parseInt(new URLSearchParams(window.location.search).get('slide') || '1', 10);
+      render(Number.isFinite(requestedSlide) ? requestedSlide - 1 : 0);
+    })();
+  </script>
+</body>
+</html>
