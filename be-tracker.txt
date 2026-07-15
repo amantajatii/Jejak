@@ -8,7 +8,7 @@ Current wave: Wave 0 — Contract Freeze
 Design spec : docs/superpowers/specs/2026-07-15-jejak-backend-roadmap-wave-0-design.md
 Design state: APPROVED + SELF-REVIEWED
 Impl. plan  : docs/superpowers/plans/2026-07-15-jejak-backend-wave-0-implementation-plan.md
-Plan state  : EXECUTING; Task 1 preflight active
+Plan state  : WAVE 0 BE-OWNED IMPLEMENTATION COMPLETE; Gate A handoffs open
 
 STATUS
 ------
@@ -20,7 +20,7 @@ STATUS
 
 SUMMARY
 -------
-DONE: 0  |  DOING: 1  |  TODO: 19  |  BLOCKED: 0  |  DEFERRED: 1
+DONE: 1  |  DOING: 2  |  TODO: 17  |  BLOCKED: 0  |  DEFERRED: 1
 
 Repository evidence at initialization:
 - apps/web exists and belongs to FE.
@@ -36,7 +36,7 @@ WAVE 0 — FOUNDATION AND FROZEN CONTRACTS
 [~] BE-00  MUST  Create monorepo/root scaffold
     Done: all apps/packages install and build independently.
 
-[ ] BE-01  MUST  Publish canonical JSON Schema and OpenAPI
+[x] BE-01  MUST  Publish canonical JSON Schema and OpenAPI
     Done: TS/Python validation and reproducible client generation pass.
 
 [ ] BE-02  MUST  Add PostgreSQL/Drizzle schema and migrations
@@ -93,7 +93,7 @@ READ MODELS, OPERATIONS, AND INTEGRATION
 [ ] BE-16  MUST  Portfolio and audit query APIs
     Done: institutional queries are correct, authorized, and tested.
 
-[ ] BE-17  MUST  Docker Compose, CI, OpenTelemetry, and health checks
+[~] BE-17  MUST  Docker Compose, CI, OpenTelemetry, and health checks
     Done: fresh clone starts successfully with health/traces visible.
 
 [ ] BE-18  MUST  Integration and failure-injection tests
@@ -108,12 +108,12 @@ READ MODELS, OPERATIONS, AND INTEGRATION
 
 INTEGRATION-STEWARD CHECKLIST
 -----------------------------
-[ ] Canonical Money, IDs, enums, entities, errors, and fixtures are frozen.
+[x] Canonical Money, IDs, enums, entities, errors, and fixtures are frozen.
 [ ] FE consumes generated OpenAPI client; no handwritten domain copies.
 [ ] RISK validates the same Money/ID/snapshot contracts.
 [ ] SC bindings/events match the frozen ABI and indexer fixtures.
 [ ] Breaking frozen-contract changes use an approved ICP.
-[ ] Generated artifacts are reproducible and checked for drift in CI.
+[x] Generated artifacts are reproducible and checked for drift in CI.
 [ ] External calls have timeout, retry class, correlation, and reconciliation.
 [ ] Chain state is reconciled; submission success is never assumed final.
 [ ] Migrations include safe up/down and rollback instructions.
@@ -122,12 +122,11 @@ INTEGRATION-STEWARD CHECKLIST
 
 NEXT ACTIONS
 ------------
-1. BE-00: establish the canonical root workspace and align apps/api versus
-   the current apps/server placeholder without touching FE-owned code.
-2. BE-01: freeze packages/domain schemas, fixtures, errors, and OpenAPI with
-   FE, SC, and RISK before feature implementation.
-3. Create docs/status/be.md and record Wave 0 evidence continuously.
-4. Reach Gate A before starting the happy-path vertical slice.
+1. FE: validate @jejak/api-client and approve removal of apps/web/package-lock.json.
+2. RISK: validate shared Python schemas/fixtures and independently verify JCS/Ed25519.
+3. SC: validate Rust key/hash/amount vectors and freeze ABI/event mappings.
+4. CI/local Docker: run the API image smoke where a Docker daemon is available.
+5. Reach Gate A before starting the happy-path vertical slice.
 
 
 IMPORTANT BOUNDARIES

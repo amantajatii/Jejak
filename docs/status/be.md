@@ -4,9 +4,9 @@ Role: `BE` — Backend Engineer and Integration Steward
 
 Current wave: Wave 0 — Contract Freeze
 
-Completed task IDs: None
+Completed task IDs: `BE-01`
 
-Active task IDs: `BE-00` (Task 4 Fastify health/readiness)
+Active task IDs: `BE-00`, initial foundation of `BE-17`
 
 Changed owned paths:
 
@@ -15,8 +15,17 @@ Changed owned paths:
 - `CLAUDE.md` (local project memory; ignored by git)
 - root pnpm/Turborepo workspace files
 - `packages/config/**`
+- `apps/api/**`
+- `packages/domain/**`
+- `packages/api-client/**`
+- contract/CI/container tests and BE runbooks
 
-Generated contracts consumed: None; generators have not been implemented.
+Generated contracts consumed:
+
+- TypeScript domain types: `packages/domain/src/generated`
+- Bundled OpenAPI 3.1: `apps/api/openapi/openapi.json`
+- FE-safe client/types: `packages/api-client/src/generated/schema.ts`
+- Python consumer proof reads the same schemas/fixtures directly
 
 Tests run and result:
 
@@ -29,6 +38,19 @@ Tests run and result:
 - Project-local Supabase CLI version: PASS (`2.109.1`)
 - Fastify API tests: PASS (5 tests)
 - Fastify API typecheck/build: PASS
+- JSON Schema validation: PASS (39 schema resources)
+- Shared scenarios: PASS (8 fixtures)
+- Cross-runtime vectors: PASS (6 vector sets)
+- Domain tests: PASS (14 tests)
+- OpenAPI lint: PASS, no warnings
+- Section 18 operation coverage: PASS (23 public operations plus health/readiness)
+- API tests: PASS (13 tests)
+- Generated API client tests: PASS (3 tests)
+- Python contract tests: PASS (7 tests)
+- Generated drift rejection probe: PASS (1 test)
+- Root lint/typecheck/test/build: PASS
+- Docker Compose configuration: PASS
+- Local API image smoke: NOT RUN; Docker daemon/socket unavailable on this machine
 
 Open interface change proposals: None
 
@@ -36,10 +58,12 @@ Known risks/blockers:
 
 - `apps/web/package-lock.json` belongs to FE; removal requires FE acknowledgement before final `BE-00` acceptance.
 - `apps/ai-service` is a placeholder; alignment to canonical `apps/risk-service` requires RISK handoff.
+- `contracts/.gitkeep` is still only an SC placeholder; Rust vector/ABI acknowledgement is pending.
 - Supabase development and test projects are not yet proven provisioned.
-- Global Supabase CLI is `2.75.0`; registry-verified project-local stable CLI `2.109.1` must be pinned in Task 2.
+- Global Supabase CLI is `2.75.0`; the registry-verified project-local CLI is pinned at `2.109.1`.
 - `.env.example` and `.gitignore` contain pre-existing user changes and must not be overwritten without an ownership-safe merge.
-- FE, RISK, and SC have assigned owners but had not started implementation at the latest product-owner update.
+- FE/RISK/SC acknowledgement of the frozen handoff remains required for Gate A.
+- Docker container smoke remains to be run locally or by CI where a daemon is available.
 
 Next integration gate: Gate A — Contract
 
@@ -79,3 +103,15 @@ M  .gitignore
 ```
 
 Task commits must use explicit path staging and verify the staged file list before commit.
+
+## Wave 0 implementation evidence — 15 July 2026
+
+```text
+workspace/API foundation: 5f929ef, 6790c48
+schemas/fixtures/vectors: 5a2936c
+OpenAPI/generated client: 0a01977
+Python consumer proof: f1e60d1
+CI/container foundation: 96c3b4f
+```
+
+`BE-01` is complete on BE-owned acceptance evidence. `BE-00` stays open until FE approves removal of its nested npm lock and RISK/SC confirm workspace alignment. Gate A stays open until the three consumer workstreams acknowledge their handoffs and CI/container smoke is green.
