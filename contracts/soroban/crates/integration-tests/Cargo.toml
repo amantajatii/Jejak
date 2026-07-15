@@ -1,0 +1,22 @@
+[package]
+name = "jejak-integration-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+jejak-common.workspace = true
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+jejak-eligibility-registry = { path = "../eligibility-registry" }
+jejak-claim-lifecycle = { path = "../claim-lifecycle" }
+jejak-asset-controller = { path = "../asset-controller" }
+jejak-facility = { path = "../facility" }
+jejak-servicing-waterfall = { path = "../servicing-waterfall" }
+jejak-resolution-manager = { path = "../resolution-manager" }
+
