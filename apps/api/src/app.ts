@@ -2,8 +2,12 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import Fastify, { LogController, type FastifyInstance } from "fastify";
 
+import { AuthorizationError } from "./auth/authorization.js";
+import { AuthenticationError } from "./auth/jwt-verifier.js";
+import { TenantHeaderError } from "./auth/tenant.js";
 import { loadConfig, type AppConfig } from "./config/env.js";
 import { errorEnvelope } from "./lib/envelopes.js";
+import { InvitationError } from "./invitations/service.js";
 import { createRequestId } from "./plugins/request-context.js";
 import {
   createDeferredProbe,
@@ -11,10 +15,12 @@ import {
 } from "./readiness/postgres-probe.js";
 import type { ReadinessProbe } from "./readiness/types.js";
 import { registerHealthRoutes } from "./routes/health.js";
+import { registerInvitationRoutes, type InvitationRouteDependencies } from "./routes/invitations.js";
 
 export type BuildAppOptions = {
   config?: AppConfig;
   logger?: boolean;
+  invitationDependencies?: InvitationRouteDependencies;
   readinessProbes?: ReadinessProbe[];
 };
 
@@ -33,6 +39,19 @@ function publicError(error: unknown): {
   retryable: boolean;
   statusCode: number;
 } {
+  if (error instanceof AuthenticationError) {
+    return { code: error.code, message: error.message, retryable: false, statusCode: 401 };
+  }
+  if (error instanceof AuthorizationError) {
+    return { code: error.code, message: error.message, retryable: false, statusCode: 403 };
+  }
+  if (error instanceof TenantHeaderError) {
+    return { code: error.code, message: error.message, retryable: false, statusCode: 400 };
+  }
+  if (error instanceof InvitationError) {
+    const statusCode = error.code === "INVITATION_EMAIL_MISMATCH" ? 409 : 404;
+    return { code: error.code, message: error.message, retryable: false, statusCode };
+  }
   if (hasValidation(error)) {
     return {
       code: "VALIDATION_FAILED",
@@ -71,6 +90,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   ];
 
   await registerHealthRoutes(app, { config, probes });
+  if (options.invitationDependencies !== undefined) {
+    await registerInvitationRoutes(app, options.invitationDependencies);
+  }
 
   app.setNotFoundHandler(async (request, reply) =>
     reply.code(404).send(
