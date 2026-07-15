@@ -1,48 +1,33 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { PrimaryNav, type NavItem } from "./WorkspaceNav";
 
 export function WorkspaceSidebar({
-  brandLabel,
-  brandHref,
-  sandboxLabel,
-  sandboxSub,
-  dotClassName = "sandbox-dot",
+  className = "sidebar workspace-sidebar",
+  brand,
+  badge,
   navItems,
   navAriaLabel,
+  navClassName,
   footer,
+  footerClassName = "sidebar-footer",
 }: {
-  brandLabel: string;
-  brandHref?: string;
-  sandboxLabel: string;
-  sandboxSub?: string;
-  dotClassName?: string;
+  className?: string;
+  brand: ReactNode;
+  badge?: ReactNode;
   navItems: NavItem[];
   navAriaLabel: string;
+  navClassName?: string;
   footer: ReactNode;
+  footerClassName?: string;
 }) {
-  const brand = brandHref ? (
-    <Link href={brandHref} className="wordmark">
-      {brandLabel}
-      <span>.</span>
-    </Link>
-  ) : (
-    <div className="brand">
-      {brandLabel}
-      <span>.</span>
-    </div>
-  );
   return (
-    <aside className="sidebar">
+    <aside className={className}>
       {brand}
-      <div className="sandbox-note">
-        <span className={dotClassName} /> {sandboxLabel}
-        {sandboxSub && <small>{sandboxSub}</small>}
-      </div>
-      <PrimaryNav items={navItems} ariaLabel={navAriaLabel} />
-      <div className="sidebar-footer">{footer}</div>
+      {badge}
+      <PrimaryNav items={navItems} ariaLabel={navAriaLabel} className={navClassName} />
+      <div className={footerClassName}>{footer}</div>
     </aside>
   );
 }

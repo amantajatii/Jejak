@@ -7,12 +7,12 @@ import { WorkspaceSidebar } from "@/components/operations/WorkspaceSidebar";
 import { claims, formatMoney, getClaim, portfolio, roles, type ClaimStatus, type InstitutionRole } from "./data";
 
 const nav = [
-  { label: "Portfolio", href: "/institution/portfolio", icon: "▦" },
-  { label: "Claims", href: "/institution/claims/JJK-1048", icon: "⌁" },
-  { label: "Exposure", href: "/institution/exposure", icon: "◫" },
-  { label: "Transactions", href: "/institution/transactions", icon: "↗" },
-  { label: "Documents", href: "/institution/documents", icon: "□" },
-  { label: "Approvals", href: "/institution/approvals", icon: "✓" },
+  { label: "Portfolio", href: "/institution/portfolio" },
+  { label: "Claims", href: "/institution/claims/JJK-1048" },
+  { label: "Exposure", href: "/institution/exposure" },
+  { label: "Transactions", href: "/institution/transactions" },
+  { label: "Documents", href: "/institution/documents" },
+  { label: "Approvals", href: "/institution/approvals" },
 ];
 function Status({ value }: { value: ClaimStatus | "Fresh" | "Stale" | "Low" | "Monitor" | "High" }) { return <span className={`status status-${value.toLowerCase()}`}><i />{value.replace("_", " ")}</span>; }
 function Shell({ children, pageName, role, setRole }: { children: React.ReactNode; pageName: string; role: InstitutionRole; setRole: (role: InstitutionRole) => void }) {
@@ -20,8 +20,8 @@ function Shell({ children, pageName, role, setRole }: { children: React.ReactNod
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isActive = (item: (typeof nav)[number]) => item.label === "Claims" ? pathname.startsWith("/institution/claims") : pathname === item.href;
-  const navItems = nav.map((item) => ({ label: item.label, href: item.href, icon: item.icon, isActive: isActive(item) }));
-  return <div className="institution-shell"><WorkspaceSidebar brandLabel="jejak" brandHref="/institution/portfolio" sandboxLabel="SANDBOX" sandboxSub="simulation" navItems={navItems} navAriaLabel="Institution navigation" footer={<><span className="avatar">{currentRole.short}</span><div><strong>{currentRole.label}</strong><small>Institution workspace</small></div><button aria-label="Open user menu">⋯</button></>} /><main className="workspace"><header className="topbar"><div className="mobile-brand">jejak<span>.</span></div><div className="crumb">Institution <span>/</span> {pageName}</div><div className="top-actions"><button className="icon-button" aria-label="Search">⌕</button><button className="icon-button" aria-label="Notifications">♧</button><label className="role-select"><span>Viewing as</span><select value={role} onChange={(event) => setRole(event.target.value as InstitutionRole)}>{roles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><MenuButton open={mobileNavOpen} onToggle={() => setMobileNavOpen((open) => !open)} ariaControls="institution-mobile-nav" ariaLabel="Toggle institution navigation" /></header><MobileNav id="institution-mobile-nav" items={navItems} open={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} ariaLabel="Mobile institution navigation" />{children}</main></div>;
+  const navItems = nav.map((item) => ({ label: item.label, href: item.href, isActive: isActive(item) }));
+  return <div className="institution-shell"><WorkspaceSidebar brand={<Link href="/institution/portfolio" className="wordmark">jejak<span>.</span></Link>} badge={<div className="sandbox-note"><span className="sandbox-dot" /> SANDBOX <small>simulation</small></div>} navItems={navItems} navAriaLabel="Institution navigation" footer={<><span className="avatar">{currentRole.short}</span><div><strong>{currentRole.label}</strong><small>Institution workspace</small></div><button aria-label="Open user menu">⋯</button></>} /><main className="workspace"><header className="topbar"><div className="mobile-brand">jejak<span>.</span></div><div className="crumb">Institution <span>/</span> {pageName}</div><div className="top-actions"><button className="icon-button" aria-label="Search">⌕</button><button className="icon-button" aria-label="Notifications">♧</button><label className="role-select"><span>Viewing as</span><select value={role} onChange={(event) => setRole(event.target.value as InstitutionRole)}>{roles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label></div><MenuButton open={mobileNavOpen} onToggle={() => setMobileNavOpen((open) => !open)} ariaControls="institution-mobile-nav" ariaLabel="Toggle institution navigation" /></header><MobileNav id="institution-mobile-nav" items={navItems} open={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} ariaLabel="Mobile institution navigation" />{children}</main></div>;
 }
 function Metric({ label, value, detail, tone = "blue" }: { label: string; value: string; detail: string; tone?: string }) { return <article className="metric"><div className={`metric-mark ${tone}`} /><span>{label}</span><strong>{value}</strong><small>{detail}</small></article>; }
 

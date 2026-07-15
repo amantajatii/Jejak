@@ -8,10 +8,10 @@ import { WorkspaceSidebar } from "@/components/operations/WorkspaceSidebar";
 import { finalLoss, ResolutionCase, ResolutionStatus } from "./data";
 
 const nav = [
-  { label: "Resolution", href: "/resolution", icon: "▦" },
-  { label: "Portfolio", href: "/resolution/portfolio", icon: "◷" },
-  { label: "Claims", href: "/resolution/claims", icon: "⌁" },
-  { label: "Audit trail", href: "/resolution/audit", icon: "◌" },
+  { label: "Resolution", href: "/resolution" },
+  { label: "Portfolio", href: "/resolution/portfolio" },
+  { label: "Claims", href: "/resolution/claims" },
+  { label: "Audit trail", href: "/resolution/audit" },
 ];
 
 const sectionHrefs = nav.slice(1).map((item) => item.href);
@@ -22,13 +22,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navItems = nav.map((item) => ({
     label: item.label,
     href: item.href,
-    icon: item.icon,
     isActive:
       item.href === "/resolution"
         ? pathname === "/resolution" || (pathname.startsWith("/resolution/") && !sectionHrefs.some((href) => pathname.startsWith(href)))
         : pathname === item.href,
   }));
-  return <div className="app-shell"><WorkspaceSidebar brandLabel="Jejak" sandboxLabel="SANDBOX MODE" dotClassName="dot" navItems={navItems} navAriaLabel="Primary" footer={<><span className="avatar">RS</span><div><strong>Resolver Sandbox</strong><small>Authorized operator</small></div><span className="chevron">⌄</span></>} /><main className="main-content"><header className="topbar"><div className="mobile-brand">Jejak<span>.</span></div><div className="topbar-spacer" /><span className="sandbox-badge">SANDBOX · TESTNET</span><button className="icon-button" aria-label="Notifications">♢</button><span className="avatar avatar-dark">RS</span><MenuButton open={mobileNavOpen} onToggle={() => setMobileNavOpen((open) => !open)} ariaControls="resolution-mobile-nav" ariaLabel="Toggle resolution navigation" /></header><MobileNav id="resolution-mobile-nav" items={navItems} open={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} ariaLabel="Mobile resolution navigation" />{children}</main></div>;
+  return <div className="app-shell"><WorkspaceSidebar brand={<div className="brand">Jejak<span>.</span></div>} badge={<div className="sandbox-note"><span className="dot" /> SANDBOX MODE</div>} navItems={navItems} navAriaLabel="Primary" footer={<><span className="avatar">RS</span><div><strong>Resolver Sandbox</strong><small>Authorized operator</small></div><span className="chevron">⌄</span></>} /><main className="main-content"><header className="topbar"><div className="mobile-brand">Jejak<span>.</span></div><div className="topbar-spacer" /><span className="sandbox-badge">SANDBOX · TESTNET</span><button className="icon-button" aria-label="Notifications">♢</button><span className="avatar avatar-dark">RS</span><MenuButton open={mobileNavOpen} onToggle={() => setMobileNavOpen((open) => !open)} ariaControls="resolution-mobile-nav" ariaLabel="Toggle resolution navigation" /></header><MobileNav id="resolution-mobile-nav" items={navItems} open={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} ariaLabel="Mobile resolution navigation" />{children}</main></div>;
 }
 
 export function StatusBadge({ status }: { status: ResolutionStatus }) {
@@ -58,7 +57,7 @@ export function EvidenceList({ item }: { item: ResolutionCase }) {
 }
 
 export function ClaimTimeline({ item }: { item: ResolutionCase }) {
-  return <section className="panel timeline-panel"><div className="panel-heading"><div><span className="section-kicker">Trace</span><h2>Event timeline</h2></div><Link href="#timeline" className="text-link">View all</Link></div><ol className="timeline">{item.timeline.map((event) => <li key={`${event.label}-${event.date}`} className={event.tone ?? "neutral"}><span className="timeline-marker">{event.tone === "risk" ? "!" : event.tone === "success" ? "✓" : "·"}</span><div><strong>{event.label}</strong><span>{event.date} · {event.detail}</span></div></li>)}</ol></section>;
+  return <section className="panel timeline-panel"><div className="panel-heading"><div><span className="section-kicker">Trace</span><h2>Event timeline</h2></div><Link href="#timeline" className="text-link">View all</Link></div><ol className="timeline">{item.timeline.map((event) => <li key={`${event.label}-${event.date}`} className={event.tone ?? "neutral"}><span className="timeline-marker">{event.tone === "risk" ? "!" : event.tone === "success" ? "✓" : "•"}</span><div><strong>{event.label}</strong><span>{event.date} · {event.detail}</span></div></li>)}</ol></section>;
 }
 
 export function ActionPanel({ item }: { item: ResolutionCase }) {
