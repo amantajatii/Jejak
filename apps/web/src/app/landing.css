@@ -9,15 +9,24 @@
   color: inherit;
 }
 
-.landing .wordmark {
-  font-size: 22px;
-  font-weight: 780;
-  letter-spacing: -.05em;
-  color: #faf9f5;
+.landing-logo-link {
+  display: inline-flex;
+  width: max-content;
+  flex: none;
 }
 
-.landing .wordmark span {
-  color: #ff4b2b;
+.landing-logo {
+  display: block;
+  width: auto;
+  object-fit: contain;
+}
+
+.landing-logo-header {
+  height: 34px;
+}
+
+.landing-logo-footer {
+  height: 46px;
 }
 
 .landing .sandbox-pill {

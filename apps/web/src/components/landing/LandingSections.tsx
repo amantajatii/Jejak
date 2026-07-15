@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "./Reveal";
 
@@ -29,7 +30,9 @@ const stellarPoints = [
 export function LandingHeader() {
   return (
     <header className="landing-header">
-      <Link href="/" className="wordmark">Jejak<span>.</span></Link>
+      <Link href="/" className="landing-logo-link" aria-label="Jejak home">
+        <Image className="landing-logo landing-logo-header" src="/jejak-logo-light.png" alt="" width={2102} height={1082} preload />
+      </Link>
       <nav className="landing-nav" aria-label="Main navigation">
         <a href="#how-it-works">How It Works</a>
         <a href="#for-sellers">For Sellers</a>
@@ -134,7 +137,9 @@ export function LandingFooter() {
       <div className="landing-footer-inner">
         <div className="landing-footer-main">
           <div className="landing-footer-brand">
-            <span className="wordmark">Jejak<span>.</span></span>
+            <Link href="/" className="landing-logo-link" aria-label="Jejak home">
+              <Image className="landing-logo landing-logo-footer" src="/jejak-logo-light.png" alt="" width={2102} height={1082} />
+            </Link>
             <p>Early funding for eligible unsettled marketplace earnings, backed by clear evidence.</p>
           </div>
           <nav className="landing-footer-nav" aria-label="Footer navigation">

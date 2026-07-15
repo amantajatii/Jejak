@@ -12,6 +12,7 @@ test("landing uses a full-width Stellar band and grouped editorial footer", () =
   assert.match(sections, />Product</);
   assert.match(sections, />Demos</);
   assert.match(sections, />Network</);
+  assert.equal(sections.match(/src="\/jejak-logo-light\.png"/g)?.length, 2);
   assert.match(styles, /\.landing-stellar\s*{[^}]*max-width:\s*none/s);
   assert.match(styles, /\.landing-footer-nav\s*{[^}]*grid-template-columns:/s);
 });

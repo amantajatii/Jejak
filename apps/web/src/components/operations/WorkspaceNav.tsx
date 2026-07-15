@@ -15,7 +15,7 @@ export function PrimaryNav({
   className?: string;
 }) {
   const activeIndex = Math.max(items.findIndex((item) => item.isActive), 0);
-  const navigationStyle = { "--active-nav": activeIndex } as CSSProperties;
+  const navigationStyle = { "--active-nav-offset": `${activeIndex * 44}px` } as CSSProperties;
   return (
     <nav className={className} aria-label={ariaLabel} style={navigationStyle}>
       {items.map((item) => (
