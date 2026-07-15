@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jejak Web
 
-## Getting Started
+Next.js 16 frontend for the seller, institutional, and authorized-resolution demo workspaces.
 
-First, run the development server:
+## Transport configuration
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Transport selection is explicit and never falls back silently:
+
+```text
+NEXT_PUBLIC_JEJAK_TRANSPORT=mock|api
+NEXT_PUBLIC_JEJAK_API_URL=http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`NEXT_PUBLIC_JEJAK_API_URL` is required only for `api`. Demo bearer tokens remain in React memory and are discarded on refresh. The active tenant is restored from demo context, while the user must choose a role again.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+All unavailable marketplace, originator, issuer, anchor, and recovery integrations are visibly labeled `SANDBOX`. `JUSD` is a sandbox funding asset and is not production USDC. Chain mode is displayed exactly as `STELLAR TESTNET` or `DETERMINISTIC SANDBOX`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Run and verify
 
-## Learn More
+From the repository root:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm --filter web dev
+pnpm --filter web lint
+pnpm --filter web test
+pnpm --filter web build
+pnpm --filter web exec playwright test --config ../../tests/e2e/playwright.config.ts --project=mock
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+API browser tests require the Person 1 runtime and its generated ICP-0004 contract:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+JEJAK_E2E_TRANSPORT=api \
+NEXT_PUBLIC_JEJAK_API_URL=http://127.0.0.1:3001 \
+JEJAK_API_E2E=1 \
+pnpm --filter web exec playwright test --config ../../tests/e2e/playwright.config.ts --project=api
+```
 
-## Deploy on Vercel
+Without `JEJAK_API_E2E=1`, API projects are reported as skipped rather than passed.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Five-minute rehearsal
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Reset `HAPPY`, select each role requested by the primary action, and progress the institutional workspace through `CLOSED`.
+2. Reset `ADVERSE`, inject the labeled sandbox refund spike, reconcile the short waterfall, switch to `RESOLVER`, and close at `CLOSED_WITH_LOSS`.
+3. Use the seller offer and claim pages to show exact terms and a wallet-free seller experience.
+4. Open only API-provided safe Stellar explorer references; submitted operations are never presented as final before reconciliation.
