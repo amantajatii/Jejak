@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "claims_active_snapshot_uq" ON "jejak"."claims" USING btree ("tenant_id","settlement_stream_id") WHERE "jejak"."claims"."state" not in ('CLOSED', 'CLOSED_WITH_LOSS', 'REJECTED', 'CANCELLED');

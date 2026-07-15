@@ -16,6 +16,8 @@
     "openapi:lint": "redocly lint openapi/openapi.yaml --config redocly.yaml",
     "start": "node dist/server.js",
     "test": "vitest run",
+    "test:integration:supabase": "node scripts/run-supabase-integration.mjs",
+    "test:integration:supabase-storage": "node scripts/run-supabase-storage-integration.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

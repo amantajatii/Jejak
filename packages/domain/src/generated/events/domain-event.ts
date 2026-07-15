@@ -10,6 +10,8 @@ export type DomainEventType =
   | "settlement_stream.snapshot.created"
   | "claim.created"
   | "claim.analysis.completed"
+  | "financing_offer.created"
+  | "financing_offer.accepted"
   | "jcc.issued"
   | "jcc.revoked"
   | "control.verified"
@@ -33,7 +35,7 @@ export interface DomainEvent {
   eventId: string;
   eventType: DomainEventType;
   eventVersion: number;
-  aggregateType: "CLAIM" | "SELLER" | "FACILITY" | "ATTESTATION" | "RESOLUTION";
+  aggregateType: "CLAIM" | "SELLER" | "FACILITY" | "ATTESTATION" | "RESOLUTION" | "FINANCING_OFFER";
   aggregateId: string;
   aggregateVersion: number;
   tenantId: string;

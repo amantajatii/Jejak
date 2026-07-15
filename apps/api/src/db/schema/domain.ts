@@ -71,14 +71,22 @@ export const settlementStreams = jejak.table(
       .references(() => marketplaceConnections.id),
     sourceHash: text("source_hash").notNull(),
     cutoffAt: timestamp("cutoff_at", { mode: "date", withTimezone: true }).notNull(),
-    ...Object.fromEntries(
-      Object.entries(money("expected_settlement")).map(([key, value]) => [
-        `expectedSettlement${key[0]?.toUpperCase()}${key.slice(1)}`,
-        value,
-      ]),
-    ),
+    expectedSettlementAmountMinor: numeric("expected_settlement_amount_minor", {
+      mode: "string",
+      precision: 38,
+      scale: 0,
+    }).notNull(),
+    expectedSettlementCurrency: text("expected_settlement_currency").notNull(),
+    expectedSettlementScale: smallint("expected_settlement_scale").notNull(),
+    expectedSettlementIssuer: text("expected_settlement_issuer"),
   },
-  (table) => [uniqueIndex("settlement_streams_source_hash_uq").on(table.tenantId, table.sourceHash)],
+  (table) => [
+    uniqueIndex("settlement_streams_source_hash_uq").on(table.tenantId, table.sourceHash),
+    check(
+      "settlement_streams_expected_settlement_scale",
+      sql`${table.expectedSettlementScale} between 0 and 18`,
+    ),
+  ],
 );
 
 export const claims = jejak.table(
@@ -102,6 +110,9 @@ export const claims = jejak.table(
   },
   (table) => [
     uniqueIndex("claims_claim_key_uq").on(table.tenantId, table.claimKey),
+    uniqueIndex("claims_active_snapshot_uq")
+      .on(table.tenantId, table.settlementStreamId)
+      .where(sql`${table.state} not in ('CLOSED', 'CLOSED_WITH_LOSS', 'REJECTED', 'CANCELLED')`),
     check("claims_eligible_scale", sql`${table.eligibleScale} between 0 and 18`),
   ],
 );

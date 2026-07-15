@@ -1,0 +1,1 @@
+ALTER TABLE "jejak"."settlement_streams" ADD CONSTRAINT "settlement_streams_expected_settlement_scale" CHECK ("jejak"."settlement_streams"."expected_settlement_scale" between 0 and 18);

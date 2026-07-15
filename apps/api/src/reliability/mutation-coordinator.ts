@@ -30,21 +30,33 @@ export type MutationTransaction<T> = {
   appendAudit(input: Record<string, unknown>): Promise<void>;
   appendOutbox(input: MutationEvent): Promise<void>;
   claim(scope: MutationScope, payloadHash: string): Promise<ClaimDecision<T>>;
-  complete(scope: MutationScope, payloadHash: string, response: T): Promise<void>;
+  complete(
+    scope: MutationScope,
+    payloadHash: string,
+    response: T,
+    responseStatus: number,
+  ): Promise<void>;
 };
 
-export type MutationUnitOfWork<T> = {
-  transaction<R>(work: (transaction: MutationTransaction<T>) => Promise<R>): Promise<R>;
+export type MutationUnitOfWork<
+  T,
+  TTransaction extends MutationTransaction<T> = MutationTransaction<T>,
+> = {
+  transaction<R>(work: (transaction: TTransaction) => Promise<R>): Promise<R>;
 };
 
-export class MutationCoordinator<T> {
-  constructor(private readonly unitOfWork: MutationUnitOfWork<T>) {}
+export class MutationCoordinator<
+  T,
+  TTransaction extends MutationTransaction<T> = MutationTransaction<T>,
+> {
+  constructor(private readonly unitOfWork: MutationUnitOfWork<T, TTransaction>) {}
 
   execute(input: {
     audit: Record<string, unknown>;
     event: MutationEvent;
-    mutate: (transaction: MutationTransaction<T>) => Promise<T>;
+    mutate: (transaction: TTransaction) => Promise<T>;
     payload: unknown;
+    responseStatus?: number;
     scope: MutationScope;
   }): Promise<T> {
     const payloadHash = canonicalHash({ operationId: input.scope.operationId, payload: input.payload });
@@ -55,7 +67,7 @@ export class MutationCoordinator<T> {
       const response = await input.mutate(transaction);
       await transaction.appendAudit(safeAttributes({ ...input.audit, payloadHash, result: "SUCCESS" }));
       await transaction.appendOutbox({ ...input.event, payload: safeAttributes(input.event.payload) });
-      await transaction.complete(input.scope, payloadHash, response);
+      await transaction.complete(input.scope, payloadHash, response, input.responseStatus ?? 200);
       return response;
     });
   }

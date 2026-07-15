@@ -21,6 +21,9 @@ const [
   { createDatabase },
   { PostgresInvitationRepository },
   { InvitationService },
+  { createEvidenceStorage, loadEvidenceModuleConfig },
+  { createEvidenceStorageReadinessProbe, isReadinessCapableEvidenceStorage },
+  { createDeferredProbe, createPostgresReadinessProbe },
 ] = await Promise.all([
   import("./app.js"),
   import("./auth/jwt-verifier.js"),
@@ -28,7 +31,12 @@ const [
   import("./db/client.js"),
   import("./invitations/postgres-repository.js"),
   import("./invitations/service.js"),
+  import("./modules/evidence/config.js"),
+  import("./modules/evidence/readiness.js"),
+  import("./readiness/postgres-probe.js"),
 ]);
+const evidenceConfig = loadEvidenceModuleConfig();
+const evidenceStorage = createEvidenceStorage(evidenceConfig);
 const database = config.databaseUrl === undefined ? undefined : createDatabase(config.databaseUrl);
 const issuer = config.supabaseJwtIssuer ?? (config.supabaseUrl === undefined ? undefined : `${config.supabaseUrl}/auth/v1`);
 const jwksUrl = config.supabaseJwksUrl ?? (issuer === undefined ? undefined : `${issuer}/.well-known/jwks.json`);
@@ -51,6 +59,15 @@ const invitationDependencies =
 const app = await buildApp({
   config,
   ...(invitationDependencies === undefined ? {} : { invitationDependencies }),
+  readinessProbes: [
+    createPostgresReadinessProbe(config.databaseUrl),
+    createDeferredProbe("risk_service"),
+    createDeferredProbe("stellar_rpc"),
+    createEvidenceStorageReadinessProbe(
+      isReadinessCapableEvidenceStorage(evidenceStorage) ? evidenceStorage : undefined,
+      evidenceStorage.mode === "SUPABASE",
+    ),
+  ],
 });
 registerTelemetryHooks(app);
 
@@ -58,6 +75,7 @@ const shutdown = async (signal: string): Promise<void> => {
   app.log.info({ signal }, "Shutting down API");
   await app.close();
   await database?.close();
+  await evidenceStorage.close();
   await telemetry.shutdown();
   process.exit(0);
 };

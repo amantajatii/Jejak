@@ -15,8 +15,8 @@ try {
 
 const config = loadConfig();
 const direction = process.argv[2] ?? "up";
-const url = config.databaseDirectUrl;
-if (url === undefined) throw new Error("DATABASE_DIRECT_URL is required for migrations.");
+const url = config.databaseDirectUrl ?? config.databaseUrl;
+if (url === undefined) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required for migrations.");
 if (direction !== "up" && direction !== "down") throw new Error("Migration direction must be up or down.");
 if (direction === "down") assertDedicatedTestProject(config);
 

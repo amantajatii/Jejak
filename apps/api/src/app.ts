@@ -9,6 +9,7 @@ import { loadConfig, type AppConfig } from "./config/env.js";
 import { errorEnvelope } from "./lib/envelopes.js";
 import { InvitationError } from "./invitations/service.js";
 import { createRequestId } from "./plugins/request-context.js";
+import { DomainError } from "./modules/shared/errors.js";
 import {
   createDeferredProbe,
   createPostgresReadinessProbe,
@@ -51,6 +52,25 @@ function publicError(error: unknown): {
   if (error instanceof InvitationError) {
     const statusCode = error.code === "INVITATION_EMAIL_MISMATCH" ? 409 : 404;
     return { code: error.code, message: error.message, retryable: false, statusCode };
+  }
+  if (error instanceof DomainError) {
+    const statusCode =
+      error.code === "VERSION_CONFLICT"
+        ? 412
+        : error.code === "INVALID_STATE_TRANSITION" ||
+            error.code === "CLAIM_ALREADY_ENCUMBERED"
+          ? 409
+          : error.code === "PARTNER_TIMEOUT"
+            ? 503
+            : error.code === "PARTNER_REJECTED"
+              ? 502
+              : 400;
+    return {
+      code: error.code,
+      message: error.message,
+      retryable: error.retryable,
+      statusCode,
+    };
   }
   if (hasValidation(error)) {
     return {

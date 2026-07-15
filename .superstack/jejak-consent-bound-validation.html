@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jejak — Objective Validation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0d10;
+      --panel: #12161b;
+      --panel-2: #181e25;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --line: #2a323c;
+      --green: #4ade80;
+      --amber: #fbbf24;
+      --red: #fb7185;
+      --blue: #60a5fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top right, #15202d 0, var(--bg) 34rem);
+      color: var(--text);
+      font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 80px; }
+    header { display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px; align-items: end; margin-bottom: 30px; }
+    h1 { font-size: clamp(38px, 7vw, 76px); line-height: .95; letter-spacing: -.055em; margin: 8px 0 18px; }
+    h2 { font-size: 22px; letter-spacing: -.02em; margin: 0 0 14px; }
+    h3 { font-size: 15px; margin: 0 0 8px; }
+    p { margin: 0 0 12px; }
+    a { color: #93c5fd; }
+    code { color: #bfdbfe; }
+    .eyebrow { color: var(--green); text-transform: uppercase; letter-spacing: .16em; font-size: 12px; font-weight: 800; }
+    .lede { color: #cbd5e1; max-width: 720px; font-size: 18px; }
+    .verdict { border-left: 3px solid var(--amber); padding: 8px 0 8px 20px; color: #fde68a; font-size: 19px; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 16px; }
+    .card { background: linear-gradient(145deg, var(--panel), var(--panel-2)); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-12 { grid-column: span 12; }
+    .muted { color: var(--muted); }
+    .good { color: var(--green); }
+    .warn { color: var(--amber); }
+    .bad { color: var(--red); }
+    .tag { display: inline-block; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; color: #cbd5e1; font-size: 12px; margin: 0 5px 5px 0; }
+    .score { font-size: 44px; line-height: 1; font-weight: 800; letter-spacing: -.04em; }
+    ul, ol { padding-left: 20px; margin: 8px 0 0; }
+    li + li { margin-top: 7px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; vertical-align: top; padding: 12px 10px; border-bottom: 1px solid var(--line); }
+    th { color: #e5e7eb; }
+    td { color: #b9c1cc; }
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .step { background: #0e1318; border: 1px solid var(--line); border-radius: 12px; padding: 15px; }
+    .step b { display: block; color: #fff; margin-bottom: 6px; }
+    footer { margin-top: 28px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 800px) {
+      header { grid-template-columns: 1fr; }
+      .span-4, .span-5, .span-6, .span-7 { grid-column: span 12; }
+      .flow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">Jejak · independent reassessment</div>
+      <h1>Consent-bound funding,<br>with hard caveats.</h1>
+      <p class="lede">Masalahnya nyata. Solusinya belum tervalidasi sebagai bisnis. Nilai unik Jejak bukan KYC, biometrik, atau PDF verification—melainkan otorisasi pendanaan per-klaim yang independen, dibagikan, dan hanya dapat dipakai sekali.</p>
+    </div>
+    <p class="verdict"><strong>Verdict:</strong> conditional pivot / go-validate. Layak menjadi MVP hackathon yang jujur; belum layak diklaim sebagai startup tervalidasi.</p>
+  </header>
+
+  <section class="grid">
+    <article class="card span-4">
+      <div class="eyebrow">Problem</div>
+      <div class="score good">3/3</div>
+      <p>Consent fraud dan penyalahgunaan identitas adalah risiko serius; regulasi juga sudah menuntut verifikasi identitas dan TTE untuk perjanjian tertentu.</p>
+    </article>
+    <article class="card span-4">
+      <div class="eyebrow">Buyer signal</div>
+      <div class="score bad">1/3</div>
+      <p>Kasus fraud membuktikan masalah, bukan kemauan funder membayar atau memaksa originator memakai Jejak. Belum ada LOI/pilot.</p>
+    </article>
+    <article class="card span-4">
+      <div class="eyebrow">Crypto necessity</div>
+      <div class="score warn">2/3</div>
+      <p>Kuat hanya jika banyak funder independen perlu registry otorisasi bersama. Untuk satu funder, signed database lebih sederhana.</p>
+    </article>
+
+    <article class="card span-12">
+      <h2>Dari mana “identitas borrower cocok” sebenarnya diperoleh?</h2>
+      <div class="flow">
+        <div class="step"><b>1 · Claim payload</b><span class="muted">Nama, identitas, nominal, tujuan, nomor perjanjian dari originator. Ini belum tepercaya.</span></div>
+        <div class="step"><b>2 · Signed document</b><span class="muted">PDF + TTE membuktikan integritas dokumen, certificate chain, status sertifikat, dan subject penandatangan.</span></div>
+        <div class="step"><b>3 · Trusted assertion</b><span class="muted">Stable subject ID / hashed NIK dan verified contact dari PSrE, bank, atau mitra KYC berdasarkan kontrak dan dasar pemrosesan yang sah.</span></div>
+        <div class="step"><b>4 · Match</b><span class="muted">Jejak mencocokkan subject tepercaya dengan borrower reference funder, lalu mencocokkan semua field klaim dengan isi yang benar-benar ditandatangani.</span></div>
+      </div>
+      <p class="warn" style="margin-top:16px"><strong>Batas keras:</strong> PDF/sertifikat saja tidak otomatis memberi Jejak NIK atau nomor WhatsApp tepercaya. Tanpa API/kontrak data tambahan, klaim “identitas borrower cocok” terlalu kuat.</p>
+    </article>
+
+    <article class="card span-7">
+      <h2>Alur yang dikoreksi</h2>
+      <ol>
+        <li>Originator mengirim canonical claim + PSrE document ID.</li>
+        <li>Jejak mengambil atau memverifikasi hasil PSrE secara langsung; jangan hanya percaya audit trail yang diteruskan originator.</li>
+        <li>Validasi signature, hash dokumen, chain, timestamp, CRL/OCSP.</li>
+        <li>Cocokkan structured signed manifest: originator, borrower subject reference, nominal, tujuan, nomor perjanjian, term.</li>
+        <li>Jika valid, terbitkan otorisasi Stellar berstatus <code>VERIFIED</code>, punya expiry, dan hanya dapat di-<code>CONSUME</code> sekali.</li>
+        <li>Jika hilang/mismatch, biometrik dan DePIN menyelidiki serta memulihkan proses. Setelah hasil positif, dokumen yang benar tetap harus ditandatangani ulang lewat PSrE sebelum otorisasi final.</li>
+      </ol>
+    </article>
+
+    <article class="card span-5">
+      <h2>Peran DePIN yang masih defensible</h2>
+      <p><span class="tag">targeted investigation</span><span class="tag">exception handling</span><span class="tag">evidence tier</span></p>
+      <p>DePIN tetap berguna untuk kasus berisiko tinggi, tetapi jangan disebut pengganti consent legal. Ia menambah biaya, risiko suap/kolusi, masalah ketersediaan wilayah, dan operational complexity.</p>
+      <p class="warn">Untuk hackathon, demo satu jalur eskalasi sudah cukup. Jangan menjadikan besarnya jaringan verifier sebagai inti traction.</p>
+    </article>
+
+    <article class="card span-12">
+      <h2>Kompetisi dan substitusi</h2>
+      <table>
+        <thead><tr><th>Alternatif</th><th>Kuat di</th><th>Celah yang bisa dimiliki Jejak</th></tr></thead>
+        <tbody>
+          <tr><td>Privy / VIDA</td><td>KYC, Dukcapil match, liveness, TTE, audit trail, enterprise API.</td><td>Tidak otomatis menjadi shared, claim-specific, single-use funding authorization lintas funder.</td></tr>
+          <tr><td>Direct funder integration</td><td>Lebih sedikit vendor dan integrasi; funder memeriksa PSrE sendiri.</td><td>Jejak hanya menang jika funder butuh independensi lintas originator dan replay prevention bersama.</td></tr>
+          <tr><td>Generic onchain KYC / credentials</td><td>Reusable compliance attestations dan smart-contract gating.</td><td>Jejak fokus pada consent untuk satu perjanjian, jumlah, tujuan, dan originator tertentu.</td></tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="card span-6">
+      <h2>Mengapa Stellar?</h2>
+      <p>Stellar adalah <strong>fit yang baik</strong>: Soroban, regulated-asset authorization, revocation/clawback, dan transaction-scoped “authorization sandwich” selaras dengan pendanaan berizin.</p>
+      <p class="bad"><strong>Tetapi:</strong> ini bukan kemampuan eksklusif yang mustahil ditiru chain lain. Klaim defensible adalah integrasi produk/regulasi dan network adoption, bukan keunikan kriptografi Stellar.</p>
+    </article>
+
+    <article class="card span-6">
+      <h2>Risiko pembunuh</h2>
+      <ul>
+        <li>PSrE tidak memberikan stable subject/contact reference secara legal.</li>
+        <li>Funder menganggap direct Privy/VIDA integration sudah cukup.</li>
+        <li>Tidak ada kebutuhan multi-funder; blockchain menjadi dekorasi.</li>
+        <li>Exact claim replay dicegah, tetapi dua perjanjian baru yang berbeda masih dapat dibuat.</li>
+        <li>Mock PSrE menyembunyikan integrasi tersulit dan mudah dipertanyakan juri.</li>
+      </ul>
+    </article>
+
+    <article class="card span-12">
+      <h2>Validation gates sebelum memperbesar build</h2>
+      <table>
+        <thead><tr><th>Pass</th><th>Kill / pivot</th></tr></thead>
+        <tbody>
+          <tr><td>Dua funder bersedia pilot dan mengonsumsi otorisasi Jejak.</td><td>Funder memilih direct PSrE dan menolak vendor tambahan.</td></tr>
+          <tr><td>Satu PSrE/KYC partner mengonfirmasi signed webhook/API dengan stable subject dan trusted contact reference.</td><td>Jejak hanya memperoleh PDF + nama tanpa identifier pembanding.</td></tr>
+          <tr><td>Satu perjanjian PSrE asli lolos validasi cryptographic + exact structured field match.</td><td>Demo hanya berupa flag <code>MOCK_PSRE</code> tanpa verifikasi nyata.</td></tr>
+          <tr><td>Ada use case lintas lebih dari satu funder/originator.</td><td>Deployment realistis hanya untuk satu institusi dengan satu database.</td></tr>
+        </tbody>
+      </table>
+    </article>
+  </section>
+
+  <footer>
+    Sources:
+    <a href="https://ojk.go.id/id/regulasi/Documents/Pages/POJK-40-Tahun-2024-Layanan-Pendanaan-Bersama-Berbasis-Teknologi-Informasi/POJK%2040%20Tahun%202024%20Layanan%20Pendanaan%20Bersama%20Berbasis%20Teknologi%20Informasi.pdf">OJK POJK 40/2024</a> ·
+    <a href="https://repository.privyca.id/doc/CPS-Privy-v3.0-english.pdf">Privy CPS</a> ·
+    <a href="https://privy.id/id/digital-signature">Privy API</a> ·
+    <a href="https://tte.komdigi.go.id/">Komdigi PSrE</a> ·
+    <a href="https://developers.stellar.org/docs/tokens/control-asset-access">Stellar regulated assets</a>.
+  </footer>
+</main>
+</body>
+</html>

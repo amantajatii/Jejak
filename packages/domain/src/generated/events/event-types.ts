@@ -10,6 +10,8 @@ export type DomainEventType =
   | "settlement_stream.snapshot.created"
   | "claim.created"
   | "claim.analysis.completed"
+  | "financing_offer.created"
+  | "financing_offer.accepted"
   | "jcc.issued"
   | "jcc.revoked"
   | "control.verified"

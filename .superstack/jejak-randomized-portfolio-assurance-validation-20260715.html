@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jejak — Randomized Portfolio Assurance: Objective Validation</title>
+  <style>
+    :root { --ink:#15231f; --muted:#60716a; --paper:#f4f1e8; --card:#fffdf7; --line:#d8d2c4; --green:#12664f; --amber:#a45d11; --red:#9f3232; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--paper); font:16px/1.55 Inter, ui-sans-serif, system-ui, sans-serif; }
+    main { max-width:1120px; margin:auto; padding:48px 24px 80px; }
+    h1 { font-size:clamp(2.1rem,6vw,4.5rem); line-height:.98; max-width:900px; margin:0 0 18px; letter-spacing:-.045em; }
+    h2 { margin:48px 0 16px; font-size:1.65rem; }
+    h3 { margin:26px 0 10px; }
+    p { max-width:850px; }
+    a { color:var(--green); }
+    .eyebrow { color:var(--green); font-weight:800; letter-spacing:.12em; text-transform:uppercase; font-size:.78rem; }
+    .lede { font-size:1.23rem; max-width:820px; }
+    .verdict { margin:28px 0; padding:24px; border:2px solid var(--amber); background:#fff8e8; border-radius:14px; }
+    .verdict strong { font-size:1.3rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+    .score { display:block; font-size:2.25rem; font-weight:850; letter-spacing:-.05em; }
+    .label { color:var(--muted); font-size:.9rem; }
+    table { width:100%; border-collapse:collapse; background:var(--card); font-size:.92rem; }
+    th,td { padding:12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); }
+    th { background:#e8eee8; }
+    .fact,.inference,.risk { padding:14px 16px; border-left:4px solid; background:var(--card); margin:12px 0; }
+    .fact { border-color:var(--green); } .inference { border-color:var(--amber); } .risk { border-color:var(--red); }
+    code { background:#e9e6dc; padding:2px 5px; border-radius:4px; }
+    small { color:var(--muted); }
+    ul,ol { max-width:900px; }
+    footer { margin-top:56px; color:var(--muted); border-top:1px solid var(--line); padding-top:20px; }
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Independent research · 15 July 2026</div>
+  <h1>Jejak: Randomized Portfolio Assurance</h1>
+  <p class="lede">Penilaian objektif atas jaringan assurance yang meminta originator mengunci populasi portofolio, memilih sampel secara dapat diverifikasi, dan mengumpulkan bukti lapangan untuk memberi reasonable assurance kepada funder—bukan menjamin setiap pinjaman benar.</p>
+
+  <div class="verdict"><strong>Verdict: CONDITIONAL GO / GO VALIDATE — 5.6/10</strong><br>Problem-nya nyata dan MVP hackathon layak. Namun bisnis belum tervalidasi, kategori kompetitifnya tidak kosong, dan kontribusi terhadap volume Stellar kemungkinan kecil. Jangan pitch sebagai “fraud-proof portfolio” atau “volume engine for Stellar”.</div>
+
+  <div class="grid">
+    <div class="card"><span class="score">8.5</span><span class="label">Problem validity /10</span></div>
+    <div class="card"><span class="score">6.5</span><span class="label">Solution fit /10</span></div>
+    <div class="card"><span class="score">3.0</span><span class="label">Stellar volume /10</span></div>
+    <div class="card"><span class="score">5.5</span><span class="label">Business feasibility /10</span></div>
+    <div class="card"><span class="score">4.5</span><span class="label">Overall novelty /10</span></div>
+  </div>
+  <p><small>Bobot ditetapkan sama rata, 20% per kriteria, sebelum penilaian. Stellar strategic fit dinilai terpisah sebesar 6/10; itu tidak mengubah skor volume transaksi yang diminta.</small></p>
+
+  <h2>1. Problem validity — 8.5/10</h2>
+  <div class="fact"><strong>Fakta.</strong> OJK melaporkan outstanding Pindar Rp102,07 triliun dan TWP90 4,62% pada April 2026. Pada Mei 2026 OJK juga menjatuhkan sanksi administratif kepada 19 penyelenggara pinjaman daring dan menyoroti persoalan penegakan hukum di KoinP2P. <a href="https://iru.ojk.go.id/iru/WebSite/ArticleList/View/1014_May_2026_Board_of_Commissioners_Meeting%3A_Financial_Services_Sector_Stability_Maintained_Amid_Increasing_Pressures_on_Global_Economic_Performance">OJK, May 2026</a>.</div>
+  <div class="fact"><strong>Fakta.</strong> Dalam kasus Akseleran, OJK secara eksplisit meminta pencairan hanya ke rekening atas nama borrower, penguatan e-KYC, credit scoring, internal control, serta pencegahan transaksi fiktif dan fraud. <a href="https://ojk.go.id/id/berita-dan-kegiatan/siaran-pers/Documents/Pages/Langkah-Pengawasan-OJK-Terhadap-PT-Akseleran-Keuangan-Inklusif-Indonesia-dan-Industri-Pindar/SP%2095%20Langkah%20Pengawasan%20Akseleran%20dan%20Pindar.pdf">OJK SP 95/2025</a>.</div>
+  <p>Regulasi juga menuntut analisis pendanaan serta verifikasi identitas/dokumen, sementara data performa portofolio menurut kualitas keterlambatan harus dipublikasikan berkala. Lihat <a href="https://www.ojk.go.id/id/regulasi/Documents/Pages/POJK-40-Tahun-2024-Layanan-Pendanaan-Bersama-Berbasis-Teknologi-Informasi/Abstrak%20POJK%2040%20Tahun%202024%20Layanan%20Pendanaan%20Bersama%20Berbasis%20Teknologi%20Informasi.pdf">POJK 40/2024</a> dan <a href="https://www.ojk.go.id/id/regulasi/Documents/Pages/SEOJK-19-SEOJK06-2025-Penyelenggaraan-LPBBTI/SEOJK%2019-SEOJK06-2025%20Penyelenggaraan%20Layanan%20Pendanaan%20Bersama%20Berbasis%20Teknologi%20Informasi.pdf">SEOJK 19/2025</a>.</p>
+  <div class="inference"><strong>Inferensi.</strong> Ada problem nyata berupa information asymmetry, fraud, dan lemahnya kontrol originator. Tetapi angka TWP90 tidak membuktikan seberapa besar kerugian yang khusus disebabkan “physical truth” palsu. Jejak masih membutuhkan loan-level evidence dan wawancara funder; problem broad-nya valid, besarnya subproblem Jejak belum terukur.</div>
+
+  <h2>2. Solution fit — 6.5/10</h2>
+  <p>Randomized audit adalah metode assurance yang sah, tetapi selalu memiliki sampling risk. <a href="https://pcaobus.org/oversight/standards/auditing-standards/details/as-2315--audit-sampling-%28effective-on-12-15-2026%29">PCAOB AS 2315</a> mengakui statistical dan non-statistical sampling; <a href="https://pcaobus.org/oversight/standards/auditing-standards/details/AS1105">PCAOB AS 1105</a> menegaskan inquiry saja tidak cukup dan reliabilitas bukti eksternal penting. Pedoman European Court of Auditors meminta sampel representatif, tidak bias, dan setiap unit memiliki kesempatan dipilih. <a href="https://methodology.eca.europa.eu/aware/GAP/Pages/CA-FA/Planning/Audit-sampling.aspx">ECA Audit Sampling</a>.</p>
+  <p>Pendekatan hybrid digital + selective sampling juga masuk akal secara biaya: satu proyek MRV Uni Eropa melaporkan potensi pengurangan biaya verifikasi sampai 70%, dengan pemeriksaan lapangan dipakai selektif. Itu bukti analogis, bukan bukti hasil Jejak. <a href="https://eu-cap-network.ec.europa.eu/projects/practice-abstracts/smart-mrv-cut-verification-costs-70-using-mix-digital-data-and-selective-sampling">EU CAP Network, 2025</a>.</p>
+  <table><thead><tr><th>Yang Jejak bisa uji</th><th>Yang tidak otomatis terjawab</th></tr></thead><tbody>
+    <tr><td>Usaha/aset/lokasi ada, aktivitas terlihat, stok atau penggunaan dana tertentu dapat dibuktikan.</td><td>Manipulasi laporan keuangan, related-party transaction, cash diversion sesudah inspeksi, dan kolusi di luar sampel.</td></tr>
+    <tr><td>Originator tidak dapat memilih sampel setelah mengetahui siapa yang akan diperiksa—jika populasi dikomit sebelum randomness.</td><td>Kebenaran bukti off-chain. Blockchain hanya membuat perubahan bukti terlihat; ia tidak membuat foto atau testimoni menjadi benar.</td></tr>
+  </tbody></table>
+  <p>Contoh risiko sampling: dengan asumsi pemilihan uniform dan independen, sampel 30 hanya punya peluang sekitar 26% menangkap ≥1 kasus jika prevalensi masalah 1%; sekitar 78,5% pada prevalensi 5%; dan 95,8% pada prevalensi 10%. Pada prevalensi 5%, dibutuhkan kira-kira 59 sampel untuk peluang deteksi sekitar 95%.</p>
+  <div class="risk"><strong>Syarat wajib.</strong> Portfolio population harus dikomit sebelum pemilihan; pisahkan random stratum dan risk-based stratum; assignment verifier independen; perluas sampel ketika ada exception; dan attestation menyatakan ukuran sampel, confidence, exception rate, serta keterbatasannya. Klaim yang benar adalah “reasonable assurance berdasarkan desain sampel”, bukan “portfolio verified”.</div>
+
+  <h2>3. Benefit untuk Stellar — volume 3/10, strategic fit 6/10</h2>
+  <p>Stellar memang cocok secara teknis: Soroban dapat menyimpan portfolio root, komitmen randomness, task state, dan attestation dengan biaya rendah. SDF melaporkan 3,6 miliar operasi jaringan pada 2025, sedangkan pada Q1 2026 Stellar mencapai 22,5 miliar lifetime operations dan RWA melewati US$2 miliar sesudah akhir kuartal. <a href="https://stellar.org/blog/foundation-news/2025-year-in-review">Stellar 2025 Year in Review</a>; <a href="https://stellar.org/blog/foundation-news/q1-2026-execution-at-network-scale">SDF Q1 2026</a>.</p>
+  <table><thead><tr><th>Skenario</th><th>Asumsi</th><th>Tambahan transaksi/tahun</th><th>Versus 3,6B</th></tr></thead><tbody>
+    <tr><td>Pilot</td><td>10 portfolio/bulan × 30 sample × 8–15 tx</td><td>28.800–54.000</td><td>0,0008%–0,0015%</td></tr>
+    <tr><td>Growth</td><td>100 portfolio/bulan × 30 sample × 8–15 tx</td><td>288.000–540.000</td><td>0,008%–0,015%</td></tr>
+    <tr><td>Scale besar</td><td>1.000 portfolio/bulan × 30 sample × 8–15 tx</td><td>2,88–5,4 juta</td><td>0,08%–0,15%</td></tr>
+  </tbody></table>
+  <p>Jadi dampak volume hampir pasti kecil kecuali Jejak mencapai skala sangat besar. Selain itu, fee Soroban masuk ke akun terkunci dan tidak menjadi pendapatan SDF atau validator. <a href="https://developers.stellar.org/docs/learn/fundamentals/fees-resource-limits-metering">Stellar fee documentation</a>.</p>
+  <div class="inference"><strong>Nilai positif untuk Stellar.</strong> Jejak dapat membawa institutional/RWA use case, akun enterprise, smart-contract activity, dan attestation yang dapat dipakai oleh aplikasi kredit lain. Itu ecosystem utility—bukan laba langsung dan bukan volume material pada tahap hackathon.</div>
+  <div class="risk"><strong>Randomness.</strong> PRNG bawaan Soroban tidak aman untuk pemilihan yang adversarial karena seed publik/dapat dipengaruhi validator. Gunakan multi-party commit–reveal atau randomness oracle. <a href="https://docs.rs/soroban-sdk/latest/soroban_sdk/prng/index.html">Soroban SDK PRNG warning</a>.</div>
+  <p>Jangan mengandalkan pembayaran verifier dalam token untuk mengejar volume di Indonesia. BI mewajibkan Rupiah untuk pembayaran dan melarang PJP memproses virtual currency sebagai sumber dana; pembayaran operasional lebih aman dilakukan melalui mitra pembayaran berizin dalam Rupiah. <a href="https://www.bi.go.id/id/publikasi/peraturan/Pages/PBI_230621.aspx">PBI 23/6/2021</a>; <a href="https://www.bi.go.id/id/publikasi/peraturan/Pages/PBI_102025.aspx">PBI 10/2025</a>.</p>
+
+  <h2>4. Business feasibility — 5.5/10</h2>
+  <p>Ada bukti bahwa institusi membayar due diligence dan field verification. <a href="https://www.groundstateai.com/">GroundState</a> mempublikasikan tier sekitar US$1.500–3.000 untuk screening, US$5.000–12.000 termasuk spot check, dan retainer monitoring; angka ini klaim vendor. <a href="https://www.groundx.co.in/">GroundX</a> dan <a href="https://www.finsafecs.org/">Finsafe</a> juga menjual field verification kepada lender. Di Indonesia, <a href="https://www.pasarmikro.id/solutions/">PasarMIKRO</a> menawarkan stock counting, warehouse/facility inspection, dan site verification bagi funder.</p>
+  <p>Model yang masuk akal: subscription dashboard/API + fee per sampled case + monitoring retainer. Beachhead terbaik bukan semua pinjaman, tetapi institutional funder/guarantor yang mendanai beberapa originator dan mempunyai exposure pada SME/agri/supply-chain portfolios di mana physical facts material.</p>
+  <div class="risk"><strong>Hambatan utama bukan coding.</strong> Procurement enterprise, metodologi statistik yang dapat dipertanggungjawabkan, kualitas dan keselamatan verifier, anti-kolusi, SLA, liability, privasi, dan klasifikasi regulasi jauh lebih berat. Ekosistem ITSK memang memiliki 25 operator terdaftar dan 1.322 kemitraan dengan lembaga jasa keuangan pada Mei 2026, tetapi Jejak tetap perlu konsultasi OJK/sandbox, PSE, dan kepatuhan PDP. <a href="https://iru.ojk.go.id/iru/WebSite/ArticleList/View/1014_May_2026_Board_of_Commissioners_Meeting%3A_Financial_Services_Sector_Stability_Maintained_Amid_Increasing_Pressures_on_Global_Economic_Performance">OJK ITSK, May 2026</a>; <a href="https://www.komdigi.go.id/berita/siaran-pers/detail/peringatan-komdigi-untuk-36-pse-privat-belum-terdaftar-dan-pembaruan-data">Komdigi PSE</a>; <a href="https://jdih.komdigi.go.id/produk_hukum/view/id/832/t/Undang-Undang%2BNomor%2B27%2BTahun%2B2022">UU PDP</a>.</div>
+  <p>Founder/MVP/revenue score: 10/15 (founder fit 2, MVP speed 3, distribution 1, market pull 2, revenue potential 2). Ini cukup untuk validasi, belum cukup untuk menyebut bisnis tervalidasi karena belum ada interview, LOI, paid pilot, atau bukti willingness-to-pay Indonesia.</p>
+
+  <h2>5. Novelty dan competitors — overall 4.5/10</h2>
+  <table><thead><tr><th>Kompetitor/substitusi</th><th>Overlap</th><th>Ancaman</th></tr></thead><tbody>
+    <tr><td><a href="https://www.groundstateai.com/">GroundState</a></td><td>SEA private-credit due diligence, AI, site visit, monitoring.</td><td>Tinggi</td></tr>
+    <tr><td><a href="https://lendlyx.com/">LendlyX</a></td><td>Geo/time/hash-sealed evidence, AI detection, portfolio surveillance untuk private lenders.</td><td>Tinggi di real estate</td></tr>
+    <tr><td><a href="https://www.groundx.co.in/">GroundX</a></td><td>Verifier network, smart allocation, geotag/time, immutable logs, scored workers.</td><td>Tinggi secara arsitektur</td></tr>
+    <tr><td><a href="https://www.finsafecs.org/">Finsafe</a></td><td>Pre/post-disbursal verification, screening & sampling, tamper-evident evidence.</td><td>Tinggi</td></tr>
+    <tr><td><a href="https://www.pasarmikro.id/solutions/">PasarMIKRO</a></td><td>Stock/facility/site verification untuk pembiayaan Indonesia.</td><td>Tinggi pada agri/trade</td></tr>
+    <tr><td><a href="https://premise.com/solutions/commercial/">Premise</a></td><td>Global contributor network untuk real-world observational tasks dan quality control.</td><td>Tinggi sebagai network substitute</td></tr>
+    <tr><td><a href="https://fds.co.id/mobile-survey/">FDS Mobile Survey</a></td><td>Workflow field survey yang terhubung ke core banking Indonesia.</td><td>Sedang</td></tr>
+    <tr><td><a href="https://www.rizal.io/">Rizal</a> / <a href="https://www.doktar.com/solutions/financial-institutions">Doktar</a></td><td>Remote/satellite monitoring yang dapat menghilangkan kebutuhan kunjungan fisik.</td><td>Tinggi pada use case yang observable remotely</td></tr>
+    <tr><td><a href="https://communityfund.stellar.org/project/acta-720">ACTA on Stellar</a></td><td>Hash-anchored verifiable credentials; dapat menjadi primitive, partner, atau overlap attestation.</td><td>Adjacent</td></tr>
+  </tbody></table>
+  <p><strong>Novelty komponen: 2/10.</strong> Sampling, field verifier network, geo/time/photo evidence, AI fraud checks, dan hash anchoring semuanya sudah ada. <strong>Novelty kombinasi spesifik: 6.5/10.</strong> Diferensiasi positifnya adalah: (1) seluruh loan tape dikomit sebelum pemilihan, (2) random selection dapat diverifikasi semua pihak, (3) aturan progressive sampling transparan, dan (4) attestation yang sama dapat dibaca beberapa funder.</p>
+  <p><strong>Moat hari ini: 2/10.</strong> Smart contract dapat ditiru di Ethereum, Solana, atau chain lain. Moat baru terbentuk dari distribusi funder-originator, metodologi yang diakui, jaringan verifier berkualitas, dataset exception/fraud, serta regulatory/institutional trust. Belum ada bukti bahwa aset-aset itu sudah dimiliki Jejak.</p>
+  <p>Pencarian khusus ekosistem Stellar menemukan proyek kredit dan credential seperti ACTA, Growwr, dan Legasi, tetapi tidak menemukan produk publik dengan kombinasi portfolio precommitment + verifiable randomized field sampling yang sama. Ini hanya berarti exact niche tampak jarang, bukan bukti ketiadaan global atau teknologi eksklusif Stellar.</p>
+  <p>Pelajaran historis: <a href="https://www.maersk.com/ja-jp/news/articles/2022/11/29/maersk-and-ibm-to-discontinue-tradelens/">TradeLens dihentikan Maersk dan IBM</a> karena kolaborasi industri dan commercial viability tidak tercapai walaupun platform teknisnya layak. Network product gagal jika peserta besar tidak mau berbagi satu state.</p>
+
+  <h2>Keputusan dan validation gates</h2>
+  <ol>
+    <li>Wawancarai 5 institutional funders/guarantors; minimal 2 mengakui proses audit/field survey kini mahal atau tidak dipercaya dan bersedia pilot/LOI.</li>
+    <li>Dapatkan anonymized loan tape dan bandingkan total cost serta exception detection Jejak dengan field agency tradisional.</li>
+    <li>Konfirmasi ke OJK klasifikasi Jejak, peran data controller/processor, dan apakah masuk ITSK/sandbox.</li>
+    <li>Buktikan kebutuhan shared state: minimal 2 organisasi independen harus membaca/menulis assurance yang sama. Bila hanya satu funder, signed WORM database lebih murah dan blockchain menjadi ornamental.</li>
+    <li>Demo wajib: portfolio Merkle root → multi-party commit–reveal sampler → independent evidence → exception → progressive sample expansion → attestation dengan confidence dan limitations.</li>
+  </ol>
+  <div class="verdict"><strong>Rekomendasi akhir.</strong> Lanjutkan sebagai tesis hackathon dan eksperimen buyer discovery, bukan sebagai bisnis yang dianggap sudah valid. Kill/pivot jika tidak ada dua funder yang membutuhkan shared independent assurance, jika biaya sampling tidak mengalahkan vendor lapangan, atau jika juri mensyaratkan dampak volume Stellar yang besar. Pitch terkuatnya adalah “institutional RWA/credit trust infrastructure on Stellar”, bukan “membuat Stellar ramai transaksi”.</div>
+
+  <footer>Prepared for Jejak · Sources accessed 15 July 2026. Competitor performance and pricing figures are vendor-reported unless explicitly stated otherwise.</footer>
+</main></body></html>

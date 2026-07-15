@@ -28,8 +28,8 @@ if (config.nodeEnv === "test") assertDedicatedTestProject(config);
 if (config.nodeEnv === "production" && process.env.JEJAK_ALLOW_ADMIN_BOOTSTRAP !== "true") {
   throw new Error("Production bootstrap requires JEJAK_ALLOW_ADMIN_BOOTSTRAP=true.");
 }
-const url = config.databaseDirectUrl;
-if (url === undefined) throw new Error("DATABASE_DIRECT_URL is required.");
+const url = config.databaseDirectUrl ?? config.databaseUrl;
+if (url === undefined) throw new Error("DATABASE_DIRECT_URL or DATABASE_URL is required.");
 const handle = createMigrationClient(url);
 
 try {

@@ -15,6 +15,27 @@
       "when": 1784104499248,
       "tag": "0001_security_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784105804289,
+      "tag": "0002_lucky_molly_hayes",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784106164073,
+      "tag": "0003_orange_maginty",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784106598305,
+      "tag": "0004_hot_doctor_faustus",
+      "breakpoints": true
     }
   ]
 }

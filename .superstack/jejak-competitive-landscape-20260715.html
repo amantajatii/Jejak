@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jejak — Competitive Landscape</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b0f;
+      --panel: #12161d;
+      --panel2: #171d26;
+      --line: #2b3441;
+      --text: #f4f7fb;
+      --muted: #a2adba;
+      --cyan: #67e8f9;
+      --amber: #fbbf24;
+      --red: #fb7185;
+      --green: #4ade80;
+      --blue: #93c5fd;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 90% 0, rgba(28, 78, 121, .35), transparent 34rem),
+        radial-gradient(circle at 10% 30%, rgba(26, 90, 83, .16), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { width: min(1240px, calc(100% - 32px)); margin: auto; padding: 56px 0 88px; }
+    header { display: grid; grid-template-columns: 1.7fr 1fr; gap: 36px; align-items: end; margin-bottom: 28px; }
+    h1 { margin: 8px 0 18px; font-size: clamp(42px, 7vw, 78px); letter-spacing: -.055em; line-height: .95; }
+    h2 { margin: 0 0 14px; font-size: 23px; letter-spacing: -.025em; }
+    h3 { margin: 0 0 8px; font-size: 16px; }
+    p { margin: 0 0 12px; }
+    a { color: var(--blue); }
+    code { color: #bfdbfe; }
+    .eyebrow { color: var(--cyan); font-size: 11px; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
+    .lede { max-width: 800px; color: #c7d0db; font-size: 18px; }
+    .verdict { border-left: 3px solid var(--amber); padding: 10px 0 10px 19px; color: #fde68a; font-size: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .card { grid-column: span 12; background: linear-gradient(145deg, var(--panel), var(--panel2)); border: 1px solid var(--line); border-radius: 16px; padding: 22px; overflow: hidden; }
+    .s4 { grid-column: span 4; }
+    .s5 { grid-column: span 5; }
+    .s6 { grid-column: span 6; }
+    .s7 { grid-column: span 7; }
+    .metric { font-size: 42px; line-height: 1; letter-spacing: -.045em; font-weight: 850; margin: 7px 0 11px; }
+    .muted { color: var(--muted); }
+    .green { color: var(--green); }
+    .amber { color: var(--amber); }
+    .red { color: var(--red); }
+    .tag { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; margin: 0 5px 6px 0; font-size: 12px; color: #d3d9e2; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .box { background: #0d1117; border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: #f7f9fc; }
+    td { color: #bdc7d4; }
+    td:first-child { color: #fff; font-weight: 700; min-width: 130px; }
+    ul, ol { margin: 7px 0 0; padding-left: 20px; }
+    li + li { margin-top: 6px; }
+    .danger { border-color: rgba(251, 113, 133, .45); }
+    .opportunity { border-color: rgba(74, 222, 128, .4); }
+    footer { margin-top: 28px; font-size: 13px; color: var(--muted); }
+    @media (max-width: 860px) {
+      header { grid-template-columns: 1fr; }
+      .s4, .s5, .s6, .s7 { grid-column: span 12; }
+      .comparison { grid-template-columns: 1fr; }
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 900px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">Competitive landscape · 15 Jul 2026</div>
+      <h1>Jejak is not alone.</h1>
+      <p class="lede">Tidak ditemukan produk yang persis menggabungkan LPBBTI Indonesia, PSrE, independent claim matching, single-use authorization lintas funder, dan DePIN. Tetapi hampir setiap komponennya sudah memiliki pemain kuat—dan beberapa analog sangat dekat.</p>
+    </div>
+    <p class="verdict"><strong>Verdict:</strong> pasar luasnya crowded; niche persisnya sparse-to-moderate. Diferensiasi Jejak ada pada integrasi dan jaringan, bukan novelty teknis.</p>
+  </header>
+
+  <section class="grid">
+    <article class="card s4">
+      <div class="eyebrow">What it is</div>
+      <div class="metric green">Not escrow</div>
+      <p>Selama Jejak tidak mengunci, menahan, atau mengendalikan dana, ia adalah <strong>verification oracle + authorization registry</strong>.</p>
+    </article>
+    <article class="card s4">
+      <div class="eyebrow">Closest analogues</div>
+      <div class="metric amber">4</div>
+      <p>MonetaGo, Verfi Protect, Proof Sign Transactions, dan Provenance/Figure menutupi sebagian besar arsitektur inti.</p>
+    </article>
+    <article class="card s4">
+      <div class="eyebrow">Local catalog</div>
+      <div class="metric">Unavailable</div>
+      <p>Catalog <code>solana-new</code> tidak terpasang. Live search menemukan sedikitnya 7 proyek Stellar yang adjacent di identity, attestation, compliance gate, escrow, dan lending.</p>
+    </article>
+
+    <article class="card">
+      <h2>Escrow vs Jejak</h2>
+      <div class="comparison">
+        <div class="box">
+          <h3>Jejak yang direkomendasikan</h3>
+          <p class="muted">Funder tetap memegang dana dan keputusan. Jejak mengeluarkan receipt <code>VERIFIED</code>; sistem funder membaca dan mengonsumsi receipt itu sebelum pencairan.</p>
+        </div>
+        <div class="box danger">
+          <h3>Jejak jika berubah menjadi escrow</h3>
+          <p class="muted">Dana dikunci di kontrak/rekening sampai kondisi verifikasi terpenuhi. Ini langsung berhadapan dengan Trustless Work dan banyak escrow/payment-gating platform serta menambah risiko regulasi.</p>
+        </div>
+      </div>
+      <p class="amber" style="margin-top:14px"><strong>Jangan sebut “badge”.</strong> Badge terdengar reusable dan generik. Jejak membutuhkan authorization receipt yang spesifik, pendek umur, non-transferable, dan hanya dapat digunakan sekali.</p>
+    </article>
+
+    <article class="card">
+      <h2>Kompetitor langsung dan analog terdekat</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Player</th><th>Status / market</th><th>Overlap dengan Jejak</th><th>Celah untuk Jejak</th><th>Threat</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="https://privy.id/id/solutions/fintech-lending">Privy</a></td>
+              <td>Live · Indonesia</td>
+              <td>Dukcapil match, liveness, certified TTE, customer consent, lending agreements, audit readiness.</td>
+              <td>Tidak diposisikan publik sebagai neutral cross-funder single-use claim registry.</td>
+              <td class="red">High substitute</td>
+            </tr>
+            <tr>
+              <td><a href="https://vida.id/id/vida-sign-platform">VIDA</a></td>
+              <td>Live · Indonesia</td>
+              <td>PSrE, verified identity, biometric auth, document integrity, audit trail.</td>
+              <td>Belum terlihat shared claim-consumption layer antar-funder.</td>
+              <td class="red">High substitute</td>
+            </tr>
+            <tr>
+              <td><a href="https://verfisystems.com/">VerFi Systems</a></td>
+              <td>Live/early · US/global</td>
+              <td>Loan agreement identity checks, critical-term presentation, comprehension proof, execution gating, immutable trail.</td>
+              <td>Tidak PSrE/Indonesia-specific; bukan duplicate-funding network.</td>
+              <td class="red">High concept</td>
+            </tr>
+            <tr>
+              <td><a href="https://dev.proof.com/docs/sign-transactions">Proof Sign Transactions</a></td>
+              <td>Live · US</td>
+              <td>Verified identity bound cryptographically to exact transaction terms; hash match and certificate-chain checks.</td>
+              <td>Trust framework dan templates bukan LPBBTI Indonesia; tidak ada DePIN/shared funding claim registry.</td>
+              <td class="red">High product</td>
+            </tr>
+            <tr>
+              <td><a href="https://www.monetago.com/">MonetaGo Secure Financing</a></td>
+              <td>Live/deployed · global trade finance</td>
+              <td>Shared registry, document fingerprints, golden-source validation, privacy, exact/partial duplicate financing detection.</td>
+              <td>Fokus invoice/trade documents, bukan end-borrower consent pada LPBBTI.</td>
+              <td class="red">High architecture</td>
+            </tr>
+            <tr>
+              <td><a href="https://verfi.io/">Verfi Protect</a></td>
+              <td>Live/early · lead generation</td>
+              <td>Consent evidence, declared intent match, buyer claims a session, exclusive one-buyer mode, reuse rejected.</td>
+              <td>Vertical TCPA/leads, bukan pinjaman atau TTE.</td>
+              <td class="red">Very close pattern</td>
+            </tr>
+            <tr>
+              <td><a href="https://developer.provenance.io/docs/learn/provenance-applications/loan-origination-system-los/">Provenance / Figure LOS</a></td>
+              <td>Live · blockchain lending</td>
+              <td>Digital loan packet, borrower-signed agreements, signed source data, document hashes, validation contracts, funding and marketplace lifecycle.</td>
+              <td>Originator-led US infrastructure, not independent borrower protection/PSrE validation.</td>
+              <td class="red">High blockchain</td>
+            </tr>
+            <tr>
+              <td><a href="https://dualitytech.com/use-cases/duplicate-trade-finance/">Duality</a></td>
+              <td>Live · privacy infrastructure</td>
+              <td>Allows multiple lenders to detect duplicate financing without exposing private transaction data.</td>
+              <td>No consent/TTE workflow or Indonesia specialization.</td>
+              <td class="amber">Medium</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="card s6">
+      <h2>Non-crypto substitutes</h2>
+      <ul>
+        <li><strong>Direct Privy/VIDA + funder database:</strong> simplest and most dangerous substitute.</li>
+        <li><strong>Pusdafil/SLIK:</strong> existing regulatory/industry data infrastructure; stronger institutional position, although not a pre-funding consent receipt.</li>
+        <li><strong>OneSpan/BlueInk:</strong> full lending e-sign, identity and controlled workflows.</li>
+        <li><strong>Ocrolus:</strong> document tampering checks plus human-in-the-loop review.</li>
+      </ul>
+    </article>
+
+    <article class="card s6">
+      <h2>Crypto and Stellar adjacency</h2>
+      <ul>
+        <li><strong>Chainlink ACE:</strong> policy and compliance attestations that gate smart-contract actions.</li>
+        <li><strong>ACTA + Stellar Attestation Service:</strong> credentials and attestations on Stellar.</li>
+        <li><strong>Ethereum Attestation Service:</strong> already publishes a P2P loan attestation schema.</li>
+        <li><strong>Eara:</strong> identity registry and mandatory compliance hooks for Stellar assets.</li>
+        <li><strong>Microvault:</strong> offchain data approval triggering Soroban lending.</li>
+        <li><strong>Trustless Work:</strong> direct competitor only if Jejak becomes escrow.</li>
+      </ul>
+    </article>
+
+    <article class="card danger s6">
+      <h2>Failure signal: Civic Pass</h2>
+      <p>Civic Pass offered reusable onchain identity/access badges, but Civic announced its sunset in 2025 and shifted focus. Lesson: a generic verification badge can be technically valid without sustaining the product strategy.</p>
+    </article>
+
+    <article class="card danger s6">
+      <h2>Failure signal: TradeLens</h2>
+      <p>Maersk and IBM discontinued TradeLens even after building a viable platform because full ecosystem collaboration and commercial viability were not achieved. This is Jejak's biggest warning: shared registries die without network adoption.</p>
+    </article>
+
+    <article class="card opportunity s7">
+      <h2>The narrow whitespace</h2>
+      <p>Jejak masih memiliki ruang jika semua kondisi berikut dipertahankan:</p>
+      <ol>
+        <li>Indonesia LPBBTI, bukan generic global lending.</li>
+        <li>PSrE-signed terms diverifikasi independen dari originator.</li>
+        <li>Authorization terikat borrower, originator, agreement, amount, purpose, dan expiry.</li>
+        <li>Satu authorization hanya dapat dikonsumsi satu kali oleh participating funder.</li>
+        <li>PII offchain; hanya hash/status/consumption evidence onchain.</li>
+        <li>DePIN hanya exception investigation, bukan pengganti TTE.</li>
+      </ol>
+    </article>
+
+    <article class="card s5">
+      <h2>Real moat</h2>
+      <p><span class="tag">network effects</span><span class="tag">distribution</span><span class="tag">regulated integrations</span><span class="tag">trust</span><span class="tag">fraud data</span></p>
+      <p>Bukan smart contract. Bukan badge. Bukan AI. Moat baru muncul ketika PSrE, originator, dan beberapa funder memakai canonical claim rules yang sama serta menghasilkan shared fraud signals.</p>
+    </article>
+
+    <article class="card">
+      <h2>Recommended positioning</h2>
+      <p style="font-size:20px;color:#dbeafe">“Jejak is Indonesia's independent funding-authorization registry: it verifies that PSrE-signed borrower consent matches the exact claim a funder is buying, and prevents that authorization from being consumed twice.”</p>
+      <p class="muted">Hindari positioning “escrow”, “KYC badge”, “government-backed”, atau “blockchain prevents all double financing”. Semuanya terlalu luas atau belum benar.</p>
+    </article>
+  </section>
+
+  <footer>
+    Primary sources:
+    <a href="https://www.monetago.com/">MonetaGo</a> ·
+    <a href="https://verfi.io/">Verfi Protect</a> ·
+    <a href="https://verfisystems.com/">VerFi Systems</a> ·
+    <a href="https://dev.proof.com/docs/sign-transactions">Proof</a> ·
+    <a href="https://developer.provenance.io/docs/learn/provenance-applications/loan-origination-system-los/">Provenance</a> ·
+    <a href="https://privy.id/id/solutions/fintech-lending">Privy</a> ·
+    <a href="https://www.trustlesswork.com/">Trustless Work</a> ·
+    <a href="https://communityfund.stellar.org/project/acta-720">ACTA</a> ·
+    <a href="https://www.civic.com/news/an-update-on-civic-pass">Civic Pass sunset</a> ·
+    <a href="https://www.maersk.com/fr-fr/news/articles/2022/11/29/maersk-and-ibm-to-discontinue-tradelens">TradeLens closure</a>.
+  </footer>
+</main>
+</body>
+</html>
