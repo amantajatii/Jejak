@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "pnpm --filter @jejak/stellar-client build && pnpm --filter @jejak/config build && pnpm --filter @jejak/domain build && pnpm --filter @jejak/api-client build && tsc -p tsconfig.build.json",
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
     "db:generate": "drizzle-kit generate --config drizzle.config.ts",
     "db:migrate": "tsx scripts/migrate.ts up",
