@@ -41,6 +41,7 @@ const [
   { EnvironmentSecretReferenceResolver },
   { loadPromotedTestnetManifest },
   { GeneratedStellarStateReader },
+  { createChainIndexer, runChainIndexerLoop, StellarRpcAdapter },
 ] = await Promise.all([
   import("./app.js"),
   import("./auth/jwt-verifier.js"),
@@ -53,6 +54,7 @@ const [
   import("./runtime/secret-references.js"),
   import("./runtime/stellar/manifest.js"),
   import("./modules/chain/adapters/generated-state-reader.js"),
+  import("./modules/chain/index.js"),
 ]);
 const evidenceConfig = loadEvidenceModuleConfig();
 const evidenceStorage = createEvidenceStorage(evidenceConfig);
@@ -119,6 +121,7 @@ if (config.demoMode === true && workspaceConfiguration === undefined) {
 // manifest so the API can surface live Stellar Testnet claim state. Reads are
 // unauthenticated simulations — no signing key is required.
 let chainStateReader: InstanceType<typeof GeneratedStellarStateReader> | undefined;
+let promotedManifest: Awaited<ReturnType<typeof loadPromotedTestnetManifest>> | undefined;
 if (
   config.chainMode === "TESTNET" &&
   config.stellarTestnetManifestPath !== undefined &&
@@ -126,15 +129,15 @@ if (
   config.stellarSourcePublicKey !== undefined
 ) {
   const manifestPath = resolveManifestPath(config.stellarTestnetManifestPath);
-  const manifest = await loadPromotedTestnetManifest({
+  promotedManifest = await loadPromotedTestnetManifest({
     ...(config.stellarNetworkPassphrase === undefined
       ? {}
       : { expectedNetworkPassphrase: config.stellarNetworkPassphrase }),
     path: manifestPath,
   });
   chainStateReader = new GeneratedStellarStateReader({
-    contracts: manifest.contracts,
-    networkPassphrase: manifest.network.passphrase,
+    contracts: promotedManifest.contracts,
+    networkPassphrase: promotedManifest.network.passphrase,
     publicKey: config.stellarSourcePublicKey,
     rpcUrl: config.stellarRpcUrl,
   });
@@ -176,8 +179,55 @@ const app = await buildApp({
 });
 registerTelemetryHooks(app);
 
+// In-process chain indexer: hosts the Testnet event indexer inside the API web
+// service when a dedicated background worker is not available. Enabled only when
+// TESTNET is configured and a worker identity is supplied. Runs detached and is
+// stopped on shutdown; failures never take the API down.
+const indexerAbort = new AbortController();
+if (
+  config.chainMode === "TESTNET" &&
+  promotedManifest !== undefined &&
+  database !== undefined &&
+  config.stellarRpcUrl !== undefined &&
+  config.stellarSourcePublicKey !== undefined &&
+  config.chainIndexerTenantId !== undefined &&
+  config.chainIndexerActorId !== undefined
+) {
+  const rpcUrl = config.stellarRpcUrl;
+  const publicKey = config.stellarSourcePublicKey;
+  const tenantId = config.chainIndexerTenantId;
+  const workerActorId = config.chainIndexerActorId;
+  const manifest = promotedManifest;
+  const db = database.db;
+  void (async () => {
+    try {
+      const latestLedger = await new StellarRpcAdapter({ rpcUrl, timeoutMs: 20_000 }).getLatestLedger();
+      const initialLedger = config.chainIndexerInitialLedger ?? Math.max(1, latestLedger - 17_280);
+      const indexer = createChainIndexer({
+        contracts: manifest.contracts,
+        database: db,
+        fundingAsset: { currency: config.fundingAssetCode ?? "JUSD", issuer: manifest.assets.JUSD.issuer, scale: 6 },
+        initialLedger,
+        networkPassphrase: manifest.network.passphrase,
+        publicKey,
+        rpcUrl,
+        workerActorId,
+      });
+      app.log.info({ initialLedger, latestLedger }, "Starting in-process chain indexer");
+      await runChainIndexerLoop(
+        indexer,
+        { pollMs: config.chainIndexerPollMs ?? 5_000, tenantId, log: (message) => app.log.info(`[chain-indexer] ${message}`) },
+        indexerAbort.signal,
+      );
+    } catch (error) {
+      app.log.error({ err: error }, "In-process chain indexer failed to start");
+    }
+  })();
+}
+
 const shutdown = async (signal: string): Promise<void> => {
   app.log.info({ signal }, "Shutting down API");
+  indexerAbort.abort();
   await app.close();
   await database?.close();
   await evidenceStorage.close();

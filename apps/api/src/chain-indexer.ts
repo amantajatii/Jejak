@@ -4,9 +4,8 @@ import { isAbsolute, resolve } from "node:path";
 import { loadConfig } from "./config/env.js";
 import { createDatabase } from "./db/client.js";
 import {
-  ChainEventIndexer,
-  GeneratedStellarStateReader,
-  PostgresChainIndexRepository,
+  createChainIndexer,
+  runChainIndexerLoop,
   StellarRpcAdapter,
 } from "./modules/chain/index.js";
 import { loadPromotedTestnetManifest } from "./runtime/stellar/manifest.js";
@@ -51,61 +50,37 @@ const manifest = await loadPromotedTestnetManifest({
 });
 
 const database = createDatabase(config.databaseUrl);
-const rpc = new StellarRpcAdapter({ rpcUrl: config.stellarRpcUrl, timeoutMs: 20_000 });
-const stateReader = new GeneratedStellarStateReader({
+
+// Only index recent ledgers on a cold start; Testnet RPC retention is finite.
+const latestLedger = await new StellarRpcAdapter({ rpcUrl: config.stellarRpcUrl, timeoutMs: 20_000 }).getLatestLedger();
+const initialLedger = config.chainIndexerInitialLedger ?? Math.max(1, latestLedger - 17_280);
+
+const indexer = createChainIndexer({
   contracts: manifest.contracts,
+  database: database.db,
+  fundingAsset: { currency: config.fundingAssetCode ?? "JUSD", issuer: manifest.assets.JUSD.issuer, scale: 6 },
+  initialLedger,
   networkPassphrase: manifest.network.passphrase,
   publicKey: config.stellarSourcePublicKey,
   rpcUrl: config.stellarRpcUrl,
-});
-const repository = new PostgresChainIndexRepository(database.db, {
-  fundingAsset: {
-    currency: config.fundingAssetCode ?? "JUSD",
-    issuer: manifest.assets.JUSD.issuer,
-    scale: 6,
-  },
   workerActorId: config.chainIndexerActorId,
 });
 
-// Only index recent ledgers on a cold start; Testnet RPC retention is finite.
-const latestLedger = await rpc.getLatestLedger();
-const initialLedger = config.chainIndexerInitialLedger ?? Math.max(1, latestLedger - 17_280);
-
-const indexer = new ChainEventIndexer(
-  { contracts: manifest.contracts, network: "testnet", repository, rpc, stateReader },
-  { initialLedger },
-);
-
-const tenantId = config.chainIndexerTenantId;
 const abort = new AbortController();
-const stop = () => abort.abort();
-process.once("SIGINT", stop);
-process.once("SIGTERM", stop);
+process.once("SIGINT", () => abort.abort());
+process.once("SIGTERM", () => abort.abort());
 
-const sleep = (ms: number) =>
-  new Promise<void>((resolveSleep) => {
-    const timer = setTimeout(resolveSleep, ms);
-    abort.signal.addEventListener("abort", () => { clearTimeout(timer); resolveSleep(); }, { once: true });
-  });
-
-console.log(`[chain-indexer] starting at ledger ${initialLedger} (latest ${latestLedger}) for tenant ${tenantId}`);
+console.log(`[chain-indexer] starting at ledger ${initialLedger} (latest ${latestLedger}) for tenant ${config.chainIndexerTenantId}`);
 try {
-  while (!abort.signal.aborted) {
-    try {
-      const indexed = await indexer.index({ tenantId });
-      const reconciled = await indexer.reconcile({ tenantId });
-      if (indexed.indexed > 0 || reconciled.reconciled > 0 || reconciled.mismatched > 0) {
-        console.log(
-          `[chain-indexer] indexed=${indexed.indexed} dup=${indexed.duplicates} ` +
-            `stale=${indexed.staleCheckpoints} reconciled=${reconciled.reconciled} ` +
-            `mismatched=${reconciled.mismatched} pending=${reconciled.pending} latest=${indexed.latestLedger}`,
-        );
-      }
-    } catch (error) {
-      console.error("[chain-indexer] cycle failed:", error instanceof Error ? error.message : error);
-    }
-    if (!abort.signal.aborted) await sleep(config.chainIndexerPollMs ?? 5_000);
-  }
+  await runChainIndexerLoop(
+    indexer,
+    {
+      pollMs: config.chainIndexerPollMs ?? 5_000,
+      tenantId: config.chainIndexerTenantId,
+      log: (message) => console.log(`[chain-indexer] ${message}`),
+    },
+    abort.signal,
+  );
 } finally {
   await database.close();
 }
