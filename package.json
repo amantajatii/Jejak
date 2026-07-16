@@ -20,7 +20,11 @@
     "contracts:check": "node scripts/check-generated.mjs",
     "contracts:drift-test": "node --test tests/contract/generated-drift.test.mjs",
     "container:smoke": "node tests/integration/api-container-smoke.mjs",
-    "supabase": "supabase"
+    "supabase": "supabase",
+    "remotion": "node node_modules/@remotion/cli/remotion-cli.js",
+    "remotion:studio": "node node_modules/@remotion/cli/remotion-cli.js studio",
+    "remotion:render": "node node_modules/@remotion/cli/remotion-cli.js render",
+    "remotion:versions": "node node_modules/@remotion/cli/remotion-cli.js versions"
   },
   "devDependencies": {
     "@types/node": "24.13.3",
@@ -31,5 +35,11 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@remotion/cli": "4.0.489",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "remotion": "4.0.489"
+  }
 }

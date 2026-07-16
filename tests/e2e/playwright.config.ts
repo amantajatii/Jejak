@@ -11,13 +11,20 @@ export default defineConfig({
   timeout: 45_000,
   expect: { timeout: 8_000 },
   reporter: "line",
-  use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure", screenshot: "only-on-failure" },
+  use: {
+    baseURL: "http://127.0.0.1:4000",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
   webServer: {
-    command: "pnpm --filter web dev --hostname 127.0.0.1 --port 3100",
-    url: "http://127.0.0.1:3100",
+    command: "pnpm --filter web dev --hostname 127.0.0.1 --port 4000",
+    url: "http://127.0.0.1:4000",
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { NEXT_PUBLIC_JEJAK_TRANSPORT: transport, NEXT_PUBLIC_JEJAK_API_URL: apiUrl },
+    env: {
+      NEXT_PUBLIC_JEJAK_TRANSPORT: transport,
+      NEXT_PUBLIC_JEJAK_API_URL: apiUrl,
+    },
   },
   projects: [
     { name: "mock", grep: /@mock/, use: { ...devices["Desktop Chrome"] } },
