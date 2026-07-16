@@ -129,6 +129,50 @@ describe("claim and financing-offer HTTP routes", () => {
     await app.close();
   });
 
+  it("reads a claim's on-chain state when TESTNET chain reading is composed", async () => {
+    const deps = dependencies("FACILITY");
+    deps.findAssignments.mockResolvedValue([
+      { capability: "MANAGE", resourceId: claimId, resourceType: "CLAIM" },
+    ]);
+    const chainState = {
+      claimKey: claim.claimKey,
+      contracts: { assetController: { snapshot: { claimKey: claim.claimKey, issuedAmount: "0" }, status: "READ" } },
+      network: "TESTNET",
+    };
+    const readChainState = vi.fn().mockResolvedValue(chainState);
+    const app = await buildApp({
+      claimDependencies: { ...deps, readChainState },
+      config: testConfig(),
+    });
+    const response = await app.inject({
+      headers: { authorization: headers.authorization, "x-jejak-tenant-id": tenantId },
+      method: "GET",
+      url: `/v1/claims/${claimId}/chain-state`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data).toEqual(chainState);
+    expect(readChainState).toHaveBeenCalledWith(claim.claimKey);
+    await app.close();
+  });
+
+  it("returns 409 for chain-state reads when the API is not in TESTNET mode", async () => {
+    const deps = dependencies("FACILITY");
+    deps.findAssignments.mockResolvedValue([
+      { capability: "MANAGE", resourceId: claimId, resourceType: "CLAIM" },
+    ]);
+    const app = await buildApp({ claimDependencies: deps, config: testConfig() });
+    const response = await app.inject({
+      headers: { authorization: headers.authorization, "x-jejak-tenant-id": tenantId },
+      method: "GET",
+      url: `/v1/claims/${claimId}/chain-state`,
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe("CHAIN_MODE_UNAVAILABLE");
+    await app.close();
+  });
+
   it("limits institutional claim reads and lists to assigned claim resources", async () => {
     const deps = dependencies("FACILITY");
     deps.findAssignments.mockResolvedValue([

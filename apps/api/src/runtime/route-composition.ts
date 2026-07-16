@@ -6,6 +6,8 @@ import {
 import type { JejakDatabase } from "../db/client.js";
 import { PostgresInvitationRepository } from "../invitations/postgres-repository.js";
 import { InvitationService } from "../invitations/service.js";
+import { ChainStateReadService } from "../modules/chain/application/read-chain-state.js";
+import type { StellarStateReaderPort } from "../modules/chain/ports/stellar-rpc.js";
 import { ClaimLifecycleApplication } from "../modules/claims/application/claim-service.js";
 import { FinancingOfferApplication } from "../modules/claims/application/offer-service.js";
 import { PostgresClaimQueryRepository } from "../modules/claims/adapters/postgres-query-repository.js";
@@ -65,6 +67,7 @@ export type RuntimeRouteDependencies = {
 };
 
 export function createRuntimeRouteDependencies(input: {
+  chainStateReader?: StellarStateReaderPort;
   database: JejakDatabase;
   evidenceMaximumBytes: number;
   evidenceStorage: EvidenceStorage;
@@ -93,6 +96,9 @@ export function createRuntimeRouteDependencies(input: {
   const controlService = new ClaimControlCommandService(
     new PostgresControlCommandRepository(input.database, { mode: input.partnerMode }),
   );
+  const chainStateService = input.chainStateReader === undefined
+    ? undefined
+    : new ChainStateReadService(input.chainStateReader);
 
   return {
     ...(input.demoIdentityIssuer === undefined ? {} : {
@@ -120,6 +126,9 @@ export function createRuntimeRouteDependencies(input: {
         queries.findSellerOwnedOffer(context, authSubject, offerId),
       hasActiveOffer: (context, claimId) => queries.hasActiveOffer(context, claimId),
       listClaims: (context, query) => queries.listClaims(context, query),
+      ...(chainStateService === undefined
+        ? {}
+        : { readChainState: (claimKey: string) => chainStateService.readClaimChainState(claimKey) }),
       verifier: input.verifier,
     },
     controlDependencies: {

@@ -753,6 +753,55 @@
         }
       }
     },
+    "/v1/claims/{id}/chain-state": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/TenantId"
+        }
+      ],
+      "get": {
+        "operationId": "getClaimChainState",
+        "summary": "Read a claim's live Stellar Testnet on-chain state",
+        "description": "Reads the claim's current on-chain state across every Jejak contract (asset controller, claim lifecycle, facility, servicing waterfall, resolution manager) via unauthenticated RPC simulation. Available only when the API runs in Stellar TESTNET mode; returns 409 otherwise.\n",
+        "tags": [
+          "Claims"
+        ],
+        "x-jejak-roles": [
+          "SELLER",
+          "ORIGINATOR",
+          "ISSUER",
+          "FACILITY",
+          "SERVICER",
+          "RESOLVER",
+          "ADMIN"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ResourceId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Ok"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
     "/v1/claims/{id}/analyze": {
       "parameters": [
         {

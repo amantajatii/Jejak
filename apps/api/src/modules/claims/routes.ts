@@ -113,6 +113,7 @@ export type ClaimRouteDependencies = {
     state?: string;
     visibility: ClaimVisibility;
   }): Promise<ClaimPage>;
+  readChainState?(claimKey: string): Promise<unknown>;
   verifier: IdentityVerifier;
 };
 
@@ -260,6 +261,39 @@ export async function registerClaimRoutes(
         );
     if (claim === null) return sendNotFound(reply, request);
     return sendSuccess(reply, request, claim);
+  });
+
+  app.get("/v1/claims/:id/chain-state", async (request, reply) => {
+    const params = idParams.parse(request.params);
+    const auth = await requestAuthorization(
+      request,
+      dependencies,
+      ["SELLER", "ORIGINATOR", "ISSUER", "FACILITY", "SERVICER", "RESOLVER", "ADMIN"],
+    );
+    const claim = auth.context.role === "SELLER"
+      ? await dependencies.findSellerOwnedClaim(
+          transactionContext(auth.context, request),
+          auth.identity.subject,
+          params.id,
+        )
+      : await dependencies.findClaim(
+          transactionContext(
+            authorizeAssignedClaim(auth, params.id, ["ORIGINATOR", "ISSUER", "FACILITY", "SERVICER", "RESOLVER", "ADMIN"]),
+            request,
+          ),
+          params.id,
+        );
+    if (claim === null) return sendNotFound(reply, request);
+    if (dependencies.readChainState === undefined) {
+      return reply.code(409).send(errorEnvelope({
+        code: "CHAIN_MODE_UNAVAILABLE",
+        message: "On-chain state is only available when the API runs in Stellar TESTNET mode.",
+        requestId: request.id,
+        retryable: false,
+      }));
+    }
+    const state = await dependencies.readChainState(claim.claimKey);
+    return sendSuccess(reply, request, state);
   });
 
   app.post("/v1/claims/:id/analyze", async (request, reply) => {

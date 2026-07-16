@@ -295,6 +295,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/claims/{id}/chain-state": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a claim's live Stellar Testnet on-chain state
+         * @description Reads the claim's current on-chain state across every Jejak contract (asset controller, claim lifecycle, facility, servicing waterfall, resolution manager) via unauthenticated RPC simulation. Available only when the API runs in Stellar TESTNET mode; returns 409 otherwise.
+         */
+        get: operations["getClaimChainState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/claims/{id}/analyze": {
         parameters: {
             query?: never;
@@ -1764,6 +1787,28 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    getClaimChainState: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Ok"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     analyzeClaim: {

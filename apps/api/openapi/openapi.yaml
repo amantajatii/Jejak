@@ -61,6 +61,8 @@ paths:
     $ref: ./paths/claims.yaml#/claimById
   /v1/claims/{id}/workspace:
     $ref: ./paths/claims.yaml#/workspace
+  /v1/claims/{id}/chain-state:
+    $ref: ./paths/claims.yaml#/chainState
   /v1/claims/{id}/analyze:
     $ref: ./paths/claims.yaml#/analyze
   /v1/claims/{id}/control-evidence:

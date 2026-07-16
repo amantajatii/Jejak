@@ -1,4 +1,5 @@
-import { resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { isAbsolute, resolve } from "node:path";
 
 import type { IdentityVerifier } from "./auth/jwt-verifier.js";
 import type { DemoIdentityIssuer } from "./modules/demo/index.js";
@@ -14,6 +15,18 @@ for (const candidate of [resolve(process.cwd(), ".env"), resolve(process.cwd(), 
   }
 }
 
+// Resolve a (possibly repo-root-relative) manifest path against the likely
+// bases: as given, the process cwd, and the repo root derived from this file.
+// On Render the API runs from apps/api, but the manifest lives at the repo root.
+function resolveManifestPath(path: string): string {
+  if (isAbsolute(path)) return path;
+  const repoRoot = resolve(import.meta.dirname, "../../..");
+  for (const candidate of [resolve(process.cwd(), path), resolve(repoRoot, path)]) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return path;
+}
+
 const config = loadConfig();
 const telemetry = await startTelemetry(config);
 const [
@@ -26,6 +39,8 @@ const [
   { createRuntimeReadinessProbes },
   { createRuntimeRouteDependencies },
   { EnvironmentSecretReferenceResolver },
+  { loadPromotedTestnetManifest },
+  { GeneratedStellarStateReader },
 ] = await Promise.all([
   import("./app.js"),
   import("./auth/jwt-verifier.js"),
@@ -36,6 +51,8 @@ const [
   import("./readiness/index.js"),
   import("./runtime/route-composition.js"),
   import("./runtime/secret-references.js"),
+  import("./runtime/stellar/manifest.js"),
+  import("./modules/chain/adapters/generated-state-reader.js"),
 ]);
 const evidenceConfig = loadEvidenceModuleConfig();
 const evidenceStorage = createEvidenceStorage(evidenceConfig);
@@ -98,10 +115,36 @@ if (config.demoMode === true && workspaceConfiguration === undefined) {
     "Demo runtime requires JEJAK_CHAIN_MODE, FUNDING_ASSET_CODE, FUNDING_ASSET_ISSUER, JCLAIM_ASSET_CODE, and JCLAIM_ASSET_ISSUER.",
   );
 }
+// In TESTNET mode, compose a read-only on-chain state reader from the promoted
+// manifest so the API can surface live Stellar Testnet claim state. Reads are
+// unauthenticated simulations — no signing key is required.
+let chainStateReader: InstanceType<typeof GeneratedStellarStateReader> | undefined;
+if (
+  config.chainMode === "TESTNET" &&
+  config.stellarTestnetManifestPath !== undefined &&
+  config.stellarRpcUrl !== undefined &&
+  config.stellarSourcePublicKey !== undefined
+) {
+  const manifestPath = resolveManifestPath(config.stellarTestnetManifestPath);
+  const manifest = await loadPromotedTestnetManifest({
+    ...(config.stellarNetworkPassphrase === undefined
+      ? {}
+      : { expectedNetworkPassphrase: config.stellarNetworkPassphrase }),
+    path: manifestPath,
+  });
+  chainStateReader = new GeneratedStellarStateReader({
+    contracts: manifest.contracts,
+    networkPassphrase: manifest.network.passphrase,
+    publicKey: config.stellarSourcePublicKey,
+    rpcUrl: config.stellarRpcUrl,
+  });
+}
+
 const routeDependencies =
   database === undefined || verifier === undefined
     ? undefined
     : createRuntimeRouteDependencies({
+        ...(chainStateReader === undefined ? {} : { chainStateReader }),
         database: database.db,
         ...(demoIdentityIssuer === undefined ? {} : { demoIdentityIssuer }),
         evidenceMaximumBytes: evidenceConfig.policy.maxBytes,
