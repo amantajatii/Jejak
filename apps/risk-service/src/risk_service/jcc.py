@@ -80,6 +80,43 @@ class JccSigner:
         signature = base64.b64encode(key.sign(canonical_bytes(unsigned))).decode("ascii")
         return EligibilityAttestation.model_validate({**unsigned, "signature": signature})
 
+    def sign_signing_request(self, body: dict[str, Any]) -> dict[str, Any]:
+        """Sign a canonical JCC signing request produced by the API.
+
+        The API sends the exact RFC 8785 JCS `canonicalPayload`; we sign those
+        bytes verbatim so the API's public verifier (which verifies over the same
+        string) accepts the signature. We never re-derive the payload for signing.
+        """
+        if body.get("domain") != "JEJAK_JCC_V1":
+            raise ValueError("unsupported JCC signing domain")
+        attestation_id = body.get("attestationId")
+        canonical_payload = body.get("canonicalPayload")
+        payload_hash = body.get("payloadHash")
+        payload = body.get("payload")
+        if not isinstance(attestation_id, str) or not attestation_id:
+            raise ValueError("JCC signing request is missing attestationId")
+        if not isinstance(canonical_payload, str) or not canonical_payload:
+            raise ValueError("JCC signing request is missing canonicalPayload")
+        if not isinstance(payload, dict):
+            raise ValueError("JCC signing request is missing payload")
+        computed_hash = hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+        if computed_hash != payload_hash:
+            raise ValueError("payloadHash does not match canonicalPayload")
+        if payload.get("id") != attestation_id:
+            raise ValueError("attestationId does not match payload id")
+        key_id = self._settings.jcc_key_id
+        key = self._key(key_id)
+        signature = base64.b64encode(key.sign(canonical_payload.encode("utf-8"))).decode("ascii")
+        attestation = {**payload, "keyId": key_id, "signature": signature}
+        envelope_hash = hashlib.sha256(canonical_bytes({"domain": "JEJAK_JCC_V1", "attestation": attestation})).hexdigest()
+        return {
+            "attestationId": attestation_id,
+            "envelopeHash": envelope_hash,
+            "keyId": key_id,
+            "payloadHash": payload_hash,
+            "signature": signature,
+        }
+
     def verify(self, attestation: EligibilityAttestation) -> bool:
         if attestation.keyId in self._settings.revoked_key_ids:
             return False

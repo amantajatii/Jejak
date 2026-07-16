@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import hashlib
 from typing import Callable
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from .config import Settings
@@ -119,6 +119,18 @@ def create_app(settings: Settings | None = None, now: Callable[[], datetime] = u
             )
         domain_schemas.validate(RESPONSE_SCHEMA, response_to_json(response))
         return response
+
+    @app.get("/internal/v1/jcc-signatures/ready", dependencies=[Depends(authenticate)])
+    def jcc_signatures_ready() -> dict[str, object]:
+        if not signer.ready:
+            raise HTTPException(status_code=503, detail="JCC signing key is not configured")
+        return {"status": "ready", "capability": "JEJAK_JCC_SIGNING_V1", "keyId": resolved.jcc_key_id}
+
+    @app.post("/internal/v1/jcc-signatures", dependencies=[Depends(authenticate)])
+    def jcc_signatures(body: dict = Body(...)) -> dict[str, object]:
+        if not signer.ready:
+            raise HTTPException(status_code=503, detail="JCC signing key is not configured")
+        return signer.sign_signing_request(body)
 
     @app.post("/internal/v1/attestations", dependencies=[Depends(authenticate)])
     def attest(input: AttestationRequest):
