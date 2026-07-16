@@ -34,6 +34,10 @@ const environmentSchema = z.object({
     blankToUndefined,
     z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
   ),
+  CHAIN_INDEXER_ACTOR_ID: z.preprocess(blankToUndefined, z.string().uuid().optional()),
+  CHAIN_INDEXER_INITIAL_LEDGER: z.preprocess(blankToUndefined, z.coerce.number().int().min(1).optional()),
+  CHAIN_INDEXER_POLL_MS: z.coerce.number().int().min(500).max(60_000).default(5_000),
+  CHAIN_INDEXER_TENANT_ID: z.preprocess(blankToUndefined, z.string().uuid().optional()),
   JEJAK_CHAIN_MODE: z.preprocess(blankToUndefined, z.enum(["DETERMINISTIC", "TESTNET"]).optional()),
   JCC_PUBLIC_KEY_REGISTRY_REF: z.preprocess(blankToUndefined, externalReference.optional()),
   JCC_SIGNER_TOKEN_REF: z.preprocess(blankToUndefined, externalReference.optional()),
@@ -115,6 +119,10 @@ export type AppConfig = {
   logLevel: z.infer<typeof environmentSchema>["LOG_LEVEL"];
   nodeEnv: z.infer<typeof environmentSchema>["NODE_ENV"];
   allowTestProjectMutation: boolean;
+  chainIndexerActorId?: string;
+  chainIndexerInitialLedger?: number;
+  chainIndexerPollMs?: number;
+  chainIndexerTenantId?: string;
   chainMode?: "DETERMINISTIC" | "TESTNET";
   jccPublicKeyRegistryReference?: string;
   jccSignerTokenReference?: string;
@@ -157,6 +165,10 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
 
   return {
     appVersion: parsed.APP_VERSION,
+    ...(parsed.CHAIN_INDEXER_ACTOR_ID === undefined ? {} : { chainIndexerActorId: parsed.CHAIN_INDEXER_ACTOR_ID }),
+    ...(parsed.CHAIN_INDEXER_INITIAL_LEDGER === undefined ? {} : { chainIndexerInitialLedger: parsed.CHAIN_INDEXER_INITIAL_LEDGER }),
+    chainIndexerPollMs: parsed.CHAIN_INDEXER_POLL_MS,
+    ...(parsed.CHAIN_INDEXER_TENANT_ID === undefined ? {} : { chainIndexerTenantId: parsed.CHAIN_INDEXER_TENANT_ID }),
     ...(parsed.DATABASE_URL === undefined ? {} : { databaseUrl: parsed.DATABASE_URL }),
     ...(parsed.DATABASE_DIRECT_URL === undefined
       ? {}
