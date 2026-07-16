@@ -8,14 +8,13 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "3000"
       - key: HOST
         value: "0.0.0.0"
       - key: LOG_LEVEL
         value: info
       - key: PARTNER_MODE
         value: SANDBOX
+      # Render injects PORT automatically; the app reads it.
       # These must be set in Render dashboard:
       # DATABASE_URL, SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY,
       # SUPABASE_JWT_ISSUER, SUPABASE_JWKS_URL, WEB_ORIGIN, JEJAK_ADMIN_API_KEY,
@@ -25,4 +24,4 @@ services:
     runtime: python
     rootDir: apps/risk-service
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn src.risk_service.app:app --host 0.0.0.0 --port $PORT
+    startCommand: python -m uvicorn src.risk_service.app:app --host 0.0.0.0 --port $PORT
