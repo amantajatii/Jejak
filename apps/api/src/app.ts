@@ -24,6 +24,7 @@ import { registerDemoRoutes, type DemoRouteDependencies } from "./modules/demo/r
 import { registerRefundSpikeRoutes, type RefundSpikeRouteDependencies } from "./modules/demo/refund-spike-routes.js";
 import { DemoContextNotFoundError } from "./modules/demo/reset-service.js";
 import { registerIssuerIssueRoutes, type IssuerIssueRouteDependencies } from "./modules/issuer/routes.js";
+import { registerJccRoutes, type JccRouteDependencies } from "./modules/jcc/routes.js";
 import { registerResolutionRoutes, type ResolutionRouteDependencies } from "./modules/resolution/routes.js";
 import { registerSettlementRoutes, type SettlementRouteDependencies } from "./modules/settlement/routes.js";
 import { DomainError } from "./modules/shared/errors.js";
@@ -45,6 +46,7 @@ export type BuildAppOptions = {
   facilityFundingDependencies?: FacilityFundingRouteDependencies;
   ingestionDependencies?: IngestionRouteDependencies;
   issuerIssueDependencies?: IssuerIssueRouteDependencies;
+  jccDependencies?: JccRouteDependencies;
   logger?: boolean;
   invitationDependencies?: InvitationRouteDependencies;
   readModelDependencies?: ReadModelRouteDependencies;
@@ -183,6 +185,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   }
   if (options.issuerIssueDependencies !== undefined) {
     await registerIssuerIssueRoutes(app, options.issuerIssueDependencies);
+  }
+  if (options.jccDependencies !== undefined) {
+    await registerJccRoutes(app, options.jccDependencies);
   }
   if (options.facilityFundingDependencies !== undefined) {
     await registerFacilityFundingRoutes(app, options.facilityFundingDependencies);

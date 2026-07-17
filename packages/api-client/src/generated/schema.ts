@@ -318,6 +318,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/claims/{id}/jcc": {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign a JCC and register it on the Stellar Testnet eligibility registry
+         * @description ORACLE-only. Signs the collectibility credential for a trusted evaluation via the canonical JCC signer, registers its hash/status on the eligibility registry contract, and reconciles against indexed chain events. Available only when the API is fully configured for on-chain JCC issuance.
+         */
+        post: operations["registerJcc"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/claims/{id}/analyze": {
         parameters: {
             query?: never;
@@ -1805,6 +1828,42 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["Ok"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    registerJcc: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Explicit active tenant selected by the authenticated actor. */
+                "X-Jejak-Tenant-Id": components["parameters"]["TenantId"];
+                /** @description Stable caller-generated key; replaying the same key and payload returns the original result. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    attestationId: string;
+                    /** Format: uuid */
+                    evaluationId: string;
+                    /** Format: date-time */
+                    expiresAt: string;
+                };
+            };
+        };
+        responses: {
+            201: components["responses"]["Created"];
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];

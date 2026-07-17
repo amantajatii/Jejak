@@ -42,6 +42,7 @@ const [
   { loadPromotedTestnetManifest },
   { GeneratedStellarStateReader },
   { createChainIndexer, runChainIndexerLoop, StellarRpcAdapter },
+  { buildJccRouteDependencies },
 ] = await Promise.all([
   import("./app.js"),
   import("./auth/jwt-verifier.js"),
@@ -55,6 +56,7 @@ const [
   import("./runtime/stellar/manifest.js"),
   import("./modules/chain/adapters/generated-state-reader.js"),
   import("./modules/chain/index.js"),
+  import("./runtime/jcc-runtime.js"),
 ]);
 const evidenceConfig = loadEvidenceModuleConfig();
 const evidenceStorage = createEvidenceStorage(evidenceConfig);
@@ -156,9 +158,23 @@ const routeDependencies =
         verifier,
         ...(workspaceConfiguration === undefined ? {} : { workspace: workspaceConfiguration }),
       });
+// ORACLE-only JCC registration route: composed only when TESTNET + the oracle
+// secret + signer + verifier registry are all configured (otherwise unregistered).
+const jccDependencies =
+  database === undefined || verifier === undefined || promotedManifest === undefined
+    ? undefined
+    : await buildJccRouteDependencies({
+        config,
+        database: database.db,
+        manifest: promotedManifest,
+        secretReferences,
+        verifier,
+      });
+
 const app = await buildApp({
   config,
   ...(routeDependencies ?? {}),
+  ...(jccDependencies === undefined ? {} : { jccDependencies }),
   readinessProbes: [
     ...createRuntimeReadinessProbes({
       ...(config.chainMode === undefined ? {} : { chainMode: config.chainMode }),

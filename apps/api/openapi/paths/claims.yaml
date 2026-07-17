@@ -48,6 +48,42 @@ claimById:
       "401": { $ref: ../components/responses.yaml#/Unauthorized }
       "403": { $ref: ../components/responses.yaml#/Forbidden }
       "404": { $ref: ../components/responses.yaml#/NotFound }
+registerJcc:
+  parameters:
+    - { $ref: ../components/parameters.yaml#/TenantId }
+  post:
+    operationId: registerJcc
+    summary: Sign a JCC and register it on the Stellar Testnet eligibility registry
+    description: >
+      ORACLE-only. Signs the collectibility credential for a trusted evaluation
+      via the canonical JCC signer, registers its hash/status on the eligibility
+      registry contract, and reconciles against indexed chain events. Available
+      only when the API is fully configured for on-chain JCC issuance.
+    tags: [Claims]
+    x-jejak-roles: [ORACLE]
+    parameters:
+      - { $ref: ../components/parameters.yaml#/ResourceId }
+      - { $ref: ../components/parameters.yaml#/IdempotencyKey }
+      - { $ref: ../components/parameters.yaml#/CorrelationId }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [attestationId, evaluationId, expiresAt]
+            properties:
+              attestationId: { type: string, format: uuid }
+              evaluationId: { type: string, format: uuid }
+              expiresAt: { type: string, format: date-time }
+    responses:
+      "201": { $ref: ../components/responses.yaml#/Created }
+      "400": { $ref: ../components/responses.yaml#/BadRequest }
+      "401": { $ref: ../components/responses.yaml#/Unauthorized }
+      "403": { $ref: ../components/responses.yaml#/Forbidden }
+      "404": { $ref: ../components/responses.yaml#/NotFound }
+      "409": { $ref: ../components/responses.yaml#/Conflict }
 chainState:
   parameters:
     - { $ref: ../components/parameters.yaml#/TenantId }

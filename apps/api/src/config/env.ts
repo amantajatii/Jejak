@@ -39,6 +39,7 @@ const environmentSchema = z.object({
   CHAIN_INDEXER_POLL_MS: z.coerce.number().int().min(500).max(60_000).default(5_000),
   CHAIN_INDEXER_TENANT_ID: z.preprocess(blankToUndefined, z.string().uuid().optional()),
   JEJAK_CHAIN_MODE: z.preprocess(blankToUndefined, z.enum(["DETERMINISTIC", "TESTNET"]).optional()),
+  JEJAK_ORACLE_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
   JCC_PUBLIC_KEY_REGISTRY_REF: z.preprocess(blankToUndefined, externalReference.optional()),
   JCC_SIGNER_TOKEN_REF: z.preprocess(blankToUndefined, externalReference.optional()),
   JCC_SIGNER_URL: z.preprocess(blankToUndefined, z.string().url().optional()),
@@ -127,6 +128,7 @@ export type AppConfig = {
   jccPublicKeyRegistryReference?: string;
   jccSignerTokenReference?: string;
   jccSignerUrl?: string;
+  oracleSecretReference?: string;
   jclaimAssetCode?: string;
   jclaimAssetIssuer?: string;
   otelEnabled: boolean;
@@ -193,6 +195,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     ...(parsed.JCC_PUBLIC_KEY_REGISTRY_REF === undefined ? {} : { jccPublicKeyRegistryReference: parsed.JCC_PUBLIC_KEY_REGISTRY_REF }),
     ...(parsed.JCC_SIGNER_TOKEN_REF === undefined ? {} : { jccSignerTokenReference: parsed.JCC_SIGNER_TOKEN_REF }),
     ...(parsed.JCC_SIGNER_URL === undefined ? {} : { jccSignerUrl: parsed.JCC_SIGNER_URL }),
+    ...(parsed.JEJAK_ORACLE_SECRET_REF === undefined ? {} : { oracleSecretReference: parsed.JEJAK_ORACLE_SECRET_REF }),
     ...(parsed.JCLAIM_ASSET_CODE === undefined ? {} : { jclaimAssetCode: parsed.JCLAIM_ASSET_CODE }),
     ...(parsed.JCLAIM_ASSET_ISSUER === undefined ? {} : { jclaimAssetIssuer: parsed.JCLAIM_ASSET_ISSUER }),
     otelEnabled: parsed.OTEL_ENABLED,
