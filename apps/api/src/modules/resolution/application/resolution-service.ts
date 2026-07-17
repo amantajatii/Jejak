@@ -34,6 +34,7 @@ export type ResolutionSnapshot = {
 
 export interface ResolutionRepository {
   load(input: { claimId: string; context: ResolutionCommandContext }): Promise<ResolutionSnapshot | undefined>;
+  replay?(input: { context: ResolutionCommandContext; payloadHash: string }): Promise<ResolutionCaseView | undefined>;
   mutate(input: {
     action: "OPEN" | "UPDATE" | "CLOSE";
     claimId: string;
@@ -62,6 +63,9 @@ export class ResolutionService {
     recoveryRealized?: ResolutionMoney;
   }): Promise<ResolutionCaseView> {
     if (input.reasonCodes.length === 0) validationError("Resolution requires at least one reason code.");
+    const payloadHash = canonicalHash(input);
+    const replay = await this.repository.replay?.({ context, payloadHash });
+    if (replay !== undefined) return replay;
     const snapshot = await this.repository.load({ claimId: input.claimId, context });
     if (snapshot === undefined) throw new DomainError("INVALID_STATE_TRANSITION", "Claim was not found in the selected tenant.");
     assertResolutionTransition({
@@ -81,10 +85,9 @@ export class ResolutionService {
       context,
       evidenceHashes: input.evidenceHashes ?? [],
       expectedVersion: input.expectedVersion,
-      payloadHash: canonicalHash(input),
+      payloadHash,
       reasonCodes: input.reasonCodes,
       ...(input.recoveryRealized === undefined ? {} : { recoveryRealized: input.recoveryRealized }),
     });
   }
 }
-

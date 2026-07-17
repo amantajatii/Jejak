@@ -20,9 +20,10 @@ const requiredRoles = [
 
 export type PromotedTestnetManifest = {
   assets: {
-    JCLAIM: { issuer: string; sacId: string };
-    JUSD: { issuer: string; sacId: string };
+    JCLAIM: { issuer: string; sacId: string; scale: 7 };
+    JUSD: { issuer: string; sacId: string; scale: 7 };
   };
+  configuration: { facilityId: string };
   contracts: ContractRegistry;
   network: {
     name: "testnet";
@@ -90,12 +91,14 @@ export function parsePromotedTestnetManifest(
   const rawAssets = record(root.assets, "assets");
   const jclaim = record(rawAssets.JCLAIM, "assets.JCLAIM");
   const jusd = record(rawAssets.JUSD, "assets.JUSD");
+  const configuration = record(root.configuration, "configuration");
 
   return {
     assets: {
-      JCLAIM: { issuer: accountId(jclaim.issuer, "assets.JCLAIM.issuer"), sacId: contractId(jclaim.sac_id, "assets.JCLAIM.sac_id") },
-      JUSD: { issuer: accountId(jusd.issuer, "assets.JUSD.issuer"), sacId: contractId(jusd.sac_id, "assets.JUSD.sac_id") },
+      JCLAIM: { issuer: accountId(jclaim.issuer, "assets.JCLAIM.issuer"), sacId: contractId(jclaim.sac_id, "assets.JCLAIM.sac_id"), scale: 7 },
+      JUSD: { issuer: accountId(jusd.issuer, "assets.JUSD.issuer"), sacId: contractId(jusd.sac_id, "assets.JUSD.sac_id"), scale: 7 },
     },
+    configuration: { facilityId: bytes32(configuration.facility_id, "configuration.facility_id") },
     contracts,
     network: {
       name: "testnet",
@@ -126,6 +129,11 @@ function accountId(value: unknown, label: string): string {
 
 function hash(value: unknown, label: string): void {
   if (typeof value !== "string" || !/^[0-9a-f]{64}$/.test(value) || /^0{64}$/.test(value)) fail(`${label} must be a non-zero lowercase SHA-256 hash`);
+}
+
+function bytes32(value: unknown, label: string): string {
+  if (typeof value !== "string" || !/^[0-9a-f]{64}$/.test(value)) fail(`${label} must be lowercase 32-byte hex`);
+  return value;
 }
 
 function placeholder(value: string): boolean {

@@ -11,6 +11,11 @@ import {
   chainReconciliationResults,
   chainSubmissions,
   claims,
+  facilityPositions,
+  financingOffers,
+  idempotencyRecords,
+  operationSteps,
+  operations,
   auditEvents,
   outboxEvents,
 } from "../../../db/schema/index.js";
@@ -208,11 +213,14 @@ export class PostgresChainIndexRepository implements ChainIndexRepository, Chain
   async markReconciled(input: { expectationId: string; eventId: string; tenantId: string }): Promise<void> {
     await this.database.transaction(async (transaction) => {
       const database = transaction as JejakDatabase;
-      await context(database, input.tenantId, this.options.workerActorId, this.#id());
+      const workerRequestId = this.#id();
+      await context(database, input.tenantId, this.options.workerActorId, workerRequestId);
       const [record] = await database.select({
         expectation: chainReconciliationExpectations,
         eventRowId: chainEvents.id,
+        operationId: chainSubmissions.operationId,
         submissionStatus: chainSubmissions.status,
+        transactionHash: chainSubmissions.transactionHash,
       }).from(chainReconciliationExpectations).innerJoin(
         chainSubmissions,
         and(
@@ -251,6 +259,81 @@ export class PostgresChainIndexRepository implements ChainIndexRepository, Chain
         eq(chainSubmissions.tenantId, input.tenantId),
         eq(chainSubmissions.id, record.expectation.chainSubmissionId),
       ));
+      const reconciledAt = new Date();
+      const [operation] = record.operationId === null ? [] : await database.select({
+        context: operations.context,
+        kind: operations.kind,
+        resourceId: operations.resourceId,
+      }).from(operations).where(and(
+        eq(operations.tenantId, input.tenantId),
+        eq(operations.id, record.operationId),
+      )).limit(1);
+      const completesFunding = operation?.kind === "FACILITY_FUNDING" &&
+        record.expectation.expectedClaimState === "FUNDED";
+      const facilityPositionId = asObject(operation?.context).facilityPositionId;
+      if (record.operationId !== null) {
+        await database.update(operations).set({ status: completesFunding ? "COMPLETED" : "RECONCILED", updatedAt: reconciledAt }).where(and(
+          eq(operations.tenantId, input.tenantId),
+          eq(operations.id, record.operationId),
+        ));
+      }
+      if (completesFunding && record.operationId !== null) {
+        const result = { operationRecordId: record.operationId, sandbox: true, status: "COMPLETED" };
+        await database.update(operationSteps).set({
+          safeResult: {
+            canonicalEventId: input.eventId,
+            transactionHash: record.transactionHash,
+          },
+          status: "SUCCEEDED",
+          updatedAt: reconciledAt,
+        }).where(and(
+          eq(operationSteps.tenantId, input.tenantId),
+          eq(operationSteps.operationId, record.operationId),
+          eq(operationSteps.name, "FACILITY_FUNDING"),
+        ));
+        await database.update(idempotencyRecords).set({
+          completedAt: reconciledAt,
+          responseBody: result,
+          responseHash: canonicalHash(result),
+          responseStatus: 200,
+        }).where(and(
+          eq(idempotencyRecords.tenantId, input.tenantId),
+          eq(idempotencyRecords.resourceId, record.operationId),
+        ));
+        await database.insert(auditEvents).values({
+          action: "facility.funding.reconciled",
+          actorId: this.options.workerActorId,
+          createdAt: reconciledAt,
+          id: this.#id(),
+          references: {
+            eventId: input.eventId,
+            operationId: record.operationId,
+            transactionHash: record.transactionHash,
+          },
+          requestId: workerRequestId,
+          resourceId: operation?.resourceId ?? record.operationId,
+          resourceType: "FACILITY_FUNDING",
+          result: "SUCCESS",
+          tenantId: input.tenantId,
+        });
+        await database.insert(outboxEvents).values({
+          aggregateId: typeof facilityPositionId === "string" ? facilityPositionId : record.operationId,
+          aggregateType: "FACILITY_POSITION",
+          aggregateVersion: 1,
+          createdAt: reconciledAt,
+          eventType: "facility.funding.completed",
+          id: this.#id(),
+          idempotencyKey: `chain-reconciliation:${record.expectation.id}:funding-completed`,
+          payload: {
+            eventId: input.eventId,
+            operationId: record.operationId,
+            sandbox: true,
+            status: "COMPLETED",
+            transactionHash: record.transactionHash,
+          },
+          tenantId: input.tenantId,
+        }).onConflictDoNothing();
+      }
       if (record.expectation.claimKey !== null) {
         await database.update(chainPortfolioPositions).set({
           ...(record.expectation.expectedFinancingFeePaid === null ? {} : {
@@ -265,6 +348,83 @@ export class PostgresChainIndexRepository implements ChainIndexRepository, Chain
           eq(chainPortfolioPositions.tenantId, input.tenantId),
           eq(chainPortfolioPositions.claimKey, record.expectation.claimKey),
         ));
+        if (record.expectation.expectedClaimState !== null) {
+          const [claim] = await database.select().from(claims).where(and(
+            eq(claims.tenantId, input.tenantId),
+            eq(claims.claimKey, record.expectation.claimKey),
+          )).limit(1).for("update");
+          const [projection] = await database.select().from(chainPortfolioPositions).where(and(
+            eq(chainPortfolioPositions.tenantId, input.tenantId),
+            eq(chainPortfolioPositions.claimKey, record.expectation.claimKey),
+          )).limit(1);
+          if (claim !== undefined && claim.state !== record.expectation.expectedClaimState) {
+            const payload = asObject(claim.canonicalPayload);
+            const version = claim.version + 1;
+            const outstanding = projection === undefined ? undefined : {
+              amountMinor: projection.outstandingPrincipalBaseUnits,
+              currency: projection.currency,
+              ...(projection.issuer === null ? {} : { issuer: projection.issuer }),
+              scale: projection.scale,
+            };
+            await database.update(claims).set({
+              canonicalPayload: {
+                ...payload,
+                ...(outstanding === undefined ? {} : { outstandingPrincipal: outstanding }),
+                state: record.expectation.expectedClaimState,
+                updatedAt: reconciledAt.toISOString(),
+                version,
+              },
+              state: record.expectation.expectedClaimState,
+              updatedAt: reconciledAt,
+              version,
+            }).where(and(
+              eq(claims.tenantId, input.tenantId),
+              eq(claims.id, claim.id),
+              eq(claims.version, claim.version),
+            ));
+          }
+          if (claim !== undefined && projection !== undefined && record.expectation.expectedClaimState === "FUNDED") {
+            const [existingPosition] = await database.select({ id: facilityPositions.id }).from(facilityPositions).where(and(
+              eq(facilityPositions.tenantId, input.tenantId),
+              eq(facilityPositions.claimId, claim.id),
+            )).limit(1);
+            const [offer] = await database.select({ id: financingOffers.id }).from(financingOffers).where(and(
+              eq(financingOffers.tenantId, input.tenantId),
+              eq(financingOffers.claimId, claim.id),
+              eq(financingOffers.status, "ACCEPTED"),
+            )).limit(1);
+            if (existingPosition === undefined) {
+              await database.insert(facilityPositions).values({
+                canonicalPayload: {
+                  firstLossBaseUnits: projection.firstLossFundedBaseUnits,
+                  jclaimBaseUnits: projection.issuedBaseUnits,
+                  onchainTxHashes: record.transactionHash === null ? [] : [record.transactionHash],
+                  principalBaseUnits: projection.principalBaseUnits,
+                  reconciled: true,
+                },
+                claimId: claim.id,
+                ...(offer === undefined ? {} : { financingOfferId: offer.id }),
+                id: this.#id(),
+                outstandingAmountMinor: projection.outstandingPrincipalBaseUnits,
+                outstandingCurrency: projection.currency,
+                ...(projection.issuer === null ? {} : { outstandingIssuer: projection.issuer }),
+                outstandingScale: projection.scale,
+                status: "FUNDED",
+                tenantId: input.tenantId,
+              });
+            }
+          }
+          if (claim !== undefined && projection !== undefined && ["REPAID", "SHORTFALL", "CLOSED", "CLOSED_WITH_LOSS"].includes(record.expectation.expectedClaimState)) {
+            await database.update(facilityPositions).set({
+              outstandingAmountMinor: projection.outstandingPrincipalBaseUnits,
+              status: record.expectation.expectedClaimState,
+              updatedAt: reconciledAt,
+            }).where(and(
+              eq(facilityPositions.tenantId, input.tenantId),
+              eq(facilityPositions.claimId, claim.id),
+            ));
+          }
+        }
       }
       if (record.expectation.expectedClaimState === "SHORTFALL" && record.expectation.claimKey !== null) {
         await database.insert(outboxEvents).values({
@@ -455,6 +615,12 @@ function projectionUpdate(event: CanonicalChainEvent) {
     };
     default: return common;
   }
+}
+
+function asObject(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
 }
 
 async function context(database: JejakDatabase, tenantId: string, actorId: string, requestId: string): Promise<void> {

@@ -23,13 +23,15 @@ describe("demo reset application", () => {
     expect(first.claim).not.toHaveProperty("seedCheckpoint");
   });
 
-  it("marks ADVERSE as a seed-originated reconciled FUNDED checkpoint without chain hashes", () => {
+  it("starts ADVERSE at DRAFT so the live transport cannot bypass Testnet funding", () => {
     const plan = buildDemoSeedPlan({ idempotencyKey: "demo-reset-key-0002", now: now.toISOString(), scenario: "ADVERSE" });
-    expect(plan.context).toMatchObject({ claimState: "FUNDED", scenario: "ADVERSE", version: 5 });
+    expect(plan.context).toMatchObject({ claimState: "DRAFT", scenario: "ADVERSE", version: 1 });
     expect(plan.claim).toMatchObject({
-      seedCheckpoint: { kind: "DEMO_RECONCILED_FUNDING_CHECKPOINT_V1", reconciled: true, source: "DEMO_RESET" },
-      state: "FUNDED",
+      grossUnsettled: { amountMinor: "1000000000", currency: "JUSD", scale: 7 },
+      requestedAdvance: { amountMinor: "640000000", currency: "JUSD", scale: 7 },
+      state: "DRAFT",
     });
+    expect(plan.claim).not.toHaveProperty("seedCheckpoint");
     expect(JSON.stringify(plan)).not.toMatch(/transactionHash|jcc|signature|CLOSED_WITH_LOSS|"CLOSED"/i);
   });
 

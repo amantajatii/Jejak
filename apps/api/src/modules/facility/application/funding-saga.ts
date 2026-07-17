@@ -31,7 +31,7 @@ export class FacilityFundingSagaService {
     if (this.chain.mode === "PRODUCTION" && this.chain.configured !== true) {
       throw new FundingSagaError("PARTNER_REJECTED", "No production funding-chain implementation is configured.");
     }
-    const payloadHash = canonicalHash(context);
+    const payloadHash = fundingPayloadHash(context);
     const begun = await this.repository.begin(context, payloadHash);
     if (begun.kind === "CONFLICT") {
       throw new FundingSagaError("INVALID_STATE_TRANSITION", "Funding idempotency key conflicts with another payload.");
@@ -125,7 +125,7 @@ export class FacilityFundingSagaService {
     context: FundingSagaContext,
     reconciliation: FundingChainReconciliation,
   ): Promise<FundingSagaResult> {
-    const begun = await this.repository.begin(context, canonicalHash(context));
+    const begun = await this.repository.begin(context, fundingPayloadHash(context));
     if (begun.kind === "CONFLICT") throw new FundingSagaError("INVALID_STATE_TRANSITION", "Funding reconciliation payload conflicts.");
     if (begun.kind === "REPLAY") return begun.result;
     const record = await this.repository.recordChainReconciliation({
@@ -183,7 +183,7 @@ export class FacilityFundingCompensationService {
   constructor(private readonly repository: FundingSagaRepository, private readonly chain: FundingChainPort) {}
 
   async execute(context: FundingSagaContext): Promise<FundingSagaResult> {
-    const begun = await this.repository.begin(context, canonicalHash(context));
+    const begun = await this.repository.begin(context, fundingPayloadHash(context));
     if (begun.kind === "CONFLICT") throw new FundingSagaError("INVALID_STATE_TRANSITION", "Compensation payload conflicts.");
     if (begun.kind === "REPLAY" && begun.result.status === "COMPENSATED") return begun.result;
     if (begun.kind === "REPLAY") throw new FundingSagaError("INVALID_STATE_TRANSITION", "Completed funding cannot be compensated here.");
@@ -241,6 +241,17 @@ function waitingResult(operationRecordId: string, issuerReceipt?: IssuerApproval
     sandbox: true,
     status: "WAITING_EXTERNAL",
   };
+}
+
+function fundingPayloadHash(context: FundingSagaContext): string {
+  const {
+    correlationId: _correlationId,
+    idempotencyKey: _idempotencyKey,
+    requestId: _requestId,
+    requestedAt: _requestedAt,
+    ...businessPayload
+  } = context;
+  return canonicalHash(businessPayload);
 }
 
 function issuerContext(context: FundingSagaContext): IssuerOperationContext {

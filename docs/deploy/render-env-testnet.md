@@ -34,6 +34,25 @@ with a working canonical JCC signer.
 | `STELLAR_SIGNER_SECRET_REF` | `env://STELLAR_SIGNER_SECRET` | External reference to the signer secret. |
 | `STELLAR_SIGNER_SECRET` 🔒 | *(deployer secret seed `S...`)* | Export with `stellar keys secret jejak-deployer`. **Secret.** |
 
+### Signed lifecycle action roles
+
+The API registers `issue`, `fund`, settlement/waterfall, and resolution routes only
+when every role reference below resolves and its public key matches the promoted
+manifest. Keep the raw `S...` values only in Render's secret environment.
+
+| Reference variable | Secret variable 🔒 | Local CLI alias |
+|---|---|---|
+| `JEJAK_ORIGINATOR_CONTROL_SECRET_REF=env://JEJAK_ORIGINATOR_CONTROL_SECRET` | `JEJAK_ORIGINATOR_CONTROL_SECRET` | `jejak-originator-control-api` |
+| `JEJAK_ISSUER_OPERATOR_SECRET_REF=env://JEJAK_ISSUER_OPERATOR_SECRET` | `JEJAK_ISSUER_OPERATOR_SECRET` | `jejak-issuer-operator-api` |
+| `JEJAK_FACILITY_OPERATOR_SECRET_REF=env://JEJAK_FACILITY_OPERATOR_SECRET` | `JEJAK_FACILITY_OPERATOR_SECRET` | `jejak-facility-operator-api` |
+| `JEJAK_TREASURY_HOLDER_SECRET_REF=env://JEJAK_TREASURY_HOLDER_SECRET` | `JEJAK_TREASURY_HOLDER_SECRET` | `jejak-treasury-holder-api` |
+| `JEJAK_SERVICER_SECRET_REF=env://JEJAK_SERVICER_SECRET` | `JEJAK_SERVICER_SECRET` | `jejak-servicer-api` |
+| `JEJAK_RESOLVER_SECRET_REF=env://JEJAK_RESOLVER_SECRET` | `JEJAK_RESOLVER_SECRET` | `jejak-resolver-api` |
+
+Set `JEJAK_TESTNET_FIRST_LOSS_BASE_UNITS=100000000` for the demo facility. Export
+each secret locally with `stellar keys secret <alias>` without printing or committing
+the value. A missing or mismatched role keeps all signed lifecycle routes at 404.
+
 ---
 
 ## Service 2 — `risk-service` (Python)

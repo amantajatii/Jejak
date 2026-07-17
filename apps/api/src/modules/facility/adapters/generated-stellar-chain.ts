@@ -3,6 +3,7 @@ import { Buffer } from "node:buffer";
 import { AssetController, Facility } from "@jejak/stellar-client";
 
 import { canonicalHash } from "../../../reliability/canonical-json.js";
+import type { NodeRoleSigner } from "../../../runtime/stellar/node-role-signer.js";
 import { FundingSagaError } from "../domain/errors.js";
 import { chainActionRequestHash } from "../domain/chain-receipt.js";
 import type { ChainActionReceipt, ChainActionRequest } from "../domain/types.js";
@@ -31,12 +32,17 @@ export interface FundingSubmissionLookup {
 }
 
 type GeneratedStellarFundingChainOptions = {
+  assetPublicKey?: string;
+  assetSignTransaction?: NodeRoleSigner["signTransaction"];
   assetControllerContractId: string;
+  facilityPublicKey?: string;
+  facilitySignTransaction?: NodeRoleSigner["signTransaction"];
   facilityContractId: string;
   lookup: FundingSubmissionLookup;
   mode: "SANDBOX" | "PRODUCTION";
   networkPassphrase: string;
-  publicKey: string;
+  /** @deprecated Prefer the role-specific source keys. */
+  publicKey?: string;
   rpcUrl: string;
   submitter?: FundingTransactionSubmitter;
 };
@@ -58,11 +64,25 @@ export class GeneratedStellarFundingChain implements FundingChainPort {
     this.configured = options.submitter !== undefined;
     const common = {
       networkPassphrase: options.networkPassphrase,
-      publicKey: options.publicKey,
       rpcUrl: options.rpcUrl,
     };
-    this.#asset = new AssetController.Client({ ...common, contractId: options.assetControllerContractId });
-    this.#facility = new Facility.Client({ ...common, contractId: options.facilityContractId });
+    const assetPublicKey = options.assetPublicKey ?? options.publicKey;
+    const facilityPublicKey = options.facilityPublicKey ?? options.publicKey;
+    if (assetPublicKey === undefined || facilityPublicKey === undefined) {
+      throw new Error("Role-specific Stellar funding source keys are required.");
+    }
+    this.#asset = new AssetController.Client({
+      ...common,
+      contractId: options.assetControllerContractId,
+      publicKey: assetPublicKey,
+      ...(options.assetSignTransaction === undefined ? {} : { signTransaction: options.assetSignTransaction }),
+    });
+    this.#facility = new Facility.Client({
+      ...common,
+      contractId: options.facilityContractId,
+      publicKey: facilityPublicKey,
+      ...(options.facilitySignTransaction === undefined ? {} : { signTransaction: options.facilitySignTransaction }),
+    });
   }
 
   async findAction(request: ChainActionRequest): Promise<ChainActionReceipt | null> {

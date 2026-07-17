@@ -41,11 +41,11 @@ export type AnchorSandboxConfig = {
   feeBps: number;
   rateDenominator: string;
   rateNumerator: string;
-  sourceCurrency?: "USDC";
-  sourceScale?: 6;
-  targetCurrency?: "TIDR";
-  targetIssuer?: "SANDBOX";
-  targetScale?: 2;
+  sourceCurrency?: string;
+  sourceScale?: number;
+  targetCurrency?: string;
+  targetIssuer?: string;
+  targetScale?: number;
 };
 
 export type AnchorSandboxFailureMode =
@@ -65,4 +65,3 @@ export type AnchorPayoutContext = {
   source: MoneyValue;
   tenantId: string;
 };
-

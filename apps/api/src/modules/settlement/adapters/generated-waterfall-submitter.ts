@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 
 import { ServicingWaterfall } from "@jejak/stellar-client";
+import type { NodeRoleSigner } from "../../../runtime/stellar/node-role-signer.js";
 
 import type {
   WaterfallSubmissionCommand,
@@ -23,6 +24,7 @@ export type GeneratedWaterfallSubmitterOptions = {
   networkPassphrase?: string;
   publicKey?: string;
   rpcUrl?: string;
+  signTransaction?: NodeRoleSigner["signTransaction"];
   signer?: WaterfallTransactionSubmitter;
 };
 
@@ -39,6 +41,7 @@ export class GeneratedWaterfallSubmitter implements WaterfallSubmissionPort {
         networkPassphrase: options.networkPassphrase!,
         publicKey: options.publicKey!,
         rpcUrl: options.rpcUrl!,
+        signTransaction: options.signTransaction!,
       });
     }
   }
@@ -107,6 +110,7 @@ function hasProductionBoundary(options: GeneratedWaterfallSubmitterOptions): opt
     nonempty(options.networkPassphrase) &&
     nonempty(options.publicKey) &&
     nonempty(options.rpcUrl) &&
+    options.signTransaction !== undefined &&
     options.signer !== undefined;
 }
 

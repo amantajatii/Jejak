@@ -29,7 +29,7 @@ export function convertSandboxPayout(
   assertMoney(source);
   const config = normalizeSandboxConfig(rawConfig);
   if (source.currency !== config.sourceCurrency || source.scale !== config.sourceScale) {
-    validationError("Anchor sandbox accepts only USDC Money at scale 6.");
+    validationError(`Anchor sandbox accepts only ${config.sourceCurrency} Money at scale ${config.sourceScale}.`);
   }
   const sourceAmount = moneyAmount(source);
   if (sourceAmount <= 0n) validationError("Anchor payout amount must be positive.");
@@ -77,6 +77,18 @@ export function normalizeSandboxConfig(config: AnchorSandboxConfig): Required<An
   if (!Number.isInteger(config.feeBps) || config.feeBps < 0 || config.feeBps > 10_000) {
     validationError("Anchor fee basis points must be an integer from 0 through 10000.");
   }
+  if (config.sourceCurrency !== undefined && !/^[A-Z0-9]{3,12}$/.test(config.sourceCurrency)) {
+    validationError("Anchor source currency is invalid.");
+  }
+  if (config.sourceScale !== undefined && (!Number.isInteger(config.sourceScale) || config.sourceScale < 0 || config.sourceScale > 18)) {
+    validationError("Anchor source scale must be an integer from 0 through 18.");
+  }
+  if (config.targetCurrency !== undefined && !/^[A-Z0-9]{3,12}$/.test(config.targetCurrency)) {
+    validationError("Anchor target currency is invalid.");
+  }
+  if (config.targetScale !== undefined && (!Number.isInteger(config.targetScale) || config.targetScale < 0 || config.targetScale > 18)) {
+    validationError("Anchor target scale must be an integer from 0 through 18.");
+  }
   return {
     feeBps: config.feeBps,
     rateDenominator: config.rateDenominator,
@@ -88,4 +100,3 @@ export function normalizeSandboxConfig(config: AnchorSandboxConfig): Required<An
     targetScale: config.targetScale ?? 2,
   };
 }
-

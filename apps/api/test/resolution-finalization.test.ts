@@ -22,6 +22,20 @@ describe("resolution and finalization invariants", () => {
     expect(repo.mutate).not.toHaveBeenCalled();
   });
 
+  it("returns a completed idempotent replay before revalidating the advanced claim version", async () => {
+    const resolutionCase = { claimId: "claim", evidenceHashes: [], finalLoss: { ...unit, amountMinor: "0" }, id: "case", openedAt: "2026-07-15T00:00:00Z", openedReasonCodes: ["SETTLEMENT_SHORTFALL"], recoveryExpected: { ...unit, amountMinor: "160" }, recoveryRealized: { ...unit, amountMinor: "0" }, resolverAddress: "resolver", status: "OPEN" as const, version: 1 };
+    const repo: ResolutionRepository = {
+      load: vi.fn().mockResolvedValue({ case: resolutionCase, claimState: "RESOLUTION", claimVersion: 10 }),
+      mutate: vi.fn(),
+      replay: vi.fn().mockResolvedValue(resolutionCase),
+    };
+    const service = new ResolutionService(repo, { isCloseReconciled: vi.fn().mockResolvedValue(false) });
+
+    await expect(service.execute(context, { action: "OPEN", claimId: "claim", expectedVersion: 9, reasonCodes: ["SETTLEMENT_SHORTFALL"] })).resolves.toEqual(resolutionCase);
+    expect(repo.load).not.toHaveBeenCalled();
+    expect(repo.mutate).not.toHaveBeenCalled();
+  });
+
   it("rejects happy/adverse terminal commits until reconciliation and keeps terminal states immutable", async () => {
     let snapshot = { claimId: "claim", state: "REPAID", version: 4 };
     const repository: ClaimFinalizationRepository = {

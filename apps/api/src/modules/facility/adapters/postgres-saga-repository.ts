@@ -36,7 +36,9 @@ export class PostgresFundingSagaRepository implements FundingSagaRepository {
     return withTenantTransaction(this.database, context, async (database) => {
       const now = this.now();
       const [claim] = await database.select({ state: claims.state, version: claims.version }).from(claims).where(and(eq(claims.tenantId, context.tenantId), eq(claims.id, context.claimId))).limit(1);
-      if (claim?.state !== "CONTROLLED" || claim.version !== context.expectedClaimVersion) throw new FundingSagaError("INVALID_STATE_TRANSITION", "Claim must be CONTROLLED at the expected version.");
+      if (claim === undefined || !["CONTROLLED", "ISSUED"].includes(claim.state) || claim.version !== context.expectedClaimVersion) {
+        throw new FundingSagaError("INVALID_STATE_TRANSITION", "Claim must be CONTROLLED or ISSUED at the expected version.");
+      }
       const [evidence] = await database.select({ id: controlEvidence.id }).from(controlEvidence).where(and(eq(controlEvidence.tenantId, context.tenantId), eq(controlEvidence.claimId, context.claimId), eq(controlEvidence.status, "VERIFIED"), isNotNull(controlEvidence.documentSecretRef), or(isNull(controlEvidence.expiresAt), gt(controlEvidence.expiresAt, now)))).limit(1);
       if (evidence === undefined) throw new FundingSagaError("INVALID_STATE_TRANSITION", "Verified control evidence is required.");
       const [attestation] = await database.select({ id: eligibilityAttestations.id }).from(eligibilityAttestations).where(and(eq(eligibilityAttestations.tenantId, context.tenantId), eq(eligibilityAttestations.claimId, context.claimId), eq(eligibilityAttestations.status, "ACTIVE"), gt(eligibilityAttestations.expiresAt, now))).limit(1);
@@ -51,6 +53,11 @@ export class PostgresFundingSagaRepository implements FundingSagaRepository {
       const [position] = await database.select({ id: facilityPositions.id }).from(facilityPositions).where(and(eq(facilityPositions.tenantId, context.tenantId), eq(facilityPositions.claimId, context.claimId), inArray(facilityPositions.status, ["ACTIVE", "PENDING", "PAUSED"]))).limit(1);
       if (position !== undefined) throw new FundingSagaError("INVALID_STATE_TRANSITION", "Claim already has an active facility position.");
       await upsertStep(database, this.nextId, now, context.tenantId, operationRecordId, "PRECONDITIONS", "SUCCEEDED", { claimVersion: claim.version, evidenceId: evidence.id, offerId: offer.id });
+      if (claim.state === "ISSUED") {
+        await upsertStep(database, this.nextId, now, context.tenantId, operationRecordId, "ASSET_ISSUANCE", "SUCCEEDED", {
+          source: "CANONICAL_CLAIM_STATE",
+        });
+      }
     });
   }
 
@@ -67,7 +74,12 @@ export class PostgresFundingSagaRepository implements FundingSagaRepository {
   prepareChain(input: Parameters<FundingSagaRepository["prepareChain"]>[0]): Promise<{ receipt?: ChainActionReceipt; submissionId: string }> {
     return withTenantTransaction(this.database, input.context, async (database) => {
       const [existing] = await database.select().from(chainSubmissions).where(and(eq(chainSubmissions.tenantId, input.context.tenantId), eq(chainSubmissions.operationId, input.operationRecordId), eq(chainSubmissions.idempotencyKey, input.request.idempotencyKey))).limit(1);
-      if (existing !== undefined) return { submissionId: existing.id, ...(existing.status === "SUBMITTED" && existing.transactionHash !== null ? { receipt: reconstructReceipt(input.request, existing.transactionHash, existing.ledgerSequence ?? undefined) } : {}) };
+      if (existing !== undefined) return {
+        submissionId: existing.id,
+        ...(["CHAIN_SUCCESS_PENDING_RECONCILIATION", "RECONCILED", "SUBMITTED"].includes(existing.status) && existing.transactionHash !== null
+          ? { receipt: reconstructReceipt(input.request, existing.transactionHash, existing.ledgerSequence ?? undefined) }
+          : {}),
+      };
       const id = this.nextId();
       await database.insert(chainSubmissions).values({ id, tenantId: input.context.tenantId, operationId: input.operationRecordId, network: input.request.network, idempotencyKey: input.request.idempotencyKey, envelopeHash: input.request.envelopeHash, status: "PENDING", createdAt: this.now(), updatedAt: this.now() });
       return { submissionId: id };

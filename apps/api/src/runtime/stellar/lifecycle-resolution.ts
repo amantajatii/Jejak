@@ -3,7 +3,7 @@ import type { ClaimLifecycle, ResolutionManager } from "@jejak/stellar-client";
 import type { StellarSubmissionIdentity, StellarSubmissionReceipt } from "./signer.js";
 
 type LifecycleClient = Pick<ClaimLifecycle.Client, "confirm_control" | "create_claim" | "pause" | "resume" | "transition">;
-type ResolutionClient = Pick<ResolutionManager.Client, "close" | "open" | "record_recovery">;
+type ResolutionClient = Pick<ResolutionManager.Client, "close" | "get_resolution" | "open" | "record_recovery">;
 
 type ActionSubmitter = {
   submit(input: StellarSubmissionIdentity & { transaction: unknown }): Promise<StellarSubmissionReceipt>;
@@ -18,6 +18,29 @@ export class GeneratedLifecycleResolutionActions {
     resolutionManager: ResolutionClient;
     submitter: ActionSubmitter;
   }) {}
+
+  async getResolution(claimKey: string): Promise<{
+    finalLoss: string;
+    openingEvidenceHash: string;
+    reasonCode: string;
+    recovered: string;
+    resolver: string;
+    status: number;
+  } | undefined> {
+    const transaction = await this.dependencies.resolutionManager.get_resolution({
+      claim_key: bytes(claimKey, "claim key"),
+    });
+    if (transaction.result.isErr()) return undefined;
+    const resolution = transaction.result.unwrap();
+    return {
+      finalLoss: resolution.final_loss.toString(),
+      openingEvidenceHash: Buffer.from(resolution.opening_evidence_hash).toString("hex"),
+      reasonCode: resolution.reason_code,
+      recovered: resolution.recovered.toString(),
+      resolver: resolution.resolver,
+      status: Number(resolution.status),
+    };
+  }
 
   createClaim(input: Identity & {
     approvedPrincipalBaseUnits: string;
@@ -85,7 +108,7 @@ export class GeneratedLifecycleResolutionActions {
 
   recordRecovery(input: Identity & { amount: string; claimKey: string; evidenceHash: string; resolver: string }): Promise<StellarSubmissionReceipt> {
     return this.#constructAndSubmit(input, () => this.dependencies.resolutionManager.record_recovery({
-      amount: positive(input.amount, "recovery amount"),
+      amount: nonnegative(input.amount, "recovery amount"),
       claim_key: bytes(input.claimKey, "claim key"),
       evidence_hash: bytes(input.evidenceHash, "evidence hash"),
       resolver: input.resolver,

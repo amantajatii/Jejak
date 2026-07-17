@@ -11,6 +11,12 @@ describe("optional runtime environment", () => {
       DEMO_JWT_SIGNING_KEY_REF: "",
       DEMO_MODE: "",
       JEJAK_CHAIN_MODE: "",
+      JEJAK_FACILITY_OPERATOR_SECRET_REF: "",
+      JEJAK_ISSUER_OPERATOR_SECRET_REF: "",
+      JEJAK_ORIGINATOR_CONTROL_SECRET_REF: "",
+      JEJAK_RESOLVER_SECRET_REF: "",
+      JEJAK_SERVICER_SECRET_REF: "",
+      JEJAK_TREASURY_HOLDER_SECRET_REF: "",
       JCC_SIGNER_TOKEN_REF: "",
       JEJAK_ALLOW_TEST_PROJECT_MUTATION: "",
       OTEL_ENABLED: "",
@@ -32,6 +38,7 @@ describe("optional runtime environment", () => {
       demoMode: false,
       otelEnabled: false,
       partnerMode: "SANDBOX",
+      testnetFirstLossBaseUnits: "100000000",
     });
     expect(config).not.toHaveProperty("databaseUrl");
     expect(config).not.toHaveProperty("chainMode");
@@ -57,6 +64,27 @@ describe("optional runtime environment", () => {
       chainMode: "TESTNET",
       stellarSignerSecretReference: "env://STELLAR_SIGNING_CAPABILITY",
       stellarTestnetManifestPath: "contracts/soroban/deployments/testnet.json",
+    });
+  });
+
+  it("parses role-specific Testnet signer references without resolving secret material", () => {
+    const config = loadConfig({
+      JEJAK_FACILITY_OPERATOR_SECRET_REF: "env://JEJAK_FACILITY_OPERATOR_SECRET",
+      JEJAK_ISSUER_OPERATOR_SECRET_REF: "secret://jejak/testnet/issuer-operator",
+      JEJAK_ORIGINATOR_CONTROL_SECRET_REF: "env://JEJAK_ORIGINATOR_CONTROL_SECRET",
+      JEJAK_RESOLVER_SECRET_REF: "env://JEJAK_RESOLVER_SECRET",
+      JEJAK_SERVICER_SECRET_REF: "env://JEJAK_SERVICER_SECRET",
+      JEJAK_TESTNET_FIRST_LOSS_BASE_UNITS: "25000000",
+      JEJAK_TREASURY_HOLDER_SECRET_REF: "env://JEJAK_TREASURY_HOLDER_SECRET",
+    });
+    expect(config).toMatchObject({
+      facilityOperatorSecretReference: "env://JEJAK_FACILITY_OPERATOR_SECRET",
+      issuerOperatorSecretReference: "secret://jejak/testnet/issuer-operator",
+      originatorControlSecretReference: "env://JEJAK_ORIGINATOR_CONTROL_SECRET",
+      resolverSecretReference: "env://JEJAK_RESOLVER_SECRET",
+      servicerSecretReference: "env://JEJAK_SERVICER_SECRET",
+      testnetFirstLossBaseUnits: "25000000",
+      treasuryHolderSecretReference: "env://JEJAK_TREASURY_HOLDER_SECRET",
     });
   });
 

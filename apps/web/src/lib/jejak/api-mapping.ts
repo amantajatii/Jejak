@@ -46,16 +46,16 @@ type BeOffer = { id: string; principal: Money; fee: Money; advanceRateBps: numbe
 type BeWorkspace = {
   allowedActions: string[]; chainMode?: string; sandbox?: boolean; checkpoint: { asOf: string; version: number };
   claim: BeClaim;
-  latestAttestation?: { status: string; sdsBps: number; eligibleSettlementValue: Money; issuedAt: string; expiresAt: string } | null;
+  latestAttestation?: { id: string; status: string; sdsBps: number; eligibleSettlementValue: Money; issuedAt: string; expiresAt: string } | null;
   latestOffer?: BeOffer | null;
-  controlEvidence?: { status: string; evidenceHash: string; expiresAt?: string } | null;
+  controlEvidence?: { id: string; status: string; evidenceHash: string; expiresAt?: string } | null;
   facilityPosition?: { fundingAssetCode: string; principalBaseUnits: string; firstLossBaseUnits: string; repaidAt?: string } | null;
   latestWaterfall?: { inputSettlement: Money; feesPaid: Money; principalPaid: Money; sellerResidual: Money; firstLossApplied: Money; seniorLoss: Money } | null;
   resolutionCase?: { status: string; recoveryRealized: Money; finalLoss: Money } | null;
   timeline?: Record<string, unknown>[]; pendingOperation?: Record<string, unknown> | null; stellarReferences?: Record<string, unknown>[];
 };
 
-const fundingMoney = (baseUnits: string, currency: string): Money => ({ amountMinor: baseUnits, currency, scale: 6 });
+const fundingMoney = (baseUnits: string, currency: string): Money => ({ amountMinor: baseUnits, currency, scale: 7 });
 
 function mapOffer(o: BeOffer, claim: BeClaim): OfferView {
   const obligation = addMoney(o.principal, o.fee);
@@ -100,6 +100,7 @@ export function mapWorkspace(be: BeWorkspace): ClaimWorkspace {
     },
     ...(be.latestAttestation ? {
       latestAttestation: {
+        id: be.latestAttestation.id,
         status: be.latestAttestation.status === "ACTIVE" ? "ACTIVE" : be.latestAttestation.status === "REVOKED" ? "REVOKED" : "STALE",
         sds: be.latestAttestation.sdsBps, esv: be.latestAttestation.eligibleSettlementValue,
         issuedAt: be.latestAttestation.issuedAt, expiresAt: be.latestAttestation.expiresAt,
@@ -108,6 +109,7 @@ export function mapWorkspace(be: BeWorkspace): ClaimWorkspace {
     ...(offer ? { latestOffer: offer } : {}),
     ...(be.controlEvidence ? {
       controlEvidence: {
+        id: be.controlEvidence.id,
         status: be.controlEvidence.status === "VERIFIED" ? "VERIFIED" : "PENDING",
         hash: be.controlEvidence.evidenceHash, expiresAt: be.controlEvidence.expiresAt ?? "",
       },
@@ -144,7 +146,7 @@ type BePortfolio = {
 };
 export function mapPortfolio(be: BePortfolio): PortfolioView {
   const claims = (be.claims ?? []).map(mapWorkspace);
-  const zeroUsd: Money = { amountMinor: "0", currency: "USDC", scale: 6 };
+  const zeroUsd: Money = { amountMinor: "0", currency: "JUSD", scale: 7 };
   const refreshedAt = be.refreshedAt ?? (typeof be.checkpoint === "object" ? be.checkpoint.asOf : new Date().toISOString());
   return {
     checkpoint: typeof be.checkpoint === "object" ? `v${be.checkpoint.version}` : String(be.checkpoint ?? "portfolio"),

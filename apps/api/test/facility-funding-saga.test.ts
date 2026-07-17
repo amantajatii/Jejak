@@ -56,6 +56,18 @@ describe("BE-12 durable facility funding saga", () => {
     expect([...item.repository.submissions.values()].map((value) => value.receipt?.action)).toEqual(["ISSUE"]);
   });
 
+  it("treats changed transport metadata as the same idempotent funding payload", async () => {
+    const item = fixture();
+    await expect(item.service.execute(context)).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });
+    await expect(item.service.execute({
+      ...context,
+      correlationId: "01980a12-3456-789a-8abc-def012345710",
+      requestId: "01980a12-3456-789a-8abc-def012345711",
+      requestedAt: "2026-07-15T12:01:00.000Z",
+    })).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });
+    expect([...item.repository.submissions.values()].map((value) => value.receipt?.action)).toEqual(["ISSUE"]);
+  });
+
   it("resumes separate funding only after BE-15 reconciles each submitted action", async () => {
     const item = fixture();
     await expect(item.service.execute(context)).resolves.toMatchObject({ status: "WAITING_EXTERNAL" });

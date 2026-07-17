@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { describe, expect, it, vi } from "vitest";
+import { Keypair } from "@stellar/stellar-sdk";
 
 import { contractNames } from "../src/modules/chain/domain/events.js";
 import {
@@ -10,6 +11,7 @@ import {
   ExternalReferenceStellarSubmitter,
   GeneratedLifecycleResolutionActions,
   loadPromotedTestnetManifest,
+  NodeRoleSigner,
   parsePromotedTestnetManifest,
   selectStellarMode,
   STELLAR_TESTNET_NETWORK_PASSPHRASE,
@@ -137,6 +139,52 @@ describe("explicit Stellar mode and external signing boundary", () => {
     expect(submit).toHaveBeenCalledTimes(1);
     expect(lookup).toHaveBeenCalledTimes(3);
   });
+
+  it("signs the source envelope and every explicit non-invoker authorization", async () => {
+    const source = Keypair.random();
+    const treasury = Keypair.random();
+    const sourceSigner = NodeRoleSigner.fromSecret({
+      expectedPublicKey: source.publicKey(),
+      networkPassphrase: STELLAR_TESTNET_NETWORK_PASSPHRASE,
+      secret: source.secret(),
+    });
+    const treasurySigner = NodeRoleSigner.fromSecret({
+      expectedPublicKey: treasury.publicKey(),
+      networkPassphrase: STELLAR_TESTNET_NETWORK_PASSPHRASE,
+      secret: treasury.secret(),
+    });
+    const required = new Set([treasury.publicKey()]);
+    const signAuthEntries = vi.fn(async ({ address }: { address: string }) => {
+      required.delete(address);
+    });
+    const signAndSend = vi.fn(async () => ({
+      getTransactionResponse: { ledger: 321, status: "SUCCESS" },
+      sendTransactionResponse: { hash: "A".repeat(64) },
+    }));
+
+    await expect(sourceSigner.submit({
+      needsNonInvokerSigningBy: () => [...required],
+      signAndSend,
+      signAuthEntries,
+    }, [treasurySigner])).resolves.toEqual({ ledgerSequence: 321, transactionHash: "a".repeat(64) });
+    expect(signAuthEntries).toHaveBeenCalledWith(expect.objectContaining({ address: treasury.publicKey() }));
+    expect(signAndSend).toHaveBeenCalledOnce();
+  });
+
+  it("fails closed when a required non-invoker signer is missing", async () => {
+    const source = Keypair.random();
+    const missing = Keypair.random().publicKey();
+    const signer = NodeRoleSigner.fromSecret({
+      expectedPublicKey: source.publicKey(),
+      networkPassphrase: STELLAR_TESTNET_NETWORK_PASSPHRASE,
+      secret: source.secret(),
+    });
+    await expect(signer.submit({
+      needsNonInvokerSigningBy: () => [missing],
+      signAndSend: vi.fn(),
+      signAuthEntries: vi.fn(),
+    })).rejects.toThrow(/Missing configured non-invoker/);
+  });
 });
 
 describe("generated lifecycle and resolution mutation bindings", () => {
@@ -151,6 +199,19 @@ describe("generated lifecycle and resolution mutation bindings", () => {
     };
     const resolutionManager = {
       close: vi.fn(async () => transaction()),
+      get_resolution: vi.fn(async () => ({ result: {
+        isErr: () => false,
+        unwrap: () => ({
+          claim_key: Buffer.from("2".repeat(64), "hex"),
+          final_loss: 25n,
+          opening_evidence_hash: Buffer.from("3".repeat(64), "hex"),
+          reason_code: "SETTLEMENT_SHORTFALL",
+          recovered: 100n,
+          resolution_hash: undefined,
+          resolver: sourcePublicKey,
+          status: 1,
+        }),
+      } })),
       open: vi.fn(async () => transaction()),
       record_recovery: vi.fn(async () => transaction()),
     };
@@ -177,6 +238,12 @@ describe("generated lifecycle and resolution mutation bindings", () => {
     await actions.openResolution({ ...identity, claimKey, evidenceHash: hash, reasonCode: "SETTLEMENT_SHORTFALL", resolver: sourcePublicKey });
     await actions.recordRecovery({ ...identity, amount: "100", claimKey, evidenceHash: hash, resolver: sourcePublicKey });
     await actions.closeResolution({ ...identity, claimKey, finalLoss: "25", recovered: "100", resolutionHash: hash, resolver: sourcePublicKey });
+    await expect(actions.getResolution(claimKey)).resolves.toMatchObject({
+      finalLoss: "25",
+      openingEvidenceHash: hash,
+      recovered: "100",
+      status: 1,
+    });
 
     expect(claimLifecycle.create_claim).toHaveBeenCalledWith(expect.objectContaining({
       approved_principal_base_units: 64000000n,

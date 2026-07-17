@@ -34,9 +34,9 @@ export type OfferView = { id: string; gross: Money; esv: Money; principal: Money
 export type ClaimWorkspace = {
   checkpoint: string;
   claim: { id: string; displayId: string; sellerName: string; marketplace: string; state: ClaimState; version: number; updatedAt: string; gross: Money; esv: Money; principal: Money; obligation: Money; allowedActions: JejakAction[]; reasonCodes: string[] };
-  latestAttestation?: { status: "ACTIVE" | "STALE" | "REVOKED"; sds: number; esv: Money; issuedAt: string; expiresAt: string };
+  latestAttestation?: { id: string; status: "ACTIVE" | "STALE" | "REVOKED"; sds: number; esv: Money; issuedAt: string; expiresAt: string };
   latestOffer?: OfferView;
-  controlEvidence?: { status: "PENDING" | "VERIFIED"; hash: string; expiresAt: string };
+  controlEvidence?: { id: string; status: "PENDING" | "VERIFIED"; hash: string; expiresAt: string };
   facilityPosition?: { status: "ACTIVE" | "CLOSED"; principal: Money; firstLossFunded: Money };
   latestWaterfall?: { settlement: Money; servicingFee: Money; principalAllocated: Money; financingFee: Money; sellerResidual: Money; firstLossConsumed: Money; seniorLoss: Money };
   resolutionCase?: { status: "OPEN" | "CLOSED"; recovered: Money; finalLoss: Money };

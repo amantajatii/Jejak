@@ -156,9 +156,9 @@ export function buildDemoSeedPlan(input: {
     })),
     { actorId: systemActorId, label: "Jejak Demo System", role: "SYSTEM" as const },
   ];
-  const moneyUnit: MoneyValue = { amountMinor: "0", currency: "USDC", scale: 6 };
+  const moneyUnit: MoneyValue = { amountMinor: "0", currency: "JUSD", scale: 7 };
   const event: CanonicalMarketplaceEvent = {
-    amount: { ...moneyUnit, amountMinor: "100000000" },
+    amount: { ...moneyUnit, amountMinor: "1000000000" },
     eventType: "ORDER_SETTLED",
     externalEventId: `demo-${input.scenario.toLowerCase()}-order-001`,
     occurredAt: input.now,
@@ -194,13 +194,15 @@ export function buildDemoSeedPlan(input: {
     grossUnsettled: snapshot.grossUnsettled,
     id: claimId,
     now: input.now,
-    requestedAdvance: { ...moneyUnit, amountMinor: "64000000" },
+    requestedAdvance: { ...moneyUnit, amountMinor: "640000000" },
     sellerId,
     settlementStreamId: snapshot.id,
     snapshotEncumbered: false,
     tenantId,
   }).claim;
-  const claim = input.scenario === "ADVERSE" ? buildSeededFundedCheckpoint(initial) : initial;
+  // Live/API scenarios both traverse the authoritative lifecycle. The guided
+  // walkthrough keeps its shorter ADVERSE checkpoint in MockJejakGateway.
+  const claim = initial;
   const context: DemoContext = {
     actors: actors.map(({ actorId, label, role }) => ({ actorId, label, role })),
     chainMode: "DETERMINISTIC",

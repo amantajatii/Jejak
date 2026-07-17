@@ -38,6 +38,8 @@ export class ApiJejakGateway implements JejakGateway {
   readonly transport = "api" as const;
   private accessToken: string | null = null;
   private activeRole: DemoRole | null = null;
+  private activeScenario: DemoScenario | null = null;
+  private settlementEventByClaim: Record<string, string> = {};
   private tenantId: string | null = null;
 
   private readonly baseUrl: string; private readonly fetchImpl: typeof globalThis.fetch; private readonly now: () => Date; private readonly storage?: SessionStorage;
@@ -47,9 +49,11 @@ export class ApiJejakGateway implements JejakGateway {
     const saved = storage?.getItem(SESSION_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as { activeRole?: DemoRole; tenantId?: string };
+        const parsed = JSON.parse(saved) as { activeRole?: DemoRole; activeScenario?: DemoScenario; settlementEventByClaim?: Record<string, string>; tenantId?: string };
         this.tenantId = parsed.tenantId ?? null;
         this.activeRole = parsed.activeRole ?? null;
+        this.activeScenario = parsed.activeScenario ?? null;
+        this.settlementEventByClaim = parsed.settlementEventByClaim ?? {};
       } catch {
         storage?.removeItem(SESSION_KEY);
       }
@@ -78,6 +82,7 @@ export class ApiJejakGateway implements JejakGateway {
       const be = await this.request<Parameters<typeof mapDemoContext>[0]>("/v1/demo/context");
       const context = mapDemoContext(be, this.activeRole ?? undefined);
       this.tenantId = context.tenantId;
+      this.activeScenario = context.scenario;
       return context;
     } catch {
       return null;
@@ -90,6 +95,8 @@ export class ApiJejakGateway implements JejakGateway {
     });
     const context = mapDemoContext(be);
     this.tenantId = context.tenantId;
+    this.activeScenario = context.scenario;
+    this.settlementEventByClaim = {};
     this.activeRole = null;
     this.persistContext();
     return context;
@@ -118,15 +125,6 @@ export class ApiJejakGateway implements JejakGateway {
     if (ROLE_BY_ACTION[command.action] !== command.role) {
       throw new JejakGatewayError("FORBIDDEN", `Aksi ${command.action} memerlukan role ${ROLE_BY_ACTION[command.action]}.`, false, 403);
     }
-    if (!["ANALYZE", "CREATE_OFFER", "ACCEPT_OFFER", "VERIFY_CONTROL", "REFUND_SPIKE"].includes(command.action)) {
-      throw new JejakGatewayError(
-        "NOT_SUPPORTED",
-        "Aksi on-chain ini belum tersedia pada transport live.",
-        false,
-        501,
-      );
-    }
-
     const workspace = await this.getWorkspace(command.claimId);
     let result: unknown;
     if (command.action === "ANALYZE") {
@@ -175,8 +173,84 @@ export class ApiJejakGateway implements JejakGateway {
         },
         { decision: "VERIFY", reasonCodes: [] },
       );
-    } else {
+    } else if (command.action === "REFUND_SPIKE") {
       result = await this.mutate(`/v1/demo/claims/${encodeURIComponent(command.claimId)}/refund-spike`, command, {});
+    } else if (command.action === "ISSUE") {
+      if (!workspace.latestAttestation?.id || !workspace.controlEvidence?.id) {
+        throw new JejakGatewayError("INVALID_STATE_TRANSITION", "Active attestation and verified control are required before issuance.", false, 409);
+      }
+      result = await this.mutate(`/v1/claims/${encodeURIComponent(command.claimId)}/issue`, command, {
+        attestationId: workspace.latestAttestation.id,
+        controlEvidenceId: workspace.controlEvidence.id,
+      });
+    } else if (command.action === "FUND") {
+      if (!workspace.latestOffer) {
+        throw new JejakGatewayError("INVALID_STATE_TRANSITION", "An accepted financing offer is required before funding.", false, 409);
+      }
+      result = await this.mutate(`/v1/claims/${encodeURIComponent(command.claimId)}/fund`, command, {
+        maximumAmount: workspace.latestOffer.principal,
+        offerId: workspace.latestOffer.id,
+      });
+    } else if (command.action === "RECORD_SETTLEMENT") {
+      const amount: Money = {
+        ...workspace.claim.principal,
+        amountMinor: this.activeScenario === "ADVERSE" ? "500000000" : "800000000",
+        currency: "JUSD",
+        scale: 7,
+      };
+      const occurredAt = workspace.claim.updatedAt;
+      const externalEventId = `jejak-demo-${this.activeScenario?.toLowerCase() ?? "happy"}-${command.claimId}`;
+      const source = "JEJAK_DEMO_TESTNET";
+      const sourceHash = await sha256Hex(JSON.stringify({ amount, claimId: command.claimId, externalEventId, occurredAt, source }));
+      result = await this.mutate("/v1/settlement-events", command, {
+        amount,
+        claimId: command.claimId,
+        eventType: "SETTLEMENT",
+        externalEventId,
+        occurredAt,
+        source,
+        sourceHash,
+      });
+      const settlementEventId = objectId(result);
+      if (settlementEventId === undefined) {
+        throw new JejakGatewayError("PROTOCOL_MISMATCH", "Settlement response did not include an event id.", false, 502);
+      }
+      this.settlementEventByClaim[command.claimId] = settlementEventId;
+      this.persistContext();
+    } else if (command.action === "OPEN_RESOLUTION") {
+      result = await this.mutate(`/v1/claims/${encodeURIComponent(command.claimId)}/resolution`, command, {
+        action: "OPEN",
+        evidenceHashes: [await sha256Hex(`JEJAK:DEMO:RESOLUTION:OPEN:${command.idempotencyKey}`)],
+        reasonCodes: ["SETTLEMENT_SHORTFALL"],
+      });
+    } else if (command.action === "RECORD_RECOVERY") {
+      const recovered = workspace.resolutionCase?.recovered ?? { ...workspace.claim.principal, amountMinor: "0", currency: "JUSD", scale: 7 };
+      result = await this.mutate(`/v1/claims/${encodeURIComponent(command.claimId)}/resolution`, command, {
+        action: "UPDATE",
+        evidenceHashes: [await sha256Hex(`JEJAK:DEMO:RESOLUTION:RECOVERY:${command.idempotencyKey}`)],
+        reasonCodes: ["SETTLEMENT_SHORTFALL"],
+        recoveryRealized: recovered,
+      });
+    } else if (command.action === "CLOSE_RESOLUTION") {
+      const recovered = workspace.resolutionCase?.recovered ?? { ...workspace.claim.principal, amountMinor: "0", currency: "JUSD", scale: 7 };
+      result = await this.mutate(`/v1/claims/${encodeURIComponent(command.claimId)}/resolution`, command, {
+        action: "CLOSE",
+        evidenceHashes: [await sha256Hex(`JEJAK:DEMO:RESOLUTION:CLOSE:${command.idempotencyKey}`)],
+        reasonCodes: ["SETTLEMENT_SHORTFALL"],
+        recoveryRealized: recovered,
+      });
+    } else {
+      const settlementEventId = this.settlementEventByClaim[command.claimId];
+      if (settlementEventId === undefined) {
+        throw new JejakGatewayError("INVALID_STATE_TRANSITION", "Record a settlement event before running the waterfall.", false, 409);
+      }
+      const zeroFee: Money = { ...workspace.claim.principal, amountMinor: "0", currency: "JUSD", scale: 7 };
+      result = await this.mutate(`/v1/claims/${encodeURIComponent(command.claimId)}/waterfall`, command, {
+        finalSettlement: true,
+        financingFeeDue: zeroFee,
+        servicingFeeDue: zeroFee,
+        settlementEventId,
+      });
     }
 
     return {
@@ -206,12 +280,20 @@ export class ApiJejakGateway implements JejakGateway {
     }
     this.storage?.setItem(SESSION_KEY, JSON.stringify({
       ...(this.activeRole === null ? {} : { activeRole: this.activeRole }),
+      ...(this.activeScenario === null ? {} : { activeScenario: this.activeScenario }),
+      settlementEventByClaim: this.settlementEventByClaim,
       tenantId: this.tenantId,
     }));
   }
 
   /** Compile-time marker: this adapter is reconciled to the generated client contract once ICP-0004 lands. */
   declare readonly contractClient?: JejakClient;
+}
+
+function objectId(result: unknown): string | undefined {
+  if (typeof result !== "object" || result === null) return undefined;
+  const id = (result as Record<string, unknown>).id;
+  return typeof id === "string" && id.length > 0 ? id : undefined;
 }
 
 function operationId(result: unknown, fallback: string): string {

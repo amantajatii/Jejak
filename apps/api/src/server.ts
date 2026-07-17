@@ -43,6 +43,7 @@ const [
   { GeneratedStellarStateReader },
   { createChainIndexer, runChainIndexerLoop, StellarRpcAdapter },
   { buildJccRuntime },
+  { buildTestnetActionRuntime },
   { createRiskWorkerRuntime, EnvironmentSellerSubjectHasher, HttpRiskEvaluationClient, runRiskWorkerLoop },
 ] = await Promise.all([
   import("./app.js"),
@@ -58,6 +59,7 @@ const [
   import("./modules/chain/adapters/generated-state-reader.js"),
   import("./modules/chain/index.js"),
   import("./runtime/jcc-runtime.js"),
+  import("./runtime/testnet-action-runtime.js"),
   import("./modules/risk/index.js"),
 ]);
 const evidenceConfig = loadEvidenceModuleConfig();
@@ -177,11 +179,33 @@ const jccRuntime =
         verifier,
       });
 const jccDependencies = jccRuntime?.routeDependencies;
+const testnetActions =
+  database === undefined || verifier === undefined || promotedManifest === undefined
+    ? undefined
+    : await buildTestnetActionRuntime({
+        config,
+        database: database.db,
+        manifest: promotedManifest,
+        secretReferences,
+        verifier,
+      });
 
 const app = await buildApp({
   config,
   ...(routeDependencies ?? {}),
   ...(jccDependencies === undefined ? {} : { jccDependencies }),
+  ...(testnetActions?.facilityFundingDependencies === undefined
+    ? {}
+    : { facilityFundingDependencies: testnetActions.facilityFundingDependencies }),
+  ...(testnetActions?.issuerIssueDependencies === undefined
+    ? {}
+    : { issuerIssueDependencies: testnetActions.issuerIssueDependencies }),
+  ...(testnetActions?.settlementDependencies === undefined
+    ? {}
+    : { settlementDependencies: testnetActions.settlementDependencies }),
+  ...(testnetActions?.resolutionDependencies === undefined
+    ? {}
+    : { resolutionDependencies: testnetActions.resolutionDependencies }),
   readinessProbes: [
     ...createRuntimeReadinessProbes({
       ...(config.chainMode === undefined ? {} : { chainMode: config.chainMode }),
@@ -235,7 +259,7 @@ function startIndexerForTenant(tenantId: string, workerActorId: string): void {
       const indexer = createChainIndexer({
         contracts: manifest.contracts,
         database: db,
-        fundingAsset: { currency: config.fundingAssetCode ?? "JUSD", issuer: manifest.assets.JUSD.issuer, scale: 6 },
+        fundingAsset: { currency: config.fundingAssetCode ?? "JUSD", issuer: manifest.assets.JUSD.issuer, scale: manifest.assets.JUSD.scale },
         initialLedger,
         networkPassphrase: manifest.network.passphrase,
         publicKey,
@@ -245,7 +269,17 @@ function startIndexerForTenant(tenantId: string, workerActorId: string): void {
       app.log.info({ initialLedger, latestLedger, tenantId }, "Starting in-process chain indexer");
       await runChainIndexerLoop(
         indexer,
-        { pollMs: config.chainIndexerPollMs ?? 5_000, tenantId, log: (message) => app.log.info({ message, tenantId }, "Chain indexer cycle completed") },
+        {
+          ...(testnetActions === undefined
+            ? {}
+            : { afterCycle: async () => {
+                const finalized = await testnetActions.finalizeRepaidClaims({ actorId: workerActorId, tenantId });
+                if (finalized > 0) app.log.info({ finalized, tenantId }, "Happy-path Testnet claims finalized");
+              } }),
+          pollMs: config.chainIndexerPollMs ?? 5_000,
+          tenantId,
+          log: (message) => app.log.info({ message, tenantId }, "Chain indexer cycle completed"),
+        },
         indexerAbort.signal,
       );
     } catch {

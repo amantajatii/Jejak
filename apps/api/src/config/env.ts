@@ -39,7 +39,14 @@ const environmentSchema = z.object({
   CHAIN_INDEXER_POLL_MS: z.coerce.number().int().min(500).max(60_000).default(5_000),
   CHAIN_INDEXER_TENANT_ID: z.preprocess(blankToUndefined, z.string().uuid().optional()),
   JEJAK_CHAIN_MODE: z.preprocess(blankToUndefined, z.enum(["DETERMINISTIC", "TESTNET"]).optional()),
+  JEJAK_FACILITY_OPERATOR_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
+  JEJAK_ISSUER_OPERATOR_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
   JEJAK_ORACLE_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
+  JEJAK_ORIGINATOR_CONTROL_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
+  JEJAK_RESOLVER_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
+  JEJAK_SERVICER_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
+  JEJAK_TESTNET_FIRST_LOSS_BASE_UNITS: z.preprocess(blankToUndefined, z.string().regex(/^(0|[1-9][0-9]*)$/).default("100000000")),
+  JEJAK_TREASURY_HOLDER_SECRET_REF: z.preprocess(blankToUndefined, externalReference.optional()),
   JCC_TTL_MS: z.coerce.number().int().min(60_000).max(31_536_000_000).default(86_400_000),
   JCC_PUBLIC_KEY_REGISTRY_REF: z.preprocess(blankToUndefined, externalReference.optional()),
   JCC_SIGNER_TOKEN_REF: z.preprocess(blankToUndefined, externalReference.optional()),
@@ -126,11 +133,18 @@ export type AppConfig = {
   chainIndexerPollMs?: number;
   chainIndexerTenantId?: string;
   chainMode?: "DETERMINISTIC" | "TESTNET";
+  facilityOperatorSecretReference?: string;
+  issuerOperatorSecretReference?: string;
   jccPublicKeyRegistryReference?: string;
   jccSignerTokenReference?: string;
   jccSignerUrl?: string;
   jccTtlMs: number;
   oracleSecretReference?: string;
+  originatorControlSecretReference?: string;
+  resolverSecretReference?: string;
+  servicerSecretReference?: string;
+  testnetFirstLossBaseUnits?: string;
+  treasuryHolderSecretReference?: string;
   jclaimAssetCode?: string;
   jclaimAssetIssuer?: string;
   otelEnabled: boolean;
@@ -194,11 +208,18 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     nodeEnv: parsed.NODE_ENV,
     allowTestProjectMutation: parsed.JEJAK_ALLOW_TEST_PROJECT_MUTATION,
     ...(parsed.JEJAK_CHAIN_MODE === undefined ? {} : { chainMode: parsed.JEJAK_CHAIN_MODE }),
+    ...(parsed.JEJAK_FACILITY_OPERATOR_SECRET_REF === undefined ? {} : { facilityOperatorSecretReference: parsed.JEJAK_FACILITY_OPERATOR_SECRET_REF }),
+    ...(parsed.JEJAK_ISSUER_OPERATOR_SECRET_REF === undefined ? {} : { issuerOperatorSecretReference: parsed.JEJAK_ISSUER_OPERATOR_SECRET_REF }),
     ...(parsed.JCC_PUBLIC_KEY_REGISTRY_REF === undefined ? {} : { jccPublicKeyRegistryReference: parsed.JCC_PUBLIC_KEY_REGISTRY_REF }),
     ...(parsed.JCC_SIGNER_TOKEN_REF === undefined ? {} : { jccSignerTokenReference: parsed.JCC_SIGNER_TOKEN_REF }),
     ...(parsed.JCC_SIGNER_URL === undefined ? {} : { jccSignerUrl: parsed.JCC_SIGNER_URL }),
     jccTtlMs: parsed.JCC_TTL_MS,
     ...(parsed.JEJAK_ORACLE_SECRET_REF === undefined ? {} : { oracleSecretReference: parsed.JEJAK_ORACLE_SECRET_REF }),
+    ...(parsed.JEJAK_ORIGINATOR_CONTROL_SECRET_REF === undefined ? {} : { originatorControlSecretReference: parsed.JEJAK_ORIGINATOR_CONTROL_SECRET_REF }),
+    ...(parsed.JEJAK_RESOLVER_SECRET_REF === undefined ? {} : { resolverSecretReference: parsed.JEJAK_RESOLVER_SECRET_REF }),
+    ...(parsed.JEJAK_SERVICER_SECRET_REF === undefined ? {} : { servicerSecretReference: parsed.JEJAK_SERVICER_SECRET_REF }),
+    testnetFirstLossBaseUnits: parsed.JEJAK_TESTNET_FIRST_LOSS_BASE_UNITS,
+    ...(parsed.JEJAK_TREASURY_HOLDER_SECRET_REF === undefined ? {} : { treasuryHolderSecretReference: parsed.JEJAK_TREASURY_HOLDER_SECRET_REF }),
     ...(parsed.JCLAIM_ASSET_CODE === undefined ? {} : { jclaimAssetCode: parsed.JCLAIM_ASSET_CODE }),
     ...(parsed.JCLAIM_ASSET_ISSUER === undefined ? {} : { jclaimAssetIssuer: parsed.JCLAIM_ASSET_ISSUER }),
     otelEnabled: parsed.OTEL_ENABLED,

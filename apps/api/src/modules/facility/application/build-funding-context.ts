@@ -23,6 +23,7 @@ export interface FundingFactsSource {
     actorId: string;
     claimId: string;
     expectedClaimVersion: number;
+    idempotencyKey: string;
     offerId: string;
     tenantId: string;
   }): Promise<FundingServerFacts>;
@@ -46,6 +47,7 @@ export class ServerSideFundingContextBuilder {
       actorId: input.actorId,
       claimId: input.claimId,
       expectedClaimVersion: input.expectedClaimVersion,
+      idempotencyKey: input.idempotencyKey,
       offerId: input.offerId,
       tenantId: input.tenantId,
     });

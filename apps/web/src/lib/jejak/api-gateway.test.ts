@@ -9,22 +9,26 @@ const now = "2026-07-17T08:00:00.000Z";
 const money = { amountMinor: "64000000", currency: "USDC", scale: 6 };
 
 function backendWorkspace(input: {
+  attestation?: Record<string, unknown> | null;
   controlEvidence?: Record<string, unknown> | null;
   offer?: Record<string, unknown> | null;
+  resolution?: Record<string, unknown> | null;
   state?: string;
   version?: number;
+  money?: typeof money;
 } = {}) {
+  const claimMoney = input.money ?? money;
   return {
     allowedActions: [],
     chainMode: "TESTNET",
     checkpoint: { asOf: now, version: input.version ?? 4 },
     claim: {
-      advanceAmount: money,
+      advanceAmount: claimMoney,
       claimKey: "a".repeat(64),
-      eligibleSettlementValue: { ...money, amountMinor: "80000000" },
-      grossUnsettled: { ...money, amountMinor: "100000000" },
+      eligibleSettlementValue: { ...claimMoney, amountMinor: input.money ? "800000000" : "80000000" },
+      grossUnsettled: { ...claimMoney, amountMinor: input.money ? "1000000000" : "100000000" },
       id: claimId,
-      outstandingPrincipal: money,
+      outstandingPrincipal: claimMoney,
       state: input.state ?? "ELIGIBLE",
       stateReasonCodes: [],
       updatedAt: now,
@@ -32,11 +36,11 @@ function backendWorkspace(input: {
     },
     controlEvidence: input.controlEvidence ?? null,
     facilityPosition: null,
-    latestAttestation: null,
+    latestAttestation: input.attestation ?? null,
     latestOffer: input.offer ?? null,
     latestWaterfall: null,
     pendingOperation: null,
-    resolutionCase: null,
+    resolutionCase: input.resolution ?? null,
     sandbox: true,
     stellarReferences: [],
     timeline: [],
@@ -95,7 +99,9 @@ function harness(workspace = backendWorkspace(), storage?: Pick<Storage, "getIte
           version: 6,
         });
       }
-      data = { operationId: `operation-${requests.length}` };
+      data = path === "/v1/settlement-events"
+        ? { id: "019f6e1c-cc93-7000-8000-000000000099" }
+        : { operationId: `operation-${requests.length}` };
     }
     return new Response(JSON.stringify({
       data,
@@ -207,7 +213,7 @@ test("API adapter accepts the exact offer version and performs two-step control 
   assert.deepEqual(await decision?.clone().json(), { decision: "VERIFY", reasonCodes: [] });
 });
 
-test("API adapter rejects role mismatches and keeps Stage 2 gated", async () => {
+test("API adapter rejects role mismatches", async () => {
   const { gateway } = harness();
   await initialize(gateway, "ORIGINATOR");
   await assert.rejects(
@@ -217,15 +223,103 @@ test("API adapter rejects role mismatches and keeps Stage 2 gated", async () => 
     }),
     { code: "FORBIDDEN" },
   );
-  await assert.rejects(
-    gateway.performAction({
-      action: "ISSUE", claimId, expectedVersion: 4,
-      idempotencyKey: "issue-command-000001", role: "ISSUER",
-    }),
-    { code: "NOT_SUPPORTED" },
-  );
+});
+
+test("API adapter sends exact Testnet issue, fund, settlement, and waterfall commands", async () => {
+  const offer = {
+    advanceRateBps: 8_000,
+    expiresAt: "2026-07-18T09:00:00.000Z",
+    fee: { amountMinor: "25600000", currency: "JUSD", scale: 7 },
+    id: "019f6e1c-cc93-7000-8000-000000000002",
+    principal: { amountMinor: "640000000", currency: "JUSD", scale: 7 },
+    status: "ACCEPTED",
+    termsHash: "f".repeat(64),
+    version: 2,
+  };
+  const attestationId = "019f6e1c-cc93-7000-8000-000000000003";
+  const controlEvidenceId = "019f6e1c-cc93-7000-8000-000000000004";
+  const stage2 = harness(backendWorkspace({
+    attestation: {
+      eligibleSettlementValue: { amountMinor: "800000000", currency: "JUSD", scale: 7 },
+      expiresAt: "2026-07-18T08:00:00.000Z",
+      id: attestationId,
+      issuedAt: now,
+      sdsBps: 100,
+      status: "ACTIVE",
+    },
+    controlEvidence: {
+      evidenceHash: "b".repeat(64),
+      expiresAt: "2026-07-18T08:00:00.000Z",
+      id: controlEvidenceId,
+      status: "VERIFIED",
+    },
+    offer,
+    money: offer.principal,
+    state: "ISSUED",
+  }));
+  await stage2.gateway.resetDemo("HAPPY", "reset-stage2-command-01");
+
+  await stage2.gateway.createDemoSession("ISSUER");
+  await stage2.gateway.performAction({ action: "ISSUE", claimId, expectedVersion: 4, idempotencyKey: "issue-command-000001", role: "ISSUER" });
+  const issue = stage2.requests.find((request) => new URL(request.url).pathname.endsWith("/issue"));
+  assert.deepEqual(await issue?.clone().json(), { attestationId, controlEvidenceId });
+
+  await stage2.gateway.createDemoSession("FACILITY");
+  await stage2.gateway.performAction({ action: "FUND", claimId, expectedVersion: 4, idempotencyKey: "fund-command-0000001", role: "FACILITY" });
+  const fund = stage2.requests.find((request) => new URL(request.url).pathname.endsWith("/fund"));
+  assert.deepEqual(await fund?.clone().json(), { maximumAmount: offer.principal, offerId: offer.id });
+
+  await stage2.gateway.createDemoSession("SERVICER");
+  await stage2.gateway.performAction({ action: "RECORD_SETTLEMENT", claimId, expectedVersion: 4, idempotencyKey: "settlement-command-01", role: "SERVICER" });
+  const settlement = stage2.requests.find((request) => new URL(request.url).pathname === "/v1/settlement-events");
+  const settlementBody = await settlement?.clone().json();
+  assert.deepEqual(settlementBody.amount, { amountMinor: "800000000", currency: "JUSD", scale: 7 });
+  assert.match(settlementBody.sourceHash, /^[0-9a-f]{64}$/);
+
+  await stage2.gateway.performAction({ action: "RUN_WATERFALL", claimId, expectedVersion: 4, idempotencyKey: "waterfall-command-001", role: "SERVICER" });
+  const waterfall = stage2.requests.find((request) => new URL(request.url).pathname.endsWith("/waterfall"));
+  assert.deepEqual(await waterfall?.clone().json(), {
+    finalSettlement: true,
+    financingFeeDue: { amountMinor: "0", currency: "JUSD", scale: 7 },
+    servicingFeeDue: { amountMinor: "0", currency: "JUSD", scale: 7 },
+    settlementEventId: "019f6e1c-cc93-7000-8000-000000000099",
+  });
 });
 
 test("API adapter fails visibly instead of silently selecting mock", () => {
   assert.throws(() => new ApiJejakGateway("not-an-api-url"));
+});
+
+test("API adapter sends exact Testnet resolution commands", async () => {
+  const unit = { amountMinor: "640000000", currency: "JUSD", scale: 7 };
+  const testnet = harness(backendWorkspace({
+    money: unit,
+    resolution: {
+      finalLoss: { ...unit, amountMinor: "40000000" },
+      recoveryRealized: { ...unit, amountMinor: "0" },
+      status: "OPEN",
+    },
+    state: "RESOLUTION",
+  }));
+  await testnet.gateway.resetDemo("ADVERSE", "reset-resolution-00001");
+  await testnet.gateway.createDemoSession("RESOLVER");
+  for (const [action, apiAction] of [
+    ["OPEN_RESOLUTION", "OPEN"],
+    ["RECORD_RECOVERY", "UPDATE"],
+    ["CLOSE_RESOLUTION", "CLOSE"],
+  ] as const) {
+    await testnet.gateway.performAction({
+      action,
+      claimId,
+      expectedVersion: 4,
+      idempotencyKey: `${action.toLowerCase()}-command-001`,
+      role: "RESOLVER",
+    });
+    const requests = testnet.requests.filter((request) => new URL(request.url).pathname.endsWith("/resolution"));
+    const body = await requests.at(-1)?.clone().json();
+    assert.equal(body.action, apiAction);
+    assert.deepEqual(body.reasonCodes, ["SETTLEMENT_SHORTFALL"]);
+    assert.match(body.evidenceHashes[0], /^[0-9a-f]{64}$/);
+    if (apiAction !== "OPEN") assert.deepEqual(body.recoveryRealized, { ...unit, amountMinor: "0" });
+  }
 });

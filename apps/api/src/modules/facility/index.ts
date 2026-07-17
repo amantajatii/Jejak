@@ -1,5 +1,6 @@
 export * from "./adapters/deterministic-chain.js";
 export * from "./adapters/generated-stellar-chain.js";
+export * from "./adapters/postgres-funding-facts.js";
 export * from "./adapters/in-memory-saga-repository.js";
 export * from "./adapters/postgres-saga-repository.js";
 export * from "./application/funding-saga.js";

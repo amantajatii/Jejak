@@ -34,7 +34,7 @@ export class MockJejakGateway implements JejakGateway {
     if (previousScenario && previousScenario !== scenario) throw new JejakGatewayError("IDEMPOTENCY_CONFLICT", "The reset key was already used for another scenario.", false, 409);
     if (previousScenario && this.state.context && this.state.workspace) return clone(this.state.context);
     const workspace = createWorkspaceFixture(scenario);
-    if (this.fixture === "stale-attestation") workspace.latestAttestation = { status: "STALE", sds: 7100, esv: workspace.claim.esv, issuedAt: "2026-06-01T00:00:00Z", expiresAt: "2026-06-30T00:00:00Z" };
+    if (this.fixture === "stale-attestation") workspace.latestAttestation = { id: "attestation-stale", status: "STALE", sds: 7100, esv: workspace.claim.esv, issuedAt: "2026-06-01T00:00:00Z", expiresAt: "2026-06-30T00:00:00Z" };
     const context: DemoContext = { tenantId: "01983f7a-2c10-7adc-b581-demo0000001", scenario, claimId: workspace.claim.id, availableRoles: ["SELLER", "ORIGINATOR", "ISSUER", "FACILITY", "SERVICER", "RESOLVER"], chainMode: "DETERMINISTIC SANDBOX", sandbox: true };
     this.state = { context, workspace, replay: {}, resetKeys: { [idempotencyKey]: scenario } };
     this.persist();
@@ -99,12 +99,12 @@ export class MockJejakGateway implements JejakGateway {
     w.claim.updatedAt = now();
     w.checkpoint = `demo-checkpoint-${w.claim.version}`;
     w.meta.refreshedAt = now();
-    if (command.action === "ANALYZE") w.latestAttestation = { status: "ACTIVE", sds: 1420, esv: w.claim.esv, issuedAt: now(), expiresAt: "2026-08-14T10:24:00+07:00" };
+    if (command.action === "ANALYZE") w.latestAttestation = { id: `attestation-${w.claim.version}`, status: "ACTIVE", sds: 1420, esv: w.claim.esv, issuedAt: now(), expiresAt: "2026-08-14T10:24:00+07:00" };
     if (command.action === "CREATE_OFFER") w.latestOffer = { id: "offer-happy", gross: w.claim.gross, esv: w.claim.esv, principal: w.claim.principal, fee: { ...w.claim.principal, amountMinor: "40000000" }, obligation: w.claim.obligation, residual: { ...w.claim.principal, amountMinor: "120000000" }, advanceRateBps: 8000, expiresAt: "2026-07-20T18:00:00+07:00", termsHash: "c4".repeat(32), version: 1, status: "ACTIVE" };
     if (command.action === "ACCEPT_OFFER" && w.latestOffer) w.latestOffer.status = "ACCEPTED";
-    if (command.action === "VERIFY_CONTROL") w.controlEvidence = { status: "VERIFIED", hash: `8f${"2e".repeat(30)}91`, expiresAt: "2026-07-19T10:00:00+07:00" };
+    if (command.action === "VERIFY_CONTROL") w.controlEvidence = { id: `control-${w.claim.version}`, status: "VERIFIED", hash: `8f${"2e".repeat(30)}91`, expiresAt: "2026-07-19T10:00:00+07:00" };
     if (command.action === "FUND") w.facilityPosition = { status: "ACTIVE", principal: w.claim.principal, firstLossFunded: { ...w.claim.principal, amountMinor: scenario === "ADVERSE" ? "100000000" : "80000000" } };
-    if (command.action === "REFUND_SPIKE") { w.claim.esv = { ...w.claim.esv, amountMinor: "540000000" }; w.claim.reasonCodes = ["HIGH_REFUND_RATE", "CHARGEBACK_SPIKE"]; w.latestAttestation = { status: "ACTIVE", sds: 6480, esv: w.claim.esv, issuedAt: now(), expiresAt: "2026-08-14T10:24:00+07:00" }; }
+    if (command.action === "REFUND_SPIKE") { w.claim.esv = { ...w.claim.esv, amountMinor: "540000000" }; w.claim.reasonCodes = ["HIGH_REFUND_RATE", "CHARGEBACK_SPIKE"]; w.latestAttestation = { id: `attestation-refund-${w.claim.version}`, status: "ACTIVE", sds: 6480, esv: w.claim.esv, issuedAt: now(), expiresAt: "2026-08-14T10:24:00+07:00" }; }
     if (command.action === "RUN_WATERFALL") w.latestWaterfall = { settlement: { ...w.claim.principal, amountMinor: scenario === "ADVERSE" ? "500000000" : "800000000" }, servicingFee: { ...w.claim.principal, amountMinor: "10000000" }, principalAllocated: w.claim.principal, financingFee: { ...w.claim.principal, amountMinor: "30000000" }, sellerResidual: { ...w.claim.principal, amountMinor: scenario === "ADVERSE" ? "0" : "120000000" }, firstLossConsumed: { ...w.claim.principal, amountMinor: scenario === "ADVERSE" ? "100000000" : "0" }, seniorLoss: { ...w.claim.principal, amountMinor: scenario === "ADVERSE" ? "40000000" : "0" } };
     if (command.action === "OPEN_RESOLUTION") w.resolutionCase = { status: "OPEN", recovered: { ...w.claim.principal, amountMinor: "0" }, finalLoss: { ...w.claim.principal, amountMinor: "40000000" } };
     if (command.action === "RECORD_RECOVERY" && w.resolutionCase) w.resolutionCase.recovered = { ...w.claim.principal, amountMinor: "10000000" };

@@ -25,6 +25,26 @@ export class PostgresResolutionRepository implements ResolutionRepository {
     });
   }
 
+  replay(input: Parameters<NonNullable<ResolutionRepository["replay"]>>[0]): Promise<ResolutionCaseView | undefined> {
+    return this.database.transaction(async (transaction) => {
+      const database = transaction as JejakDatabase;
+      await applyTransactionContext(database, input.context);
+      const [row] = await database.select({
+        payloadHash: idempotencyRecords.payloadHash,
+        responseBody: idempotencyRecords.responseBody,
+      }).from(idempotencyRecords).where(and(
+        eq(idempotencyRecords.tenantId, input.context.tenantId),
+        eq(idempotencyRecords.actorId, input.context.actorId),
+        eq(idempotencyRecords.operationId, "resolveClaim"),
+        eq(idempotencyRecords.idempotencyKey, input.context.idempotencyKey),
+      )).limit(1);
+      if (row === undefined) return undefined;
+      if (row.payloadHash !== input.payloadHash) throw new IdempotencyConflictError();
+      if (row.responseBody !== null) return resolutionView(row.responseBody);
+      throw new DomainError("INVALID_STATE_TRANSITION", "Resolution command is still processing.");
+    });
+  }
+
   mutate(input: Parameters<ResolutionRepository["mutate"]>[0]): Promise<ResolutionCaseView> {
     return this.database.transaction(async (transaction) => {
       const database = transaction as JejakDatabase;

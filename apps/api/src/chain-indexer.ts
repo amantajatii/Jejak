@@ -58,7 +58,7 @@ const initialLedger = config.chainIndexerInitialLedger ?? Math.max(1, latestLedg
 const indexer = createChainIndexer({
   contracts: manifest.contracts,
   database: database.db,
-  fundingAsset: { currency: config.fundingAssetCode ?? "JUSD", issuer: manifest.assets.JUSD.issuer, scale: 6 },
+  fundingAsset: { currency: config.fundingAssetCode ?? "JUSD", issuer: manifest.assets.JUSD.issuer, scale: manifest.assets.JUSD.scale },
   initialLedger,
   networkPassphrase: manifest.network.passphrase,
   publicKey: config.stellarSourcePublicKey,

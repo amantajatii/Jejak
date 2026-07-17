@@ -42,7 +42,12 @@ export function createChainIndexer(input: {
  */
 export async function runChainIndexerLoop(
   indexer: ChainEventIndexer,
-  options: { pollMs: number; tenantId: string; log?: (message: string) => void },
+  options: {
+    afterCycle?: () => Promise<void>;
+    pollMs: number;
+    tenantId: string;
+    log?: (message: string) => void;
+  },
   signal: AbortSignal,
 ): Promise<void> {
   const log = options.log ?? (() => {});
@@ -56,6 +61,7 @@ export async function runChainIndexerLoop(
     try {
       const indexed = await indexer.index({ tenantId: options.tenantId });
       const reconciled = await indexer.reconcile({ tenantId: options.tenantId });
+      await options.afterCycle?.();
       if (indexed.indexed > 0 || reconciled.reconciled > 0 || reconciled.mismatched > 0) {
         log(
           `indexed=${indexed.indexed} dup=${indexed.duplicates} stale=${indexed.staleCheckpoints} ` +

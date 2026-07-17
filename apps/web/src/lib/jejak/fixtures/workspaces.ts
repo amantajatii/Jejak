@@ -23,9 +23,9 @@ export function createWorkspaceFixture(scenario: DemoScenario): ClaimWorkspace {
       allowedActions: adverse ? ["REFUND_SPIKE"] : ["ANALYZE"],
       reasonCodes: adverse ? ["HIGH_REFUND_RATE"] : ["PAYOUT_HISTORY_STABLE"],
     },
-    latestAttestation: adverse ? { status: "ACTIVE", sds: 4120, esv: idr("680000000"), issuedAt: "2026-07-15T09:12:00+07:00", expiresAt: "2026-08-14T09:12:00+07:00" } : undefined,
+    latestAttestation: adverse ? { id: "attestation-adverse", status: "ACTIVE", sds: 4120, esv: idr("680000000"), issuedAt: "2026-07-15T09:12:00+07:00", expiresAt: "2026-08-14T09:12:00+07:00" } : undefined,
     latestOffer: adverse ? { id: "offer-adverse", gross: idr("1000000000"), esv: idr("800000000"), principal: jusd("640000000"), fee: jusd("40000000"), obligation: jusd("680000000"), residual: jusd("120000000"), advanceRateBps: 8000, expiresAt: "2026-07-20T18:00:00+07:00", termsHash: "a1".repeat(32), version: 1, status: "ACCEPTED" } : undefined,
-    controlEvidence: adverse ? { status: "VERIFIED", hash: `8f${"2e".repeat(30)}91`, expiresAt: "2026-07-19T10:00:00+07:00" } : undefined,
+    controlEvidence: adverse ? { id: "control-adverse", status: "VERIFIED", hash: `8f${"2e".repeat(30)}91`, expiresAt: "2026-07-19T10:00:00+07:00" } : undefined,
     facilityPosition: adverse ? { status: "ACTIVE", principal: jusd("640000000"), firstLossFunded: jusd("100000000") } : undefined,
     timeline: adverse ? [
       { id: "seed-funded", state: "FUNDED", label: "Adverse checkpoint funded", detail: "Seeded through canonical demo prerequisites.", actor: "Demo system", occurredAt: "2026-07-15T10:24:00+07:00", transactionHash: "b".repeat(64) },
