@@ -20,7 +20,7 @@ export function OperationPanel({ action }: { action: JejakAction }) {
     catch { /* Provider exposes the authoritative error and keeps the command identity for retry. */ }
     finally { setSubmitting(false); }
   }
-  return <section className="jejak-operation panel" aria-live="polite">
+  return <section className="jejak-operation panel" data-tour="op-action" aria-live="polite">
     <span className="section-label">Primary next action</span><h2>{ACTION_LABELS[action]}</h2>
     <p>Required role: <strong>{ROLE_LABELS[requiredRole]}</strong>. Success appears only after workspace reconciliation.</p>
     <dl><div><dt>Amount</dt><dd>{formatMoney(workspace.claim.principal)}</dd></div><div><dt>Asset</dt><dd>{describeAsset(workspace.claim.principal)}</dd></div><div><dt>Current state/version</dt><dd>{workspace.claim.state} · v{workspace.claim.version}</dd></div><div><dt>Intended outcome</dt><dd>{ACTION_LABELS[action]}</dd></div></dl>

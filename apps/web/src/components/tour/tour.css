@@ -1,0 +1,168 @@
+.tour-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  pointer-events: none;
+}
+.tour-root * { box-sizing: border-box; }
+
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 12, 20, 0.66);
+  pointer-events: auto;
+}
+
+/* Spotlight: a transparent box with a giant shadow dims everything else. */
+.tour-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(9, 12, 20, 0.66);
+  outline: 2px solid rgba(120, 190, 255, 0.9);
+  outline-offset: 2px;
+  pointer-events: none;
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight { transition: none; }
+}
+
+/* Coach-mark card */
+.tour-coach {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  background: #ffffff;
+  color: #10141c;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 24px 60px rgba(9, 12, 20, 0.4);
+  pointer-events: auto;
+  border: 1px solid rgba(9, 12, 20, 0.08);
+}
+.tour-coach-bottom { bottom: 28px; }
+.tour-coach-top { top: 28px; }
+
+.tour-coach-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.tour-progress {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #5b6472;
+  text-transform: uppercase;
+}
+.tour-coach-controls { display: flex; gap: 8px; }
+.tour-ghost {
+  background: transparent;
+  border: 1px solid rgba(9, 12, 20, 0.14);
+  color: #47505e;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tour-ghost:hover { background: rgba(9, 12, 20, 0.05); }
+
+.tour-coach h3 { margin: 0 0 6px; font-size: 18px; line-height: 1.25; }
+.tour-coach p { margin: 0; font-size: 14px; line-height: 1.55; color: #2b3340; }
+
+.tour-next {
+  margin-top: 16px;
+  background: #1763ff;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tour-next:hover { background: #0f52db; }
+
+.tour-hint {
+  margin-top: 14px !important;
+  background: rgba(23, 99, 255, 0.08);
+  border: 1px dashed rgba(23, 99, 255, 0.4);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 600 !important;
+  color: #123a8f !important;
+}
+
+/* Scenario selection screen */
+.tour-select {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(760px, calc(100vw - 32px));
+  background: #ffffff;
+  color: #10141c;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 30px 80px rgba(9, 12, 20, 0.5);
+  pointer-events: auto;
+  text-align: center;
+}
+.tour-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #1763ff; margin: 0 0 8px; }
+.tour-select h2 { margin: 0 0 8px; font-size: 26px; }
+.tour-select-lede { margin: 0 auto 24px; max-width: 520px; color: #47505e; font-size: 14px; }
+
+.tour-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left; }
+@media (max-width: 620px) { .tour-choices { grid-template-columns: 1fr; } }
+
+.tour-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(9, 12, 20, 0.12);
+  background: #f8fafc;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.tour-choice:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(9, 12, 20, 0.14); }
+.tour-choice-happy:hover { border-color: #1aa06a; }
+.tour-choice-adverse:hover { border-color: #d1653a; }
+.tour-choice-tag {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.tour-choice-happy .tour-choice-tag { background: rgba(26, 160, 106, 0.14); color: #147d52; }
+.tour-choice-adverse .tour-choice-tag { background: rgba(209, 101, 58, 0.14); color: #b3491f; }
+.tour-choice strong { font-size: 17px; }
+.tour-choice span:last-child { font-size: 13px; line-height: 1.5; color: #47505e; }
+
+.tour-exit-link {
+  margin-top: 20px;
+  background: transparent;
+  border: none;
+  color: #5b6472;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tour-coach, .tour-select { background: #161b24; color: #eef2f8; border-color: rgba(255,255,255,0.08); }
+  .tour-coach p { color: #c4ccd8; }
+  .tour-coach h3, .tour-select h2 { color: #f4f7fb; }
+  .tour-ghost { color: #c4ccd8; border-color: rgba(255,255,255,0.16); }
+  .tour-ghost:hover { background: rgba(255,255,255,0.06); }
+  .tour-choice { background: #1d232e; border-color: rgba(255,255,255,0.1); }
+  .tour-select-lede, .tour-choice span:last-child { color: #aab3c0; }
+}

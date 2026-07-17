@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useTour } from "@/components/tour/TourProvider";
 import { explainError } from "./errors";
 import { createConfiguredGateway } from "./gateway-factory";
+import { createBrowserMockGateway } from "./mock-gateway";
 import type { ClaimWorkspace, DemoContext, DemoRole, DemoScenario, DemoSession, JejakAction, JejakGateway, PortfolioView } from "./gateway";
 
 type ProviderValue = {
@@ -13,6 +15,7 @@ type ProviderValue = {
 const Context = createContext<ProviderValue | null>(null);
 
 export function JejakProvider({ children }: { children: React.ReactNode }) {
+  const { active: tourActive } = useTour();
   const gatewayRef = useRef<JejakGateway | undefined>(undefined);
   const [context, setContext] = useState<DemoContext | null>(null);
   const [session, setSession] = useState<DemoSession | null>(null);
@@ -28,16 +31,20 @@ export function JejakProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
-        const gateway = createConfiguredGateway(); gatewayRef.current = gateway;
+        // The guided tour always runs on the deterministic mock gateway, even when
+        // the app is otherwise configured for the live Testnet transport.
+        const gateway = tourActive ? createBrowserMockGateway() : createConfiguredGateway();
+        gatewayRef.current = gateway;
         const restored = await gateway.getDemoContext();
-        if (!cancelled) { setContext(restored); if (restored) await loadWorkspace(gateway, restored.claimId); }
+        if (!cancelled) { setContext(restored); setSession(null); if (restored) await loadWorkspace(gateway, restored.claimId); else { setWorkspace(null); setPortfolio(null); } }
       } catch (cause) { if (!cancelled) setError(explainError(cause)); }
       finally { if (!cancelled) setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [loadWorkspace]);
+  }, [loadWorkspace, tourActive]);
 
   const reset = useCallback(async (scenario: DemoScenario) => {
     const gateway = gatewayRef.current; if (!gateway) return;

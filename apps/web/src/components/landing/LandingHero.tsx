@@ -5,6 +5,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useTour } from "@/components/tour/TourProvider";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -12,6 +13,7 @@ const HEADLINE = "Get your marketplace earnings sooner";
 
 export function LandingHero() {
   const root = useRef<HTMLElement>(null);
+  const tour = useTour();
 
   useGSAP(
     () => {
@@ -65,9 +67,15 @@ export function LandingHero() {
             evidence before every decision and no crypto knowledge required.
           </p>
           <div className="hero-actions">
-            <Link href="/seller/onboarding" className="button button-primary">Try it as a Seller</Link>
-            <Link href="#how-it-works" className="button button-secondary">See how it works</Link>
+            <button type="button" className="button button-primary" onClick={() => tour.openSelect()}>
+              ▶ Mulai walkthrough terpandu
+            </button>
+            <Link href="/seller/onboarding" className="button button-secondary">Coba sistem langsung (Testnet)</Link>
           </div>
+          <p className="hero-actions-note">
+            <strong>Walkthrough</strong> memakai data contoh (mock) — tur terpandu tanpa transaksi nyata.{" "}
+            <strong>Coba sistem langsung</strong> memakai data nyata di Stellar Testnet (bukan mock).
+          </p>
         </div>
         <div className="hero-figures">
           <p className="hero-figures-title">Example values</p>

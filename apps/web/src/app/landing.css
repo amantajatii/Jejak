@@ -178,6 +178,15 @@ h1.hero-headline {
   flex-wrap: wrap;
   gap: 12px;
 }
+.hero-actions-note {
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  max-width: 46ch;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.72;
+}
 
 /* Hero example-values card */
 

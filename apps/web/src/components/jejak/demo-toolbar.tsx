@@ -12,7 +12,7 @@ export function DemoToolbar() {
     <div className="demo-toolbar-actions">
       <span>{context ? `${context.scenario} · ${context.claimId.slice(0, 8)}` : "Choose a scenario"}</span>
       {(["HAPPY", "ADVERSE"] as DemoScenario[]).map((scenario) => <button key={scenario} type="button" disabled={loading} onClick={() => setConfirmScenario(scenario)}>Reset {scenario.toLowerCase()}</button>)}
-      {context && <label><span>Active role</span><select aria-label="Active demo role" value={session?.role ?? ""} onChange={(event) => switchRole(event.target.value as DemoRole)}><option value="" disabled>Choose role</option>{context.availableRoles.map((role) => <option value={role} key={role}>{ROLE_LABELS[role]}</option>)}</select></label>}
+      {context && <label data-tour="role-switch"><span>Active role</span><select aria-label="Active demo role" value={session?.role ?? ""} onChange={(event) => switchRole(event.target.value as DemoRole)}><option value="" disabled>Choose role</option>{context.availableRoles.map((role) => <option value={role} key={role}>{ROLE_LABELS[role]}</option>)}</select></label>}
       <button type="button" disabled={!context || loading} onClick={refresh}>Refresh status</button>
     </div>
     {confirmScenario && <div className="reset-confirmation" role="alertdialog" aria-labelledby="reset-title"><div><strong id="reset-title">Reset {confirmScenario.toLowerCase()} demo?</strong><span>This replaces the current browser-session scenario.</span></div><button type="button" onClick={async () => { const scenario = confirmScenario; setConfirmScenario(null); await reset(scenario); }}>Confirm reset</button><button type="button" onClick={() => setConfirmScenario(null)}>Cancel</button></div>}
