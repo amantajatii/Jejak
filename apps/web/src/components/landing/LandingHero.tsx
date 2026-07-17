@@ -68,7 +68,7 @@ export function LandingHero() {
           </p>
           <div className="hero-actions">
             <button type="button" className="button button-primary" onClick={() => tour.openSelect()}>
-              ▶ Mulai walkthrough terpandu
+              Mulai walkthrough terpandu
             </button>
             <Link href="/seller/onboarding" className="button button-secondary">Coba sistem langsung (Testnet)</Link>
           </div>

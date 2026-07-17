@@ -31,7 +31,7 @@ const HAPPY: TourStep[] = [
     id: "intro",
     route: () => "/",
     title: "Selamat datang di walkthrough Jejak",
-    body: "Tur ini memakai DATA CONTOH (mock) — tidak ada transaksi nyata. Kita akan mendanai earnings marketplace dari awal sampai lunas, berpindah peran sesuai kebutuhan. Klik Lanjut.",
+    body: "Walkthrough ini memakai data contoh tanpa transaksi nyata. Anda akan meninjau proses pendanaan marketplace dari awal hingga lunas dan berganti peran sesuai kebutuhan.",
     gate: { kind: "observe" },
   },
   {
@@ -103,7 +103,7 @@ const HAPPY: TourStep[] = [
     route: (claimId) => institution(claimId),
     target: "op-action",
     title: "Verifikasi bukti kontrol",
-    body: "Centang konfirmasi lalu klik Verify control. Klaim berpindah ELIGIBLE → CONTROLLED — jalur pembayaran kini terkendali.",
+    body: "Centang konfirmasi lalu pilih Verify control. Status klaim berubah dari ELIGIBLE menjadi CONTROLLED setelah jalur pembayaran terverifikasi.",
     gate: { kind: "action", until: (w) => w.claim.state === "CONTROLLED", hint: "Centang konfirmasi lalu klik Verify control." },
   },
   {
@@ -159,7 +159,7 @@ const HAPPY: TourStep[] = [
     route: (claimId) => institution(claimId),
     target: "op-action",
     title: "Jalankan waterfall",
-    body: "Centang konfirmasi lalu klik Run waterfall. Kas dialokasikan sesuai urutan: fee → principal senior → fee pembiayaan → residual seller.",
+    body: "Centang konfirmasi lalu pilih Run waterfall. Kas dialokasikan secara berurutan untuk biaya, pokok senior, biaya pembiayaan, dan residual seller.",
     gate: { kind: "action", until: (w) => w.claim.state === "CLOSED", hint: "Centang konfirmasi lalu klik Run waterfall." },
   },
   {
@@ -176,8 +176,8 @@ const ADVERSE: TourStep[] = [
   {
     id: "intro",
     route: () => "/",
-    title: "Skenario Adverse (data contoh)",
-    body: "Skenario ini dimulai dari klaim yang SUDAH didanai (FUNDED), lalu terjadi lonjakan refund. Kita lihat bagaimana Jejak menyerap kerugian secara terkendali. Klik Lanjut.",
+    title: "Skenario resolusi dengan data contoh",
+    body: "Skenario dimulai dari klaim berstatus FUNDED sebelum terjadi lonjakan refund. Anda akan meninjau cara Jejak menangani penurunan nilai dan mengalokasikan kerugian secara terkendali.",
     gate: { kind: "observe" },
   },
   {
@@ -225,7 +225,7 @@ const ADVERSE: TourStep[] = [
     route: (claimId) => institution(claimId),
     target: "op-action",
     title: "Jalankan waterfall (kas kurang)",
-    body: "Centang konfirmasi lalu klik Run waterfall. Kas tidak cukup → klaim jatuh ke SHORTFALL. Perhatikan first-loss mulai terpakai.",
+    body: "Centang konfirmasi lalu pilih Run waterfall. Karena kas tidak mencukupi, klaim berubah menjadi SHORTFALL dan first-loss mulai digunakan.",
     gate: { kind: "action", until: (w) => w.claim.state === "SHORTFALL", hint: "Centang konfirmasi lalu klik Run waterfall." },
   },
   {
@@ -265,7 +265,7 @@ const ADVERSE: TourStep[] = [
     route: (claimId, w) => `/resolution/${w?.claim.id ?? ""}`,
     target: "claim-financials",
     title: "Selesai — CLOSED_WITH_LOSS",
-    body: "Kerugian diserap sesuai urutan first-loss → senior, dengan model error tercatat. Bandingkan dengan happy path untuk melihat perbedaan alokasi.",
+    body: "Kerugian diserap oleh first-loss sebelum dialokasikan ke senior dan seluruh hasilnya tercatat. Bandingkan dengan alur pendanaan untuk melihat perbedaan alokasi.",
     gate: { kind: "observe" },
   },
 ];

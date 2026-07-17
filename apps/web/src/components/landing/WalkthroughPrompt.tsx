@@ -1,59 +1,71 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useTour } from "@/components/tour/TourProvider";
-
-const DISMISS_KEY = "jejak.walkthrough.gate.dismissed.v1";
+import { useDialogFocus } from "@/components/tour/use-dialog-focus";
 
 /**
- * A blocking welcome gate on the landing page. It dims and blocks the whole page
- * so first-time visitors must decide: start the guided walkthrough, or explicitly
- * choose to continue without it. Only after a choice does the page become usable.
- * The choice is remembered so returning visitors are not blocked again.
+ * A blocking welcome gate on the landing page. It appears on each page entry and
+ * requires an explicit choice before the landing page becomes interactive.
  */
 export function WalkthroughPrompt() {
   const tour = useTour();
-  const [mounted, setMounted] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const primaryActionRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => setMounted(true), []);
+  useDialogFocus({
+    active: open && !tour.active,
+    containerRef: dialogRef,
+    initialFocusRef: primaryActionRef,
+  });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(DISMISS_KEY)) return;
-    setOpen(true);
-  }, []);
+  function start() { setOpen(false); tour.openSelect(); }
+  function skip() { setOpen(false); }
 
-  // Never overlap the tour itself.
-  useEffect(() => {
-    if (tour.active) setOpen(false);
-  }, [tour.active]);
-
-  function remember() {
-    try { window.localStorage.setItem(DISMISS_KEY, "1"); } catch { /* ignore */ }
-  }
-  function start() { remember(); setOpen(false); tour.openSelect(); }
-  function skip() { remember(); setOpen(false); }
-
-  if (!mounted || !open) return null;
+  if (!open || tour.active) return null;
 
   return (
-    <div className="wt-gate" role="dialog" aria-modal="true" aria-label="Rekomendasi walkthrough terpandu">
-      <div className="wt-gate-backdrop" />
-      <div className="wt-gate-card">
-        <p className="wt-gate-eyebrow">▶ Selamat datang di Jejak</p>
-        <h2 className="wt-gate-title">Mulai dengan walkthrough terpandu</h2>
-        <p className="wt-gate-body">
-          Jejak punya beberapa peran dan alur yang saling terkait. Cara tercepat memahaminya adalah lewat
-          tur terpandu singkat — memakai data contoh, tanpa transaksi nyata. Kami sangat menyarankan kamu
-          memulainya lebih dulu sebelum menjelajah sendiri.
-        </p>
+    <div className="wt-gate">
+      <div className="wt-gate-backdrop" aria-hidden="true" />
+      <div
+        ref={dialogRef}
+        className="wt-gate-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="walkthrough-gate-title"
+        aria-describedby="walkthrough-gate-description"
+      >
+        <div className="wt-gate-copy">
+          <p className="wt-gate-kicker">Cara terbaik memahami Jejak</p>
+          <h2 id="walkthrough-gate-title" className="wt-gate-title">
+            Ikuti alur pendanaan dari awal hingga selesai
+          </h2>
+          <p id="walkthrough-gate-description" className="wt-gate-body">
+            Walkthrough terpandu menunjukkan hubungan antarperan, keputusan
+            risiko, dan pencatatan Stellar melalui data contoh. Tidak ada
+            transaksi nyata selama walkthrough.
+          </p>
+        </div>
+        <div className="wt-gate-summary" aria-label="Ringkasan walkthrough">
+          <span>Dua skenario</span>
+          <span>Langkah terpandu</span>
+          <span>Data contoh</span>
+        </div>
         <div className="wt-gate-actions">
-          <button type="button" className="button button-primary wt-gate-primary" onClick={start}>
-            ▶ Mulai walkthrough terpandu
+          <button
+            ref={primaryActionRef}
+            type="button"
+            className="wt-gate-primary"
+            onClick={start}
+          >
+            Mulai walkthrough
           </button>
+          <p className="wt-gate-recommendation">
+            Direkomendasikan sebelum menjelajahi sistem secara mandiri.
+          </p>
           <button type="button" className="wt-gate-skip" onClick={skip}>
-            Tidak, lanjut tanpa walkthrough
+            Jelajahi tanpa walkthrough
           </button>
         </div>
       </div>
