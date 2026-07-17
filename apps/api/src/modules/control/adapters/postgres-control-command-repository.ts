@@ -49,6 +49,12 @@ export class PostgresControlCommandRepository implements ControlCommandRepositor
       await database.insert(controlEvidence).values({
         canonicalPayload: evidence,
         claimId: input.claimId,
+        documentSecretRef: sandboxEvidenceDocumentReference({
+          claimId: input.claimId,
+          evidenceHash: input.evidenceHash,
+          mode: this.options.mode,
+          tenantId: input.context.tenantId,
+        }),
         evidenceHash: input.evidenceHash,
         id: evidence.id,
         status: evidence.status,
@@ -226,3 +232,18 @@ function object(value: unknown): JsonObject {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? value as JsonObject : {};
 }
 
+/**
+ * The HTTP demo submits only a digest, not document bytes. In SANDBOX mode we
+ * persist a non-secret, deterministic evidence locator so downstream funding
+ * can distinguish a completed demo handoff from missing evidence. Production
+ * must always receive its reference from the durable evidence lifecycle.
+ */
+export function sandboxEvidenceDocumentReference(input: {
+  claimId: string;
+  evidenceHash: string;
+  mode: "SANDBOX" | "PRODUCTION";
+  tenantId: string;
+}): string | undefined {
+  if (input.mode !== "SANDBOX") return undefined;
+  return `evidence://sandbox/${input.tenantId}/${input.claimId}/${input.evidenceHash}`;
+}

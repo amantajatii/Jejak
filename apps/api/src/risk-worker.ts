@@ -1,15 +1,12 @@
 import { resolve } from "node:path";
 
-import { v7 as uuidv7 } from "uuid";
-
 import { loadConfig } from "./config/env.js";
 import { createDatabase } from "./db/client.js";
 import {
-  createPostgresRiskEvaluationWorker,
+  createRiskWorkerRuntime,
   EnvironmentSellerSubjectHasher,
   HttpRiskEvaluationClient,
-  PostgresRiskWorkQueue,
-  RiskWorkerRuntime,
+  runRiskWorkerLoop,
 } from "./modules/risk/index.js";
 
 for (const candidate of [resolve(process.cwd(), ".env"), resolve(process.cwd(), "../../.env")]) {
@@ -40,37 +37,31 @@ const stop = () => abort.abort();
 process.once("SIGINT", stop);
 process.once("SIGTERM", stop);
 
-const actorBase = {
-  actorId: config.riskWorkerActorId,
-  requestId: uuidv7(),
-  tenantId: config.riskWorkerTenantId,
-};
 const client = new HttpRiskEvaluationClient({
   baseUrl: config.riskServiceUrl,
   workloadToken: config.riskServiceToken ?? "",
 });
 const sellerSubjectHasher = new EnvironmentSellerSubjectHasher(config.riskSellerSubjectSaltRef);
-const runtime = new RiskWorkerRuntime(
-  {
-    queue: new PostgresRiskWorkQueue(database.db, actorBase),
-    workerFor: (requestId) => createPostgresRiskEvaluationWorker({
-      actorContext: { ...actorBase, requestId },
-      client,
-      database: database.db,
-      maxAttempts: 3,
-      policyVersion: config.riskPolicyVersion ?? "sandbox-policy-v1",
-      sellerSubjectHasher,
-      sleep: async (attempt) => new Promise((resolveSleep) => setTimeout(resolveSleep, attempt * 250)),
-    }),
-  },
-  {
-    batchSize: config.riskWorkerBatchSize ?? 10,
-    pollMs: config.riskWorkerPollMs ?? 1_000,
-  },
-);
+const runtime = createRiskWorkerRuntime({
+  actorId: config.riskWorkerActorId,
+  batchSize: config.riskWorkerBatchSize ?? 10,
+  client,
+  database: database.db,
+  policyVersion: config.riskPolicyVersion ?? "sandbox-policy-v1",
+  pollMs: config.riskWorkerPollMs ?? 1_000,
+  sellerSubjectHasher,
+  tenantId: config.riskWorkerTenantId,
+});
 
 try {
-  await runtime.runUntilAborted(config.riskWorkerTenantId, abort.signal);
+  await runRiskWorkerLoop(
+    runtime,
+    {
+      pollMs: config.riskWorkerPollMs ?? 1_000,
+      tenantId: config.riskWorkerTenantId,
+    },
+    abort.signal,
+  );
 } finally {
   await database.close();
 }

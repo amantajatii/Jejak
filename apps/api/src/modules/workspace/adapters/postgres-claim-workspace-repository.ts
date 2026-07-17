@@ -72,7 +72,15 @@ export class PostgresClaimWorkspaceRepository implements ClaimWorkspaceRepositor
       const stellarReferences = stellarRows.map((row) => stellarReference(row, this.config));
       const referenceByHash = new Map(stellarRows.map((row, index) => [row.transactionHash, String(stellarReferences[index]?.id)]));
       return {
-        allowedActions: allowedWorkspaceActions(parts.claim.state, input.role),
+        allowedActions: allowedWorkspaceActions({
+          ...(parts.controlEvidence === null
+            ? {}
+            : { controlStatus: parts.controlEvidence.status }),
+          ...(parts.latestOffer === null ? {} : { offerStatus: parts.latestOffer.status }),
+          role: input.role,
+          sandbox: this.config.sandbox,
+          state: parts.claim.state,
+        }),
         chainMode: this.config.chainMode,
         checkpoint: { asOf: claimRow.updatedAt.toISOString(), version: claimRow.version },
         ...parts,
@@ -139,15 +147,38 @@ function waterfallView(row: typeof waterfallResults.$inferSelect) {
 }
 
 function pendingOperation(row: typeof operations.$inferSelect): Record<string, unknown> | null {
-  const kinds = new Set(["RISK_EVALUATION", "JCC_REGISTRATION", "CONTROL_VERIFICATION", "ASSET_ISSUANCE", "FACILITY_FUNDING", "SETTLEMENT_RECONCILIATION", "WATERFALL", "REDEMPTION", "RESOLUTION"]);
-  if (!kinds.has(row.kind)) return null;
+  const actionByKind: Record<string, string> = {
+    ASSET_ISSUANCE: "ISSUE",
+    CONTROL_VERIFICATION: "VERIFY_CONTROL",
+    FACILITY_FUNDING: "FUND",
+    JCC_REGISTRATION: "ANALYZE",
+    REDEMPTION: "RUN_WATERFALL",
+    RESOLUTION: "OPEN_RESOLUTION",
+    RISK_EVALUATION: "ANALYZE",
+    SETTLEMENT_RECONCILIATION: "RECORD_SETTLEMENT",
+    WATERFALL: "RUN_WATERFALL",
+  };
+  const action = actionByKind[row.kind];
+  if (action === undefined) return null;
   const statusMap: Record<string, string> = {
-    QUEUED: "QUEUED", RUNNING: "PROCESSING", PROCESSING: "PROCESSING", PENDING: "AWAITING_PARTNER", PREPARED: "AWAITING_CHAIN_RECONCILIATION",
-    SUBMITTING: "AWAITING_CHAIN_RECONCILIATION", SUBMITTED: "AWAITING_CHAIN_RECONCILIATION", PENDING_RECONCILIATION: "AWAITING_CHAIN_RECONCILIATION",
+    QUEUED: "AWAITING_PARTNER", RUNNING: "AWAITING_PARTNER", PROCESSING: "AWAITING_PARTNER", PENDING: "AWAITING_PARTNER", PREPARED: "AWAITING_CHAIN",
+    SUBMITTING: "AWAITING_CHAIN", SUBMITTED: "AWAITING_CHAIN", PENDING_RECONCILIATION: "AWAITING_CHAIN",
     RETRYABLE_FAILURE: "RETRYABLE_FAILURE", FAILED: "TERMINAL_FAILURE", MANUAL_REVIEW: "MANUAL_REVIEW",
   };
-  const status = statusMap[row.status] ?? "PROCESSING";
-  return { id: row.id, kind: row.kind, reasonCodes: [], retryable: status === "RETRYABLE_FAILURE", status, submittedAt: row.createdAt.toISOString(), updatedAt: row.updatedAt.toISOString() };
+  const stage = statusMap[row.status] ?? "AWAITING_PARTNER";
+  return {
+    action,
+    id: row.id,
+    message: stage === "AWAITING_CHAIN"
+      ? "Stellar Testnet submission is awaiting indexed reconciliation."
+      : stage === "RETRYABLE_FAILURE"
+        ? "The operation can be retried with the same command identity."
+        : stage === "MANUAL_REVIEW" || stage === "TERMINAL_FAILURE"
+          ? "The operation requires review before continuing."
+          : "The authoritative backend operation is processing.",
+    retryable: stage === "RETRYABLE_FAILURE",
+    stage: stage === "TERMINAL_FAILURE" ? "MANUAL_REVIEW" : stage,
+  };
 }
 
 function stellarReference(row: typeof chainEvents.$inferSelect, config: ClaimWorkspaceConfiguration): Record<string, unknown> {
@@ -184,4 +215,3 @@ function moneyObject(value: unknown): { amountMinor: string; currency: string; i
 }
 function actorRole(value: unknown): ActorRole { return ["SELLER", "ORIGINATOR", "ISSUER", "FACILITY", "SERVICER", "RESOLVER", "ORACLE", "ADMIN", "SYSTEM"].includes(String(value)) ? value as ActorRole : "SYSTEM"; }
 function safeLabel(value: string): string { return value.replace(/[._-]+/g, " ").replace(/\b\w/g, (character) => character.toUpperCase()).slice(0, 120); }
-

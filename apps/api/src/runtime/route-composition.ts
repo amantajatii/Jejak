@@ -72,6 +72,7 @@ export function createRuntimeRouteDependencies(input: {
   evidenceMaximumBytes: number;
   evidenceStorage: EvidenceStorage;
   demoIdentityIssuer?: DemoIdentityIssuer;
+  onDemoReset?: (context: Awaited<ReturnType<DemoResetService["reset"]>>) => Promise<void> | void;
   partnerMode: "SANDBOX" | "PRODUCTION";
   resolution?: {
     reconciliation: ResolutionReconciliationPort;
@@ -105,7 +106,11 @@ export function createRuntimeRouteDependencies(input: {
       demoDependencies: {
         createSession: ({ role, tenantId }) => input.demoIdentityIssuer!.issue({ role, tenantId }),
         getContext: (tenantId) => demoReset.getContext(tenantId),
-        reset: (request) => demoReset.reset(request),
+        reset: async (request) => {
+          const context = await demoReset.reset(request);
+          await input.onDemoReset?.(context);
+          return context;
+        },
       },
     }),
     claimDependencies: {

@@ -39,7 +39,20 @@ export function JejakProvider({ children }: { children: React.ReactNode }) {
         const gateway = tourActive ? createBrowserMockGateway() : createConfiguredGateway();
         gatewayRef.current = gateway;
         const restored = await gateway.getDemoContext();
-        if (!cancelled) { setContext(restored); setSession(null); if (restored) await loadWorkspace(gateway, restored.claimId); else { setWorkspace(null); setPortfolio(null); } }
+        if (!cancelled) {
+          setContext(restored);
+          setSession(null);
+          if (restored) {
+            if (restored.activeRole) {
+              const restoredSession = await gateway.createDemoSession(restored.activeRole);
+              if (!cancelled) setSession(restoredSession);
+            }
+            await loadWorkspace(gateway, restored.claimId);
+          } else {
+            setWorkspace(null);
+            setPortfolio(null);
+          }
+        }
       } catch (cause) { if (!cancelled) setError(explainError(cause)); }
       finally { if (!cancelled) setLoading(false); }
     })();

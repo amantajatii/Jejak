@@ -42,7 +42,8 @@ const [
   { loadPromotedTestnetManifest },
   { GeneratedStellarStateReader },
   { createChainIndexer, runChainIndexerLoop, StellarRpcAdapter },
-  { buildJccRouteDependencies },
+  { buildJccRuntime },
+  { createRiskWorkerRuntime, EnvironmentSellerSubjectHasher, HttpRiskEvaluationClient, runRiskWorkerLoop },
 ] = await Promise.all([
   import("./app.js"),
   import("./auth/jwt-verifier.js"),
@@ -57,6 +58,7 @@ const [
   import("./modules/chain/adapters/generated-state-reader.js"),
   import("./modules/chain/index.js"),
   import("./runtime/jcc-runtime.js"),
+  import("./modules/risk/index.js"),
 ]);
 const evidenceConfig = loadEvidenceModuleConfig();
 const evidenceStorage = createEvidenceStorage(evidenceConfig);
@@ -145,6 +147,9 @@ if (
   });
 }
 
+let startDemoWorkers:
+  | ((context: { actors: Array<{ actorId: string; role: string }>; tenantId: string }) => void)
+  | undefined;
 const routeDependencies =
   database === undefined || verifier === undefined
     ? undefined
@@ -154,22 +159,24 @@ const routeDependencies =
         ...(demoIdentityIssuer === undefined ? {} : { demoIdentityIssuer }),
         evidenceMaximumBytes: evidenceConfig.policy.maxBytes,
         evidenceStorage,
+        onDemoReset: (context) => startDemoWorkers?.(context),
         partnerMode: config.partnerMode,
         verifier,
         ...(workspaceConfiguration === undefined ? {} : { workspace: workspaceConfiguration }),
       });
 // ORACLE-only JCC registration route: composed only when TESTNET + the oracle
 // secret + signer + verifier registry are all configured (otherwise unregistered).
-const jccDependencies =
+const jccRuntime =
   database === undefined || verifier === undefined || promotedManifest === undefined
     ? undefined
-    : await buildJccRouteDependencies({
+    : await buildJccRuntime({
         config,
         database: database.db,
         manifest: promotedManifest,
         secretReferences,
         verifier,
       });
+const jccDependencies = jccRuntime?.routeDependencies;
 
 const app = await buildApp({
   config,
@@ -195,24 +202,30 @@ const app = await buildApp({
 });
 registerTelemetryHooks(app);
 
-// In-process chain indexer: hosts the Testnet event indexer inside the API web
-// service when a dedicated background worker is not available. Enabled only when
-// TESTNET is configured and a worker identity is supplied. Runs detached and is
-// stopped on shutdown; failures never take the API down.
+// Free-tier hosting cannot run dedicated background workers. The API owns one
+// isolated indexer/risk loop per configured or freshly reset demo tenant.
 const indexerAbort = new AbortController();
-if (
-  config.chainMode === "TESTNET" &&
-  promotedManifest !== undefined &&
-  database !== undefined &&
-  config.stellarRpcUrl !== undefined &&
-  config.stellarSourcePublicKey !== undefined &&
-  config.chainIndexerTenantId !== undefined &&
-  config.chainIndexerActorId !== undefined
-) {
+const riskWorkerAbort = new AbortController();
+const indexedTenants = new Set<string>();
+const riskTenants = new Set<string>();
+const riskServiceToken = config.riskServiceToken ?? (
+  config.riskServiceTokenReference === undefined
+    ? undefined
+    : await secretReferences.resolve(config.riskServiceTokenReference)
+);
+
+function startIndexerForTenant(tenantId: string, workerActorId: string): void {
+  if (
+    indexedTenants.has(tenantId) ||
+    config.chainMode !== "TESTNET" ||
+    promotedManifest === undefined ||
+    database === undefined ||
+    config.stellarRpcUrl === undefined ||
+    config.stellarSourcePublicKey === undefined
+  ) return;
+  indexedTenants.add(tenantId);
   const rpcUrl = config.stellarRpcUrl;
   const publicKey = config.stellarSourcePublicKey;
-  const tenantId = config.chainIndexerTenantId;
-  const workerActorId = config.chainIndexerActorId;
   const manifest = promotedManifest;
   const db = database.db;
   void (async () => {
@@ -229,21 +242,79 @@ if (
         rpcUrl,
         workerActorId,
       });
-      app.log.info({ initialLedger, latestLedger }, "Starting in-process chain indexer");
+      app.log.info({ initialLedger, latestLedger, tenantId }, "Starting in-process chain indexer");
       await runChainIndexerLoop(
         indexer,
-        { pollMs: config.chainIndexerPollMs ?? 5_000, tenantId, log: (message) => app.log.info(`[chain-indexer] ${message}`) },
+        { pollMs: config.chainIndexerPollMs ?? 5_000, tenantId, log: (message) => app.log.info({ message, tenantId }, "Chain indexer cycle completed") },
         indexerAbort.signal,
       );
-    } catch (error) {
-      app.log.error({ err: error }, "In-process chain indexer failed to start");
+    } catch {
+      indexedTenants.delete(tenantId);
+      app.log.error({ tenantId }, "In-process chain indexer failed to start");
     }
   })();
 }
 
+function startRiskWorkerForTenant(tenantId: string, actorId: string): void {
+  if (
+    riskTenants.has(tenantId) ||
+    database === undefined ||
+    jccRuntime === undefined ||
+    config.riskServiceUrl === undefined ||
+    riskServiceToken === undefined ||
+    config.riskSellerSubjectSaltRef === undefined
+  ) return;
+  riskTenants.add(tenantId);
+  const runtime = createRiskWorkerRuntime({
+    actorId,
+    batchSize: config.riskWorkerBatchSize ?? 10,
+    client: new HttpRiskEvaluationClient({
+      baseUrl: config.riskServiceUrl,
+      workloadToken: riskServiceToken,
+    }),
+    database: database.db,
+    policyVersion: config.riskPolicyVersion ?? "sandbox-policy-v1",
+    pollMs: config.riskWorkerPollMs ?? 1_000,
+    postEvaluationFor: (actorContext) =>
+      jccRuntime.createRiskPostEvaluation(actorContext),
+    sellerSubjectHasher: new EnvironmentSellerSubjectHasher(
+      config.riskSellerSubjectSaltRef,
+    ),
+    tenantId,
+  });
+  app.log.info({ tenantId }, "Starting in-process risk worker");
+  void runRiskWorkerLoop(
+    runtime,
+    {
+      log: (summary) => app.log.info({ ...summary }, "Risk worker cycle completed"),
+      logCycleFailure: () => app.log.error("Risk worker cycle failed"),
+      pollMs: config.riskWorkerPollMs ?? 1_000,
+      tenantId,
+    },
+    riskWorkerAbort.signal,
+  );
+}
+
+if (config.chainIndexerTenantId !== undefined && config.chainIndexerActorId !== undefined) {
+  startIndexerForTenant(config.chainIndexerTenantId, config.chainIndexerActorId);
+}
+if (config.riskWorkerTenantId !== undefined && config.riskWorkerActorId !== undefined) {
+  startRiskWorkerForTenant(config.riskWorkerTenantId, config.riskWorkerActorId);
+}
+startDemoWorkers = (context) => {
+  const systemActor = context.actors.find((actor) => actor.role === "SYSTEM");
+  if (systemActor === undefined) {
+    app.log.error({ tenantId: context.tenantId }, "Demo reset did not provide a SYSTEM worker identity");
+    return;
+  }
+  startIndexerForTenant(context.tenantId, systemActor.actorId);
+  startRiskWorkerForTenant(context.tenantId, systemActor.actorId);
+};
+
 const shutdown = async (signal: string): Promise<void> => {
   app.log.info({ signal }, "Shutting down API");
   indexerAbort.abort();
+  riskWorkerAbort.abort();
   await app.close();
   await database?.close();
   await evidenceStorage.close();

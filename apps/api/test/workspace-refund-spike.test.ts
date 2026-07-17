@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { InMemoryRefundSpikeRepository } from "../src/modules/demo/in-memory-refund-spike-repository.js";
 import { RefundSpikeService } from "../src/modules/demo/refund-spike-service.js";
-import { ClaimWorkspaceService, safeWorkspaceParts, type ClaimWorkspaceProjection, type ClaimWorkspaceRepository } from "../src/modules/workspace/index.js";
+import { allowedWorkspaceActions, ClaimWorkspaceService, safeWorkspaceParts, type ClaimWorkspaceProjection, type ClaimWorkspaceRepository } from "../src/modules/workspace/index.js";
 
 const now = "2026-07-15T12:00:00Z";
 const money = { amountMinor: "64000000", currency: "USDC", scale: 6 };
@@ -48,6 +48,15 @@ describe("ClaimWorkspace safety and checkpoints", () => {
     expect(restored).toEqual(first);
     expect(restored.checkpoint.version).toBe(restored.claim.version);
     expect(restored.checkpoint.asOf).toBe(restored.claim.updatedAt);
+  });
+
+  it("exposes only frontend-canonical actions for the active role and state", () => {
+    expect(allowedWorkspaceActions({ role: "ORIGINATOR", sandbox: true, state: "DRAFT" })).toEqual(["ANALYZE"]);
+    expect(allowedWorkspaceActions({ role: "ORIGINATOR", sandbox: true, state: "ELIGIBLE" })).toEqual(["CREATE_OFFER"]);
+    expect(allowedWorkspaceActions({ offerStatus: "OFFERED", role: "SELLER", sandbox: true, state: "ELIGIBLE" })).toEqual(["ACCEPT_OFFER"]);
+    expect(allowedWorkspaceActions({ offerStatus: "ACCEPTED", role: "ORIGINATOR", sandbox: true, state: "ELIGIBLE" })).toEqual(["VERIFY_CONTROL"]);
+    expect(allowedWorkspaceActions({ role: "ORIGINATOR", sandbox: true, state: "FUNDED" })).toEqual(["REFUND_SPIKE"]);
+    expect(allowedWorkspaceActions({ role: "SERVICER", sandbox: true, state: "FUNDED" })).toEqual(["RECORD_SETTLEMENT", "RUN_WATERFALL"]);
   });
 });
 

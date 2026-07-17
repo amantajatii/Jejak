@@ -94,13 +94,36 @@ export function safeWorkspaceParts(input: {
   };
 }
 
-export function allowedWorkspaceActions(state: string, role: ActorRole): string[] {
+export function allowedWorkspaceActions(input: {
+  controlStatus?: string;
+  offerStatus?: string;
+  role: ActorRole;
+  sandbox: boolean;
+  state: string;
+}): string[] {
   const actions: string[] = [];
+  const { controlStatus, offerStatus, role, sandbox, state } = input;
   if (role === "ORIGINATOR" && state === "DRAFT") actions.push("ANALYZE");
-  if (role === "ORIGINATOR" && state === "ELIGIBLE") actions.push("CREATE_OFFER", "SUBMIT_CONTROL_EVIDENCE", "DECIDE_CONTROL");
+  if (role === "ORIGINATOR" && state === "ELIGIBLE" && offerStatus === undefined) {
+    actions.push("CREATE_OFFER");
+  }
+  if (role === "SELLER" && state === "ELIGIBLE" && offerStatus === "OFFERED") {
+    actions.push("ACCEPT_OFFER");
+  }
+  if (
+    role === "ORIGINATOR" &&
+    state === "ELIGIBLE" &&
+    offerStatus === "ACCEPTED" &&
+    controlStatus !== "VERIFIED"
+  ) {
+    actions.push("VERIFY_CONTROL");
+  }
   if (role === "ISSUER" && state === "CONTROLLED") actions.push("ISSUE");
   if (role === "FACILITY" && state === "ISSUED") actions.push("FUND");
-  if (role === "SERVICER" && ["FUNDED", "SETTLING", "SHORTFALL"].includes(state)) actions.push("RECORD_SETTLEMENT", "RECONCILE", "EXECUTE_WATERFALL");
+  if (role === "SERVICER" && ["FUNDED", "SETTLING", "SHORTFALL"].includes(state)) {
+    actions.push("RECORD_SETTLEMENT", "RUN_WATERFALL");
+  }
+  if (sandbox && role === "ORIGINATOR" && state === "FUNDED") actions.push("REFUND_SPIKE");
   if (role === "ADMIN" && !["CLOSED", "CLOSED_WITH_LOSS", "REJECTED", "CANCELLED"].includes(state)) actions.push("PAUSE");
   if (role === "RESOLVER" && state === "SHORTFALL") actions.push("OPEN_RESOLUTION");
   if (role === "RESOLVER" && state === "RESOLUTION") actions.push("RECORD_RECOVERY", "CLOSE_RESOLUTION");
@@ -112,4 +135,3 @@ function nullable<T>(schema: z.ZodType<T>, value: unknown): T | null {
   const result = schema.safeParse(value);
   return result.success ? result.data : null;
 }
-

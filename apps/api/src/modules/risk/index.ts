@@ -11,6 +11,7 @@ export * from "./adapters/postgres-pending-projection.js";
 export * from "./application/orchestrate-evaluation.js";
 export * from "./application/postgres-composition.js";
 export * from "./application/risk-evaluation-worker.js";
+export * from "./application/run-risk-worker.js";
 export * from "./application/worker-runtime.js";
 export * from "./application/jcc-lifecycle.js";
 export * from "./domain/evaluation.js";

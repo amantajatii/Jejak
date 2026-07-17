@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   EnvironmentSellerSubjectHasher,
   RiskWorkerRuntime,
+  runRiskWorkerLoop,
 } from "../src/modules/risk/index.js";
 
 const tenantId = "0198a5ea-7c9c-7000-8000-000000000001";
@@ -36,5 +37,28 @@ describe("executable RISK worker runtime", () => {
     await expect(hasher.hashSellerSubject({ ...base, tenantId: `${tenantId}-other` })).resolves.not.toBe(first);
     expect(() => new EnvironmentSellerSubjectHasher("inline-secret", source)).toThrow("env://");
     expect(JSON.stringify(hasher)).not.toContain(source.RISK_SUBJECT_SALT);
+  });
+
+  it("isolates a failed poll cycle and continues until aborted", async () => {
+    const abort = new AbortController();
+    const runOnce = vi.fn()
+      .mockRejectedValueOnce(new Error("database detail must not be logged"))
+      .mockImplementationOnce(async () => {
+        abort.abort();
+        return { attempted: 1, failed: 0, succeeded: 1 };
+      });
+    const log = vi.fn();
+    const logCycleFailure = vi.fn();
+
+    await runRiskWorkerLoop(
+      { runOnce },
+      { log, logCycleFailure, pollMs: 1, tenantId },
+      abort.signal,
+    );
+
+    expect(runOnce).toHaveBeenCalledTimes(2);
+    expect(logCycleFailure).toHaveBeenCalledTimes(1);
+    expect(logCycleFailure).not.toHaveBeenCalledWith(expect.stringContaining("database detail"));
+    expect(log).toHaveBeenCalledWith({ attempted: 1, failed: 0, succeeded: 1 });
   });
 });

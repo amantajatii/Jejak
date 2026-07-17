@@ -1,8 +1,8 @@
-import { addMoney, subtractMoney } from "./money";
+import { addMoney, subtractMoney } from "./money.ts";
 import type {
   ChainMode, ClaimState, ClaimWorkspace, DemoContext, DemoRole, DemoScenario, DemoSession,
   JejakAction, Money, OfferView, PendingOperation, PortfolioView, SafeStellarReference, TimelineItem,
-} from "./gateway";
+} from "./gateway.ts";
 
 /**
  * Transforms the backend API's response shapes into the frontend's demo-console

@@ -5,6 +5,7 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     appVersion: "test",
     allowTestProjectMutation: false,
     host: "127.0.0.1",
+    jccTtlMs: 86_400_000,
     logLevel: "silent",
     nodeEnv: "test",
     otelEnabled: false,

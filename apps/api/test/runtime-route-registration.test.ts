@@ -25,6 +25,7 @@ const config: AppConfig = {
   allowTestProjectMutation: false,
   appVersion: "test",
   host: "127.0.0.1",
+  jccTtlMs: 86_400_000,
   logLevel: "silent",
   nodeEnv: "test",
   otelEnabled: false,

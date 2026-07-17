@@ -1,7 +1,27 @@
 export type DemoScenario = "HAPPY" | "ADVERSE";
 export type ChainMode = "STELLAR TESTNET" | "DETERMINISTIC SANDBOX";
 export type DemoRole = "SELLER" | "ORIGINATOR" | "ISSUER" | "FACILITY" | "SERVICER" | "RESOLVER";
-export type ClaimState = "DRAFT" | "ELIGIBLE" | "CONTROLLED" | "ISSUED" | "FUNDED" | "SETTLING" | "SHORTFALL" | "RESOLUTION" | "CLOSED" | "CLOSED_WITH_LOSS";
+export type ClaimState =
+  | "DRAFT"
+  | "DATA_PENDING"
+  | "ANALYZED"
+  | "ELIGIBLE"
+  | "CONTROLLED"
+  | "ISSUED"
+  | "FUNDED"
+  | "SETTLING"
+  | "REPAID"
+  | "REDEEMED"
+  | "CLOSED"
+  | "SHORTFALL"
+  | "RESOLUTION"
+  | "CLOSED_WITH_LOSS"
+  | "REVIEW"
+  | "REJECTED"
+  | "FROZEN"
+  | "SUSPENDED"
+  | "PAUSED"
+  | "CANCELLED";
 
 export type Money = { amountMinor: string; currency: string; scale: number; issuer?: string };
 export type OperationStage = "SUBMITTED" | "AWAITING_PARTNER" | "AWAITING_CHAIN" | "RECONCILED" | "RETRYABLE_FAILURE" | "MANUAL_REVIEW";
