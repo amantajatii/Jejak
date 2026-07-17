@@ -35,6 +35,14 @@ const HAPPY: TourStep[] = [
     gate: { kind: "observe" },
   },
   {
+    id: "portfolio-overview",
+    route: () => "/institution/portfolio",
+    target: "portfolio-claims",
+    title: "Tinjauan Portfolio",
+    body: "Daftar seluruh klaim aktif beserta Gross unsettled dan Eligible Settlement Value (ESV). Tinjau posisi arus kas marketplace dan status klaim sebelum analisis lebih lanjut.",
+    gate: { kind: "observe" },
+  },
+  {
     id: "financials",
     route: (claimId) => institution(claimId),
     target: "claim-financials",
@@ -178,6 +186,14 @@ const ADVERSE: TourStep[] = [
     route: () => "/",
     title: "Skenario resolusi dengan data contoh",
     body: "Skenario dimulai dari klaim berstatus FUNDED sebelum terjadi lonjakan refund. Anda akan meninjau cara Jejak menangani penurunan nilai dan mengalokasikan kerugian secara terkendali.",
+    gate: { kind: "observe" },
+  },
+  {
+    id: "portfolio-overview",
+    route: () => "/institution/portfolio",
+    target: "portfolio-claims",
+    title: "Tinjauan Portfolio (Adverse)",
+    body: "Pada portfolio overview, pilih klaim yang sudah didanai (FUNDED). Skenario ini memperlihatkan dampak lonjakan refund terhadap nilai tertagih dan proteksi first-loss.",
     gate: { kind: "observe" },
   },
   {
