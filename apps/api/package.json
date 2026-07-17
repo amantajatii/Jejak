@@ -16,6 +16,7 @@
     "openapi:generate": "node scripts/generate-openapi.mjs",
     "openapi:lint": "redocly lint openapi/openapi.yaml --config redocly.yaml",
     "chain:indexer": "node --env-file-if-exists=../../.env --import tsx src/chain-indexer.ts",
+    "seed:eligible-claim": "node --env-file-if-exists=../../.env --import tsx scripts/seed-eligible-claim.ts",
     "risk:worker": "node --env-file-if-exists=../../.env --import tsx src/risk-worker.ts",
     "start": "node --env-file-if-exists=../../.env dist/server.js",
     "test": "vitest run",
