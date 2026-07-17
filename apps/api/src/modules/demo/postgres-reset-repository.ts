@@ -80,8 +80,21 @@ export class PostgresDemoResetRepository implements DemoResetRepository {
         return existing.responseBody as DemoContext;
       }
 
-      await this.#seedIdentities(database, input.plan);
-      await this.#seedPrerequisites(database, input.plan);
+      // The demo tenant/claim ids are deterministic per scenario, so a repeat
+      // reset (new idempotency key, same scenario) would re-seed the same rows
+      // and violate uniqueness. Seed only when the claim does not already exist;
+      // otherwise return the current authoritative state.
+      const [alreadySeeded] = await database.select({ state: claims.state, version: claims.version })
+        .from(claims)
+        .where(and(eq(claims.tenantId, input.plan.context.tenantId), eq(claims.id, input.plan.context.claimId)))
+        .limit(1);
+      if (alreadySeeded === undefined) {
+        await this.#seedIdentities(database, input.plan);
+        await this.#seedPrerequisites(database, input.plan);
+      }
+      const seededContext: DemoContext = alreadySeeded === undefined
+        ? input.plan.context
+        : { ...input.plan.context, claimState: alreadySeeded.state, version: alreadySeeded.version };
 
       await database.insert(auditEvents).values({
         action: "demo.prerequisites.seeded",
@@ -116,8 +129,8 @@ export class PostgresDemoResetRepository implements DemoResetRepository {
       });
       await database.update(idempotencyRecords).set({
         completedAt: now(),
-        responseBody: input.plan.context,
-        responseHash: canonicalHash(input.plan.context),
+        responseBody: seededContext,
+        responseHash: canonicalHash(seededContext),
         responseStatus: 200,
       }).where(and(
         eq(idempotencyRecords.tenantId, input.plan.context.tenantId),
@@ -126,7 +139,7 @@ export class PostgresDemoResetRepository implements DemoResetRepository {
         eq(idempotencyRecords.idempotencyKey, input.idempotencyKey),
         eq(idempotencyRecords.payloadHash, input.payloadHash),
       ));
-      return input.plan.context;
+      return seededContext;
     });
   }
 
