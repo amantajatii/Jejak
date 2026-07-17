@@ -2,118 +2,199 @@
   "schema_version": 1,
   "status": "promoted",
   "sandbox_only": true,
-  "network": {"name": "testnet", "passphrase": "Test SDF Network ; September 2015", "protocol": 27},
-  "source": {"branch": "agent/sc", "implementation_git_commit": "4ffbcc2"},
-  "toolchain": {"stellar_cli": "27.0.0", "soroban_sdk": "27.0.0", "rustc": "1.95.0", "cargo": "1.95.0"},
-  "deployer": {"alias": "jejak-deployer", "address": "GB4HSH72SE27IVSQV6O5WDV4UJCYFR5WVZEW2CEF3GWDWF46GPMO5MFU"},
+  "network": {
+    "name": "testnet",
+    "passphrase": "Test SDF Network ; September 2015",
+    "protocol": 27
+  },
+  "previous_promoted_manifest": "contracts/soroban/deployments/testnet-legacy-20260715.json",
+  "deployer": {
+    "alias": "jejak-deployer",
+    "address": "GB4HSH72SE27IVSQV6O5WDV4UJCYFR5WVZEW2CEF3GWDWF46GPMO5MFU"
+  },
   "roles": {
-    "jclaim_issuer": "GAVC2STTMZWVNIOKS5GCHHH5QJSJTNXMEY2BKV6SP4NNFJ7NGNYOMXSN",
-    "jusd_issuer": "GAOSWMVGOBDPGOSXHULX55PAOJDWWMPANK72OKQYHV2S3Z6VH5CLJ5OI",
-    "oracle": "GAIBWSMMLZYWKVWB7UJMCQ2CPUXHOMSYCK2WCVELZ4TDSNP5JT5OV3EC",
-    "originator_control": "GCTTIK4U3SCRAQ3EMZWVUF5UARAKREKGL6WUQLM5KECJYLNWB2FDIQD2",
-    "issuer_operator": "GAXUTPA3KVCELRMP6UHU35UQFJNGLV4HN4OD3ZIO3VTD2QP6YA7J5LXX",
-    "facility_operator": "GALUGOPJGPNGSGBENDE5IJIE2RGOYWSKSEOYJUAGOEPP2KDF6EWA45YT",
-    "treasury_holder": "GC7NDQSTF5XEVLUEUWPWM5O67KVHJSPJFU6AH6TAICWY67MUDKWD7BJR",
-    "servicer": "GDBEFFT3EAFLPPY6DIRGHM55UZUIF4TONO3FVL3SK4CKXIN5U5QYTBCY",
-    "resolver": "GDBL32UL6DVYCCCATZZFFAVUEJG533HLASIUZMBCTOJKKMCZ4YBUCR6X",
-    "pauser": "GD5WEAZ2SI7Y3YOM7FTMHE6PB4IQ4GUBHQEW54QDYNKOHLQESJHUUN7A",
-    "seller_payout": "GB4MVVTD3DKF4F7E5LG7WOPEWY4JBARUEHQQCZ3EPQNF2ZTNPEAMJO6W",
-    "unauthorized_test_actor": "GCROYWXC2FFGS3PO7YROJIEHZB4J5A5G5O4TRDDJZT665U3E7YHDBN56"
+    "oracle": "GCMPWP3KSRUO3IPHHOA6JGYA7CYVZBKOYWF44USTDAEYVQ425TJKH7AV",
+    "jclaim_issuer": "GA4QHBUCFBBYGIKQ72ZI23J2FJ2UIHP2MUUF44OGFIUHGSLW553KD5NW",
+    "jusd_issuer": "GBYZVNFV56IGXQWPAANI4PQXWNS27GWITWYHVCLARKAZZ34IQBCLR3BB",
+    "originator_control": "GDT5YI562J4KV7V5PKJWJELFTFVUEMOPTAPGGRQRLZMJEGPH2TBPXONO",
+    "issuer_operator": "GDBVUTRPXP6TUQKIKWB4QASJP5VDUB22C7YYLJV6A7TR2DTITJNUSQSS",
+    "facility_operator": "GDKNYCAWYN35U26S23D52HMGIOAQWZ6QCRRRQFW7VRZZBY7JJBAPKCAO",
+    "treasury_holder": "GANYW5GQNAYS4SAVXCTVDR7YE3AZOU56737YQ2NJFAMWTY4OUTCRQFT5",
+    "servicer": "GAP6L7WC7HMEDNGVZYZNWU4OK7HXC3TNYKD3BBDJYBDANM66X4ZKDETX",
+    "resolver": "GC2SP3CZJ2WKWBPITYPJ5JCOBIJORLVRTCCLPJ7FDV5JSSYZQRXUYMGZ",
+    "pauser": "GBYYO3EHLPHNTULNRR7JKI2N3O5UIDLL4RXBSO3MZFHA332772OADQYN",
+    "seller_payout": "GCV6YBZ5X4QP2B5ZLUOWBM2F7YNET4C42FESQTKJ52AOEZPLXDH7SAFJ"
+  },
+  "contracts": {
+    "eligibility_registry": {
+      "id": "CCIUEPL4SGUOO5XSFIIJXF2PN42OKAM2YFZCDQ23OLSAZWCNBB6MZGRT",
+      "wasm_hash": "f64f31edffd73e138ca0728b0d47b91ba2c2389152aae05351f1707f204e9b3b"
+    },
+    "claim_lifecycle": {
+      "id": "CBRUWJYPAHXZISGS7UIOUUOBI55RX2JKM2IMXAGE5DENCNH35RMKJRSQ",
+      "wasm_hash": "bd6f04057207e48d3ddfa853f2bc938742241d8ba80eadfb421f756a1849c65a"
+    },
+    "asset_controller": {
+      "id": "CCXEFTDRNY2P66YIR5UNSVEDBIAHTWDB4QIHR2DUC7E5ICKRATFVYBYL",
+      "wasm_hash": "1ca70c4f76c7d86983bded645e3c34ce7fa55160c50bdc846d7824c68e8e6c4e"
+    },
+    "facility": {
+      "id": "CCJDYGQSOJQ3LSTZ7TS2QYCMKJDINZP5RU23ZFYEBHUBPX4LWUXO5RAU",
+      "wasm_hash": "b116c023b385d96f1d89201bf98663ce67b5f585b65af2ba6f30b9f228d849e3"
+    },
+    "servicing_waterfall": {
+      "id": "CCMPB4UGHKAUB5IDHDH5METNQU5XBF7AQSYHNYCFLNOYEL7DVV6CNOU6",
+      "wasm_hash": "f1d1df11125516479f88ce78ab5cd6d289d1340867b6798f29047c4990c8c740"
+    },
+    "resolution_manager": {
+      "id": "CCFQ66BJN7CSURJYD2CI67E3FG3CPSLIBKE33W52TRSOSWLBNL65ATMB",
+      "wasm_hash": "95b70ad38055c56275b904c594eeee29cb4704e33893655de094982f5bdd11f2"
+    }
   },
   "assets": {
     "JCLAIM": {
-      "issuer": "GAVC2STTMZWVNIOKS5GCHHH5QJSJTNXMEY2BKV6SP4NNFJ7NGNYOMXSN",
-      "sac_id": "CC2VMNLFMQJCWMVKBAWNOO7RRQEHW7UPLWJBPHIXCZ76AA5JET2XDC4X",
+      "issuer": "GA4QHBUCFBBYGIKQ72ZI23J2FJ2UIHP2MUUF44OGFIUHGSLW553KD5NW",
+      "sac_id": "CDKXHDL2AP4NKTZPMM574FOTGC5KCYG3A2OUCZLZHUIW5ICOD6D23RTJ",
       "authorization_required": true,
       "authorization_revocable": true,
       "clawback_enabled": true,
-      "sac_admin": "CB2WNWAKLCIV6BF6THPKUX5IXA7EOJUBQ3IIQ3MJXF7MBDUUKKCKUEDM"
+      "sac_admin": "CCXEFTDRNY2P66YIR5UNSVEDBIAHTWDB4QIHR2DUC7E5ICKRATFVYBYL"
     },
     "JUSD": {
-      "issuer": "GAOSWMVGOBDPGOSXHULX55PAOJDWWMPANK72OKQYHV2S3Z6VH5CLJ5OI",
-      "sac_id": "CC7N7M72RNJSMONXLG5N644LORVCVSVREASPQPNWVDOEVNC2GMCS7P2D",
+      "issuer": "GBYZVNFV56IGXQWPAANI4PQXWNS27GWITWYHVCLARKAZZ34IQBCLR3BB",
+      "sac_id": "CC3YERAOSFAJW3VUHY5U46T2Q4AVNZU2GZMPGRHZW44EWNCJIQ3MXBFT",
       "label": "SANDBOX TESTNET FUNDING ASSET"
     }
   },
-  "contracts": {
-    "eligibility_registry": {"id": "CCI6OI2YEFUD7YPHMCZ3DXFFHICJ6HRT5S6NRLP3LR3BG25KEPCCFGUY", "wasm_hash": "c2831cbecf9593860293e130be44a7321f10f61508db892158cd6889010a13c8"},
-    "claim_lifecycle": {"id": "CDHBG3Y3FQS6KWKD3QAEZA7WMUWKR7N4QHRDWKJDF2DQWKOD6MJNJ67B", "wasm_hash": "058a9f27ed2b6c1307e9ca47abcd0a40c43ef65224c3826996b3fca835262ad4"},
-    "asset_controller": {"id": "CB2WNWAKLCIV6BF6THPKUX5IXA7EOJUBQ3IIQ3MJXF7MBDUUKKCKUEDM", "wasm_hash": "32c22fb925d6fcd0846193df5d7f1cac4d1705799e4028f4d35eca452c38e677"},
-    "facility": {"id": "CADRQLNFZKIMXESXK3X5KXZPTTUXZPV2NPGYGPJVT4A4FSSUPIEB7MOB", "wasm_hash": "b533c73f8fd5c0c9572ee6671e69e2f399e5a40dbd817c926a9c0207134f41b6"},
-    "servicing_waterfall": {"id": "CDR4L6AXUXALOF2VFE7OIBHL4LXDIRPBPLQYHQZTOCOZTZQ47EW5LPEZ", "wasm_hash": "c796deea3be5912cf2e684cdfadd40b967954c67e3a027e113de056462d8a714"},
-    "resolution_manager": {"id": "CANTRNFGQSWKLJ36Q4XT5KEVP5IHSXUTMAH235SUS7JEFORD26EIHNVD", "wasm_hash": "63a5f5c490972c8f511325bb7aeb4fe0e4799aafb7a929771af8138df8135b67"}
+  "configuration": {
+    "facility_id": "1111111111111111111111111111111111111111111111111111111111111111",
+    "limits": {
+      "max_total_principal": "10000000000",
+      "max_position_principal": "1000000000",
+      "max_first_loss": "200000000",
+      "servicing_fee_cap": "100000000",
+      "financing_fee_cap": "100000000"
+    },
+    "initial_jusd_liquidity": {
+      "treasury_holder": "10000000000",
+      "servicer": "10000000000"
+    }
   },
   "transactions": {
-    "asset_setup": {
-      "jclaim_flags": "5826fdd43d3e1128473d33b8a82b0b0a5502a087b1e93b145d5ef48c09b47713",
-      "jclaim_sac_deploy": "ffd7df7c1c5b364c9074988cc7cdd4cc582af17796e394f8df0be27bcacad1aa",
-      "jusd_sac_deploy": "165a9449471c6d436731234819ef2544644903041bd36219b6b41dc168adf571",
-      "jclaim_admin_delegation": "6f2491d2c35c41e4cb746f95c7cef69b83b180ec070d1a0314954bf70a45f9ca",
-      "holder_authorization": "3f0bf03d6233e83b6cf75d470bf621332c74d1e5273e0753fe2fc372370fc456"
-    },
-    "deploy": {
-      "eligibility_registry": "2177ab24884fe212ab399b34d81ff3a4f9d0345ddc3bbbb6110feec9ef62aa32",
-      "claim_lifecycle": "10717e04faf6086ca75f4094f158f4ab8f91bd582b5f58b8c0a9e685c4143d16",
-      "asset_controller": "29f8b8dceba45e038d8c52c33553aea50ee339350d1ac1dae5e8ca099baa63fb",
-      "facility": "b881c300ef443060531422683412d3a6c005e5990b6ce6569f3bdd6c344d7fbf",
-      "servicing_waterfall": "e4628be5680912861ced3242dd5c33c0d0f3bcfdfeddfffac41ec41755391514",
-      "resolution_manager": "abdbc2205ffd0baaac9c2e5e4b7dd1583fdd54fa2b283207f817a32857693474"
-    },
-    "initialize": {
-      "eligibility_registry": "ee8031259a5583d46b824b5a6bf7f186f6eac082f1fe0a1452312fa1431eee03",
-      "claim_lifecycle": "0b8e19406da1be254dccad933564faa9277003967445dba10d315113c5500559",
-      "asset_controller": "0adade3d96672b55f7896f45c3be4804a9e8b55d0a5993aedda9d87ae1c26f4f",
-      "facility": "7ad28bc1b89a1c82b94fa8baf19f07ccd7b633567daaf30b35f0f51cff96e2f4",
-      "servicing_waterfall": "cd060532c51e6d4ff4e5d00d309d6f3230488cea3dcd958f921021bc46ad6220",
-      "resolution_manager": "0ac09467c050aa49bc8b4693758ed14a64c24668185f0489340f97d8e02c6129"
-    },
-    "upgrades": {
-      "asset_controller": "a42e3843052a234342fd833180954e7e8a9cc10c4a4a2c9925dc3fcc3176a9b3",
-      "claim_lifecycle": "e6c058eb8a6b9fa2e69b1411fc72557b0a6fee5d01a7dadac697a62904f438a7",
-      "facility": "361f8cda179d4a4a529690165f496519f67960549bacd7db4d8c80e35f853457",
-      "servicing_waterfall": "55488b3131b80cd73c0e09fe478b75f2d801acc6f9263d6b91bceefddcd69419"
-    },
+    "jclaim_flags": "83de4661e93201dd60b22cb369c0ecccd38fd964cb361d4cf093bfac650fa22d",
+    "jclaim_sac_deploy": "f90a55077fcbee88607e0afbbd8faf019d7e48eaa0191c7c35165a2531dfbe35",
+    "jusd_sac_deploy": "50fd4cf7b7acd4441c030a4df111d9584b8def65f4751540480696713d53c776",
+    "eligibility_upload": "3d7af0f7078b0b809ce9e53095633e5055bf18d1c232a1b3c7c0bb0521d72b58",
+    "eligibility_deploy": "2bd68e682accdfaaac24302696b8a010a5a2ca701dd9c6b5c6a4eac581090b8a",
+    "lifecycle_upload": "68a21e3630e8c374038e8112855706dd309a5ddf952ba01aeac5f5790d1a4a76",
+    "lifecycle_deploy": "5ace7b01989974ae6761e79f05704635e58cd52fb0dcee18aaac6487de1377ae",
+    "asset_controller_upload": "d90984bb87db5444b0a7e39eb2b65cb3b7318cb57cdc4de22b19a4b53f3eea86",
+    "asset_controller_deploy": "b0b8980a1889bf3cd34e828f36f52728d3cdd736d6ab4aee28edcb04598ba9eb",
+    "facility_upload": "24a430096c962052d1cf2e3652d777bf8d4e58f28ee1a32027747c7004fa34b7",
+    "facility_deploy": "7bfa8987be836da9c33f66111dd3d41b703d43f5e7778b52b04ca8196f210b72",
+    "waterfall_upload": "e50c8adc12411b9acddacc79322565ff4fa0c21d9f360c925e55740e73ec1c24",
+    "waterfall_deploy": "9038bcc5ac2da391fb0040e3a29583280243bdcc8be6cfa6cfd9f23f5f22d231",
+    "resolution_upload": "0ce5bd2e6d4cb29361a53f695d8e34deba3d2221129a18072c6f62e838ccfc2e",
+    "resolution_deploy": "fe7bb1c3b69293e6263954f3d8867d50aa8c0211124b32d34b0220c7f33c48c9",
+    "eligibility_initialize": "58fe58512fb6d7ebccb5de265ac48535e931eaa5ef9de4ec679e8fede8c6dac6",
+    "lifecycle_initialize": "1499e1195918bea023859406e21a60d4352bf31f78061440d69d565cb9b6ae50",
+    "asset_controller_initialize": "0e57ad4fec76d3596aa95c53b8ae98f1b58ce80e20ba73836376fd1f288a3064",
+    "jclaim_delegate_admin": "c44f326fb738b5fbc6316c4af2cf52e3b02e4937135d624996ee0097f796e633",
+    "facility_initialize": "6032120489e5ca784c974af56cb7f4e566f9fea2fcabb908532d764d42444590",
+    "waterfall_initialize": "e79395d8868c1e8db7fd8ea67ee1fd59af1db60f255fdbcabd229bc3fbca9d95",
+    "resolution_initialize": "50119139d307eddeccf8a1e618768ee5eb57bde966ee05d102d082e6dd93f3d2",
+    "facility_configure": "7f4e1390d7a3754e5a8c79d5e7f6745dc47e941bc320ff32cbf21cd86a03edbd",
+    "facility_authorize_servicer": "05a3de9919d9da6c501b1440319cfe72b6864a9b4f5d8ccb38c29cbb2f16366b",
+    "facility_set_waterfall": "96a3175db354c965eb8ff2877142aef08f1a6be8ce41d90072c550bffe22a39e",
+    "waterfall_authorize_servicer": "c7563fb65378ec086f73ab7d831e1305b41f139943655d2ad57e98dcef159d46",
+    "resolution_authorize_resolver": "fc04632531ecc195b106ae33a02f89f8d585977889207c77b44027d31e458deb",
+    "asset_controller_set_pauser": "05e2c71a33a955224785a7f18dc35c136fb801dae96196d594ff5bc6d73c4ea6",
+    "lifecycle_set_originator": "3e301923921d3fe47ce4b194406d860cd52a86ebc532286f5f9a5d9b402cfbc1",
+    "lifecycle_set_control": "e47d65c689f40366e212834f33fd4f42f7df7344ce5bc5003a83b455b2f75718",
+    "lifecycle_set_issuer": "64ee67d1a422b6e693f943962460135d8c619e6668cb3efc1a2283132171e259",
+    "lifecycle_set_facility": "da2df269d1267a0e3fa9bf426a3d6941b64ff0bd18c19a93b29572b75c9239e3",
+    "lifecycle_set_servicer": "ac23c2166ce048cc544d17675af036e5fbaaca156af5bec3e4d288296360bda4",
+    "lifecycle_set_resolver": "e9fdb726366ba220a5ca3d17da543b41c32255854ca262f120210c1cf90fc70b",
+    "lifecycle_set_pauser": "583b09d67660b849e03fc66d86ff1302ab0b90b28852f3c1c44b1f5ea894a27f",
+    "treasury_jclaim_trustline": "6094ff9b4d618c53b4ebe784a10c64434940d5ab823ff99fd31a714d84c998d9",
+    "treasury_jusd_trustline": "9c0fd8fbec117e119d42ebde0e4bec13fa0c739b911848f67cc94d53f532d4ec",
+    "seller_jusd_trustline": "4453bec392fbe82727f1446ebf46a9531a00dcc72a3ed5dcb17da2f699b2ab3e",
+    "servicer_jusd_trustline": "8e9fcbd7b4422c6680109f356116e0580eb64697ac388579d8792b905e7b3168",
+    "asset_controller_authorize_treasury": "62456fe30d65c5826354a57e88d2446ddd1468febbb44f3c10ded32c622310c6",
+    "treasury_jusd_liquidity": "e3459e636365f04958b448aed8987cf7c54c4e6a47d16b04da005ad42e208f63",
+    "servicer_jusd_liquidity": "0f7b58435b56fd253270663dd72b87c5fdca99a50fd3758955043fa13872ce1b",
     "happy_path": {
-      "attestation": "8ae440f5b17215be03d76a6e786b1d9a7dd99224bb81b93fae6f71109a94cdbe",
-      "claim": "03fe68420dd502f7496fa47f4de7c116bd3b64cd185a21a74ec1d6b3beef8aac",
-      "control": "28432e301f95598994fa124771d4264660f04add9764082522418cb86cb5e6ef",
-      "issue": "5e50988d6ef10def53050d8b4c2aad54c55e4e8aaf1862f7ee86161e08ba3888",
-      "fund": "7f68130e225945df4e96ffc86762ab10336558e7688bed09e0a31c9dd2538f36",
-      "settle": "ed89c142bcb34a947572dfd2031dbb5fd4799188b836f639ef0a6f7046e0e975",
-      "release_first_loss": "2e265bd1e29e6a7f025d77b080cb8ebcdbdf8d27e1883de0a63159329a1b48fd",
-      "redeem": "2f3b561c487271bce7cfc477e909cbc27c244c35c9c1d2d75c2c9c55e8983f6f",
-      "close": "40189feb45545f0952a7c8a678f0c45ae8b3470ccda1953c63baa54582730237"
+      "register_attestation": "dc60463d7f84869953030573c9df004d2c90de27164850a7f0cb03626c155ee9",
+      "create_claim": "fa52d191482924aa7980b050690805212896184f209dff02a1c55d3390b976c5",
+      "confirm_control": "0b4c8dc5b98fb505d40e5fa2f1b44f9484b6ff567ba087db0a862619c2cbbbb5",
+      "issue": "4f5f15a4a114d2feec5ca6eff0efe3ab9fb7aa7e77e8652ff7dacb82f8665f89",
+      "fund": "afa940d866c780b29347e54b1afa7e86fd89d34fa970c22a578ab19afce881d0",
+      "waterfall": "f75078fc2a666f1ef5b6042f15a07385e433e135e232146eb8067a2b92258141",
+      "redeem": "b818f042f2fd9dba4ea834810f0d66c72b25cbc6a105fe4fec9eaf617a0f9d74",
+      "close": "6e9cf2b3f6ee0034098ed6674963e9c5ed883058f9bb65cc98cbcdeaa59f5472",
+      "release_unused_first_loss": "9e7ed67ea1dbb3696a572bcd55c25ddd7384b9a3a5ded5ba79051029e2a5e7ee"
     },
     "adverse_path": {
-      "attestation": "2ecdbc6061720923f637dffc569bc0e33ceacaebd32e1e1ecca32f9eacc45745",
-      "claim": "29e63e1ed9c0ef14351235e562d9c36382bd1d2bc69d856038f0ad0a5895ae0c",
-      "control": "8738384fe73ef6eede931aca23e1a4c50ac57fb3aad9b8241b63e1829ab3d653",
-      "issue": "4d9634c1acc9fcbf04b587b4fbd0ee1a5a7a316d0b05366e50e68ce9bd3f5e64",
-      "fund": "03b8afe0c75c89ab90782099c7ef089168ea8f70af9f56a929a3ca7b9aae5156",
-      "settle": "6e4905388909858cff25d8583fe5056cd9c7ab9cc41cc83d96259bb07304fd15",
-      "open_resolution": "551aa4133dce22df346366d528b9c66d9ab9f4359e173bc432e6ffd216bd7f8d",
-      "close_resolution": "7e5045e04f191b9355b6d76e9c7a0607a650460a023ab61b34047f8c95e5d3bd",
-      "claim_clawback": "5d759426a1a765d2f083b7a931fa4c9b9a003217d34648502096394d29d14c15",
-      "position_reconciliation": "7092b23ad8490a9dd55307bd0c39b20127247ea09d4b49832bf4e6a942ab9587"
+      "register_attestation": "158c7893831d928ed235e74f9dd9f501793420afd3585c3e5df4bb415b37e936",
+      "create_claim": "99afe0e25924a11fcd9da78501cdd5cc898aa5c06c2711e7cabeffe2884f7270",
+      "confirm_control": "5fd126e43f3c21e99929a40a92bcdcffba8ca63e37a996ef3d500914614e4fa0",
+      "issue": "0c29496620f18c0a58d0a883cc83c3e515ba43cf10150d3694a722662e29b8d9",
+      "fund": "0edd03a05a0082b59e55c782e73ee89da083e18917ad584ca285a2a0ea235063",
+      "waterfall": "c34e1e0e291136fa975a1dddf958eaf427db9dd07086a4db647a7f077900dd3e",
+      "open_resolution": "badfad5e12dd981601c82b82562c396ed483942190e298fe345ac39c651502e4",
+      "record_recovery": "f035998b4d12468cf3c199f78706b11b9e8ff96db375faf5cb5c5f4fb745b2fd",
+      "close_resolution": "cf091658b56e41601f8df0dea202529032fc664bb3148295f661aac3a18491dd",
+      "claim_clawback": "1cccd8aad26773c71d669214b4b0877433877d362122aab99b833b9979525582"
     },
-    "compensation_recovery": {
-      "pause": "45f98ed0ebe2ed3b46290602262319e0ab6d70bc2d50ce5fc49bd40b146adce2",
-      "redeem": "9d1561c44c4f71abbdf3827c20589d257b8584d678015cb84ab6b2261e5a1fbe",
-      "resume_controlled": "3f52d09a3dc710a8ba628861ba9709358311a14742bc4600f8b53217e81bde80"
+    "guard_cleanup": {
+      "register_revoked_attestation": "e0b4a625f2e6ac8f5b8923dd2641ba641f785957d75838b330b8b7161841481f",
+      "revoke_attestation": "25bc4618036475584d06b7f823cba0a45e345b6a91ee7f02cb80cc0fd9551831",
+      "register_cleanup_attestation": "aa7ae41422958fd3dba1b9f349560fb08e396cb4cc3507c581d0424e5c21dcbb",
+      "create_cleanup_claim": "1bdb54e2f77706bf4820969821a601ee03c17f5948cfb374c1eec22336b27501",
+      "confirm_cleanup_control": "67e6aeec528e6b0d18c90f1bc288c98ed412a1df0e07b05037e3ed566f3cfafb",
+      "pause_asset_controller": "81b42f6fd67ef7e50387d6c33fc3d728db35715d41ed8c66aad2195816db6172",
+      "resume_asset_controller": "93e890b56327ba3c22e991edfecf2de1cd34cc217903c5c329091f3e7e064484",
+      "issue_cleanup_claim": "f2ad0e97ee0cb675b57318dfbb58b9faf964d02195b82eebcddbec5a732b15f0",
+      "fund_cleanup_claim": "dd814625ea63e95769cc627e9fa77918592715aa56e303a346ad94c462ce6e1e",
+      "waterfall_cleanup_claim": "fc314666ba43af387497d0060d2636f710e91d6e77c00ea3910d58ff226d60ac",
+      "redeem_cleanup_claim": "d2d3a3bda2e6a33f4b4b6ef923ae069db491138bcf592cc15d69bcf62e56afb7",
+      "close_cleanup_claim": "e395f345d6d4091f965bfc654b9d4ea86fb645e071595bbabd3d7b86c11bdf03"
     }
   },
   "smoke_tests": {
+    "verified_on": "2026-07-17",
+    "happy_claim_key": "1717171717171717171717171717171717171717171717171717171717171717",
     "happy_claim_state": "CLOSED",
+    "adverse_claim_key": "1818181818181818181818181818181818181818181818181818181818181818",
     "adverse_claim_state": "CLOSED_WITH_LOSS",
     "adverse_senior_loss": "40000000",
+    "adverse_recovered": "0",
     "happy_unused_first_loss_returned": "100000000",
     "jclaim_treasury_balance": "0",
     "facility_jusd_balance": "0",
     "waterfall_jusd_balance": "0",
     "adverse_position_active": false,
     "adverse_position_outstanding": "0",
-    "rejections": {"expired_attestation": 8, "revoked_attestation": 8, "unauthorized_issue": 3, "unauthorized_fund": 3, "unauthorized_resolution": 3, "waterfall_replay": 18, "duplicate_claim": 11, "issue_while_paused": 16},
+    "cleanup_claim_state": "CLOSED",
+    "cleanup_claim_issuance": "0",
+    "jusd_conservation": {
+      "initial_total": "20000000000",
+      "treasury_holder": "9860000000",
+      "servicer": "8699000000",
+      "seller_payout": "1441000000",
+      "contracts": "0",
+      "final_total": "20000000000"
+    },
+    "rejections": {
+      "expired_attestation": 8,
+      "revoked_attestation": 8,
+      "unauthorized_issue": 3,
+      "unauthorized_fund": 3,
+      "unauthorized_resolution": 3,
+      "waterfall_replay": 18,
+      "duplicate_claim": 11,
+      "issue_while_paused": 16
+    },
     "result": "PASS"
-  },
-  "secret_export_command": "stellar keys secret jejak-deployer"
+  }
 }

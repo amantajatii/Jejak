@@ -1,4 +1,4 @@
-# Testnet role wallets (Stage 2 prep)
+# Testnet role wallets (promoted Stage 2 stack)
 
 Fresh Stellar Testnet wallets generated + friendbot-funded for the 11 Jejak roles.
 Secrets live in the local `stellar` CLI keystore under these aliases — export with
@@ -18,12 +18,16 @@ Secrets live in the local `stellar` CLI keystore under these aliases — export 
 | pauser | `jejak-pauser-api` | `GBYYO3EHLPHNTULNRR7JKI2N3O5UIDLL4RXBSO3MZFHA332772OADQYN` |
 | seller_payout | `jejak-seller-payout-api` | `GCV6YBZ5X4QP2B5ZLUOWBM2F7YNET4C42FESQTKJ52AOEZPLXDH7SAFJ` |
 
-## Stage 2 note (on-chain actions)
+## Promotion status
 
-The deployed Soroban contracts were initialized by the SC workstream with the role
-addresses in `contracts/soroban/deployments/testnet.json` (different from the ones
-above). To have the API sign on-chain lifecycle actions (issue/fund/settle/waterfall/
-resolution) as these new wallets, each contract's configurable role must be pointed
-at the new address via its admin setter (like the oracle `set_oracle` we already ran).
-The `oracle` above is already enabled on the eligibility registry. The rest still need
-their contracts reconfigured before use — that is Stage 2 work.
+All addresses above are wired into the parallel Testnet stack promoted on
+2026-07-17. The authoritative public IDs and complete smoke evidence are in
+`contracts/soroban/deployments/testnet.json`; the prior stack is retained at
+`contracts/soroban/deployments/testnet-legacy-20260715.json` for configuration
+rollback. No legacy contract or asset was deleted.
+
+The promoted stack passed complete HAPPY and ADVERSE lifecycle paths plus rejection
+assertions for expired/revoked attestations, unauthorized issue/fund/resolution,
+waterfall replay, duplicate claims, and issue during pause. API deployments still
+need role-specific secret references in their hosting environment; only public
+addresses belong in this document.
