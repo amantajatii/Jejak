@@ -1,6 +1,9 @@
 import type { JejakClient } from "@jejak/api-client";
 import { JejakGatewayError } from "./errors.ts";
 import type { ActionCommand, ActionReceipt, ClaimWorkspace, DemoContext, DemoRole, DemoScenario, DemoSession, JejakGateway, PortfolioView } from "./gateway.ts";
+import { mapDemoContext, mapDemoSession, mapPortfolio, mapWorkspace } from "./api-mapping.ts";
+
+function randomKey() { return globalThis.crypto?.randomUUID?.() ?? `key-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
 
 type ApiEnvelope<T> = { data: T; meta: { requestId: string; timestamp: string; sandbox: boolean } };
 type ApiErrorEnvelope = { error?: { code?: string; message?: string; retryable?: boolean } };
@@ -30,36 +33,57 @@ export class ApiJejakGateway implements JejakGateway {
     return payload.data;
   }
 
-  async getDemoContext() {
-    const context = await this.request<DemoContext>("/v1/demo/context");
-    this.tenantId = context.tenantId;
-    return context;
+  async getDemoContext(): Promise<DemoContext | null> {
+    // The API's demo context is tenant-scoped; on a fresh load there is no tenant
+    // yet, so there is nothing to restore — the caller starts with scenario select.
+    if (!this.tenantId) return null;
+    try {
+      const be = await this.request<Parameters<typeof mapDemoContext>[0]>("/v1/demo/context");
+      const context = mapDemoContext(be);
+      this.tenantId = context.tenantId;
+      return context;
+    } catch {
+      return null;
+    }
   }
 
   async resetDemo(scenario: DemoScenario, idempotencyKey: string) {
-    const context = await this.request<DemoContext>("/v1/demo/reset", { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: JSON.stringify({ scenario }) });
+    const be = await this.request<Parameters<typeof mapDemoContext>[0]>("/v1/demo/reset", {
+      method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: JSON.stringify({ scenario }),
+    });
+    const context = mapDemoContext(be);
     this.tenantId = context.tenantId;
     return context;
   }
 
   async createDemoSession(role: DemoRole): Promise<DemoSession> {
-    const session = await this.request<DemoSession>("/v1/demo/sessions", { method: "POST", body: JSON.stringify({ role, tenantId: this.tenantId }) });
+    const be = await this.request<Parameters<typeof mapDemoSession>[0]>("/v1/demo/sessions", {
+      method: "POST", headers: { "Idempotency-Key": randomKey() }, body: JSON.stringify({ role }),
+    });
+    const session = mapDemoSession(be);
     this.accessToken = session.accessToken;
     return session;
   }
 
-  getWorkspace(claimId: string) { return this.request<ClaimWorkspace>(`/v1/claims/${encodeURIComponent(claimId)}/workspace`); }
-  getPortfolio() { return this.request<PortfolioView>("/v1/portfolio/summary"); }
+  async getWorkspace(claimId: string): Promise<ClaimWorkspace> {
+    return mapWorkspace(await this.request<Parameters<typeof mapWorkspace>[0]>(`/v1/claims/${encodeURIComponent(claimId)}/workspace`));
+  }
 
-  async performAction(command: ActionCommand): Promise<ActionReceipt> {
-    const headers = { "Idempotency-Key": command.idempotencyKey, "If-Match": String(command.expectedVersion) };
-    if (command.action === "REFUND_SPIKE") return this.request<ActionReceipt>(`/v1/demo/claims/${encodeURIComponent(command.claimId)}/refund-spike`, { method: "POST", headers, body: JSON.stringify({}) });
-    const pathByAction = {
-      ANALYZE: "analyze", CREATE_OFFER: "offers", ACCEPT_OFFER: "accept", VERIFY_CONTROL: "control-decision", ISSUE: "issue", FUND: "fund", RECORD_SETTLEMENT: "settlement", RUN_WATERFALL: "waterfall", OPEN_RESOLUTION: "resolution", RECORD_RECOVERY: "resolution", CLOSE_RESOLUTION: "resolution",
-    } as const;
-    const actionPath = pathByAction[command.action];
-    const path = command.action === "ACCEPT_OFFER" ? `/v1/offers/current/accept` : `/v1/claims/${encodeURIComponent(command.claimId)}/${actionPath}`;
-    return this.request<ActionReceipt>(path, { method: "POST", headers, body: JSON.stringify({ action: command.action, termsHash: command.termsHash }) });
+  async getPortfolio(): Promise<PortfolioView> {
+    return mapPortfolio(await this.request<Parameters<typeof mapPortfolio>[0]>("/v1/portfolio/summary"));
+  }
+
+  async performAction(_command: ActionCommand): Promise<ActionReceipt> {
+    // Live read views (context, session, workspace, portfolio) are reconciled to
+    // the API. Driving lifecycle actions against the live backend still needs the
+    // richer per-action inputs the API expects (offer terms, snapshot cutoffs) and
+    // the risk worker to reconcile analysis — that is the next live-mode milestone.
+    throw new JejakGatewayError(
+      "NOT_SUPPORTED",
+      "Aksi lifecycle live belum tersedia — tampilan data sudah live dari Testnet. Untuk mencoba seluruh alur, gunakan walkthrough terpandu.",
+      false,
+      501,
+    );
   }
 
   clearSession() { this.accessToken = null; }
