@@ -188,52 +188,55 @@ h1.hero-headline {
   opacity: 0.72;
 }
 
-/* Auto-appearing walkthrough nudge */
-.wt-prompt {
+/* Blocking walkthrough welcome gate */
+.wt-gate {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 1200;
-  width: min(340px, calc(100vw - 32px));
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.wt-gate-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 12, 20, 0.72);
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
+}
+.wt-gate-card {
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
   background: #ffffff;
   color: #10141c;
   border: 1px solid rgba(9, 12, 20, 0.1);
-  border-radius: 16px;
-  padding: 18px 20px 20px;
-  box-shadow: 0 20px 50px rgba(9, 12, 20, 0.28);
-  animation: wt-prompt-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(9, 12, 20, 0.5);
+  animation: wt-gate-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-@keyframes wt-prompt-in {
-  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+@keyframes wt-gate-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .wt-prompt { animation: none; }
+  .wt-gate-card { animation: none; }
 }
-.wt-prompt-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  border: none;
-  background: transparent;
-  color: #8a93a2;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-}
-.wt-prompt-close:hover { color: #10141c; }
-.wt-prompt-eyebrow {
-  margin: 0 0 6px;
+.wt-gate-eyebrow {
+  margin: 0 0 10px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: #1763ff;
 }
-.wt-prompt-title { margin: 0 0 6px; font-size: 17px; line-height: 1.25; }
-.wt-prompt-body { margin: 0 0 16px; font-size: 13px; line-height: 1.5; color: #47505e; }
-.wt-prompt-actions { display: flex; align-items: center; gap: 12px; }
-.wt-prompt-actions .button-primary { padding: 9px 16px; font-size: 14px; }
-.wt-prompt-later {
+.wt-gate-title { margin: 0 0 12px; font-size: 24px; line-height: 1.2; }
+.wt-gate-body { margin: 0 auto 24px; max-width: 42ch; font-size: 14px; line-height: 1.6; color: #47505e; }
+.wt-gate-actions { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.wt-gate-primary { padding: 12px 22px; font-size: 15px; }
+.wt-gate-skip {
   border: none;
   background: transparent;
   color: #5b6472;
@@ -241,16 +244,14 @@ h1.hero-headline {
   cursor: pointer;
   text-decoration: underline;
 }
-.wt-prompt-later:hover { color: #10141c; }
+.wt-gate-skip:hover { color: #10141c; }
 
 @media (prefers-color-scheme: dark) {
-  .wt-prompt { background: #161b24; color: #eef2f8; border-color: rgba(255, 255, 255, 0.1); }
-  .wt-prompt-title { color: #f4f7fb; }
-  .wt-prompt-body { color: #aab3c0; }
-  .wt-prompt-close { color: #8a93a2; }
-  .wt-prompt-close:hover { color: #eef2f8; }
-  .wt-prompt-later { color: #aab3c0; }
-  .wt-prompt-later:hover { color: #eef2f8; }
+  .wt-gate-card { background: #161b24; color: #eef2f8; border-color: rgba(255, 255, 255, 0.1); }
+  .wt-gate-title { color: #f4f7fb; }
+  .wt-gate-body { color: #aab3c0; }
+  .wt-gate-skip { color: #aab3c0; }
+  .wt-gate-skip:hover { color: #eef2f8; }
 }
 
 /* Hero example-values card */
