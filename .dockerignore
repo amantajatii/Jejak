@@ -1,6 +1,7 @@
 .git
 .github
 .venv
+**/.venv
 .env
 .env.*
 !.env.example
@@ -17,6 +18,5 @@ coverage
 .superstack
 apps/web
 packages/api-client
-packages/domain
 tests
 docs

@@ -11,6 +11,63 @@ import {
 } from "../../../db/schema/index.js";
 import type { AuditFilters, PortfolioMoneyRow, ReadModelRepository, SafeAuditEvent } from "../ports/read-model-repository.js";
 
+/** Raw query body, split out from PostgresReadModelRepository#getPortfolio for reuse/testing. */
+export async function queryPortfolio(database: JejakDatabase, input: { tenantId: string }) {
+  // These five aggregates are independent of one another, so they are dispatched
+  // concurrently rather than with five sequential `await`s, matching the pattern already
+  // used by PostgresClaimWorkspaceRepository#get.
+  const [money, states, [pending], [mismatched], [checkpoint]] = await Promise.all([
+        database.select({
+          approvedPrincipalBaseUnits: sum(chainPortfolioPositions.approvedPrincipalBaseUnits),
+          currency: chainPortfolioPositions.currency,
+          financingFeePaidBaseUnits: sum(chainPortfolioPositions.financingFeePaidBaseUnits),
+          firstLossConsumedBaseUnits: sum(chainPortfolioPositions.firstLossConsumedBaseUnits),
+          firstLossFundedBaseUnits: sum(chainPortfolioPositions.firstLossFundedBaseUnits),
+          issuedBaseUnits: sum(chainPortfolioPositions.issuedBaseUnits),
+          issuer: chainPortfolioPositions.issuer,
+          outstandingPrincipalBaseUnits: sum(chainPortfolioPositions.outstandingPrincipalBaseUnits),
+          principalBaseUnits: sum(chainPortfolioPositions.principalBaseUnits),
+          repaidBaseUnits: sum(chainPortfolioPositions.repaidBaseUnits),
+          scale: chainPortfolioPositions.scale,
+          seniorLossBaseUnits: sum(chainPortfolioPositions.seniorLossBaseUnits),
+          servicingFeePaidBaseUnits: sum(chainPortfolioPositions.servicingFeePaidBaseUnits),
+          settlementBaseUnits: sum(chainPortfolioPositions.settlementBaseUnits),
+        }).from(chainPortfolioPositions).where(eq(chainPortfolioPositions.tenantId, input.tenantId)).groupBy(
+          chainPortfolioPositions.currency,
+          chainPortfolioPositions.scale,
+          chainPortfolioPositions.issuer,
+        ).orderBy(chainPortfolioPositions.currency, chainPortfolioPositions.scale, chainPortfolioPositions.issuer),
+        database.select({ count: sql<number>`count(*)::integer`, state: chainPortfolioPositions.state })
+          .from(chainPortfolioPositions)
+          .where(eq(chainPortfolioPositions.tenantId, input.tenantId))
+          .groupBy(chainPortfolioPositions.state)
+          .orderBy(chainPortfolioPositions.state),
+        database.select({ count: sql<number>`count(*)::integer` }).from(chainSubmissions).where(and(
+          eq(chainSubmissions.tenantId, input.tenantId),
+          inArray(chainSubmissions.status, ["SUBMITTED", "CHAIN_SUCCESS_PENDING_RECONCILIATION"]),
+        )),
+        database.select({ count: sql<number>`count(distinct ${chainReconciliationResults.expectationId})::integer` })
+          .from(chainReconciliationResults)
+          .where(and(
+            eq(chainReconciliationResults.tenantId, input.tenantId),
+            eq(chainReconciliationResults.outcome, "MISMATCH"),
+          )),
+        database.select({
+          count: sql<number>`count(distinct ${chainEventCheckpoints.contractId})::integer`,
+          updatedAt: sql<Date>`min(${chainEventCheckpoints.updatedAt})`,
+        })
+          .from(chainEventCheckpoints)
+          .where(eq(chainEventCheckpoints.tenantId, input.tenantId)),
+      ]);
+  return {
+    ...(checkpoint?.count !== 6 || checkpoint.updatedAt === null || checkpoint.updatedAt === undefined ? {} : { checkpointUpdatedAt: new Date(checkpoint.updatedAt) }),
+    mismatchedSubmissions: mismatched?.count ?? 0,
+    money: money.map((row) => ({ ...row, ...(row.issuer === null ? { issuer: undefined } : {}) })) as PortfolioMoneyRow[],
+    pendingSubmissions: pending?.count ?? 0,
+    states,
+  };
+}
+
 export class PostgresReadModelRepository implements ReadModelRepository {
   constructor(private readonly database: JejakDatabase, private readonly actorId: string) {}
 
@@ -18,54 +75,7 @@ export class PostgresReadModelRepository implements ReadModelRepository {
     return this.database.transaction(async (transaction) => {
       const database = transaction as JejakDatabase;
       await applyTransactionContext(database, { actorId: this.actorId, requestId: input.requestId, tenantId: input.tenantId });
-      const money = await database.select({
-        approvedPrincipalBaseUnits: sum(chainPortfolioPositions.approvedPrincipalBaseUnits),
-        currency: chainPortfolioPositions.currency,
-        financingFeePaidBaseUnits: sum(chainPortfolioPositions.financingFeePaidBaseUnits),
-        firstLossConsumedBaseUnits: sum(chainPortfolioPositions.firstLossConsumedBaseUnits),
-        firstLossFundedBaseUnits: sum(chainPortfolioPositions.firstLossFundedBaseUnits),
-        issuedBaseUnits: sum(chainPortfolioPositions.issuedBaseUnits),
-        issuer: chainPortfolioPositions.issuer,
-        outstandingPrincipalBaseUnits: sum(chainPortfolioPositions.outstandingPrincipalBaseUnits),
-        principalBaseUnits: sum(chainPortfolioPositions.principalBaseUnits),
-        repaidBaseUnits: sum(chainPortfolioPositions.repaidBaseUnits),
-        scale: chainPortfolioPositions.scale,
-        seniorLossBaseUnits: sum(chainPortfolioPositions.seniorLossBaseUnits),
-        servicingFeePaidBaseUnits: sum(chainPortfolioPositions.servicingFeePaidBaseUnits),
-        settlementBaseUnits: sum(chainPortfolioPositions.settlementBaseUnits),
-      }).from(chainPortfolioPositions).where(eq(chainPortfolioPositions.tenantId, input.tenantId)).groupBy(
-        chainPortfolioPositions.currency,
-        chainPortfolioPositions.scale,
-        chainPortfolioPositions.issuer,
-      ).orderBy(chainPortfolioPositions.currency, chainPortfolioPositions.scale, chainPortfolioPositions.issuer);
-      const states = await database.select({ count: sql<number>`count(*)::integer`, state: chainPortfolioPositions.state })
-        .from(chainPortfolioPositions)
-        .where(eq(chainPortfolioPositions.tenantId, input.tenantId))
-        .groupBy(chainPortfolioPositions.state)
-        .orderBy(chainPortfolioPositions.state);
-      const [pending] = await database.select({ count: sql<number>`count(*)::integer` }).from(chainSubmissions).where(and(
-        eq(chainSubmissions.tenantId, input.tenantId),
-        inArray(chainSubmissions.status, ["SUBMITTED", "CHAIN_SUCCESS_PENDING_RECONCILIATION"]),
-      ));
-      const [mismatched] = await database.select({ count: sql<number>`count(distinct ${chainReconciliationResults.expectationId})::integer` })
-        .from(chainReconciliationResults)
-        .where(and(
-          eq(chainReconciliationResults.tenantId, input.tenantId),
-          eq(chainReconciliationResults.outcome, "MISMATCH"),
-        ));
-      const [checkpoint] = await database.select({
-        count: sql<number>`count(distinct ${chainEventCheckpoints.contractId})::integer`,
-        updatedAt: sql<Date>`min(${chainEventCheckpoints.updatedAt})`,
-      })
-        .from(chainEventCheckpoints)
-        .where(eq(chainEventCheckpoints.tenantId, input.tenantId));
-      return {
-        ...(checkpoint?.count !== 6 || checkpoint.updatedAt === null || checkpoint.updatedAt === undefined ? {} : { checkpointUpdatedAt: checkpoint.updatedAt }),
-        mismatchedSubmissions: mismatched?.count ?? 0,
-        money: money.map((row) => ({ ...row, ...(row.issuer === null ? { issuer: undefined } : {}) })) as PortfolioMoneyRow[],
-        pendingSubmissions: pending?.count ?? 0,
-        states,
-      };
+      return queryPortfolio(database, input);
     });
   }
 

@@ -22,7 +22,7 @@ export class ReadModelService {
   async portfolio(input: { requestId: string; tenantId: string }) {
     const projection = await this.repository.getPortfolio(input);
     return {
-      asOf: (projection.checkpointUpdatedAt ?? new Date(0)).toISOString(),
+      asOf: timestampIso(projection.checkpointUpdatedAt),
       exposures: projection.money.map((row) => ({
         approvedPrincipal: money(row.approvedPrincipalBaseUnits, row),
         financingFeePaid: money(row.financingFeePaidBaseUnits, row),
@@ -55,6 +55,11 @@ export class ReadModelService {
       ...(hasNext && last !== undefined ? { nextCursor: encodeCursor(last) } : {}),
     };
   }
+}
+
+function timestampIso(value: Date | string | undefined): string {
+  const date = value === undefined ? new Date(0) : value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.valueOf()) ? new Date(0).toISOString() : date.toISOString();
 }
 
 export function auditFilters(query: AuditQuery): AuditFilters {

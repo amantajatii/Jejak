@@ -14,10 +14,11 @@ const grantId = "01980a12-3456-789a-8abc-def012345681";
 
 class ReadRepository implements ReadModelRepository {
   auditRows: Array<SafeAuditEvent & Record<string, unknown>> = [];
+  checkpointUpdatedAt: Date | string = new Date("2026-07-15T12:00:00Z");
   lastFilters?: AuditFilters;
   async getPortfolio() {
     return {
-      checkpointUpdatedAt: new Date("2026-07-15T12:00:00Z"),
+      checkpointUpdatedAt: this.checkpointUpdatedAt,
       mismatchedSubmissions: 1,
       money: [{
         approvedPrincipalBaseUnits: "99999999999999999999999999999999999999",
@@ -68,6 +69,15 @@ describe("BE-16 read service", () => {
       scale: 7,
     });
     expect(result.reconciliation).toEqual({ mismatchedSubmissions: 1, pendingSubmissions: 2 });
+  });
+
+  it("normalizes an aggregate checkpoint timestamp decoded by Postgres as a string", async () => {
+    const repository = new ReadRepository();
+    repository.checkpointUpdatedAt = "2026-07-15T12:00:00.000Z";
+
+    await expect(new ReadModelService(repository).portfolio({ requestId: actorId, tenantId })).resolves.toMatchObject({
+      asOf: "2026-07-15T12:00:00.000Z",
+    });
   });
 
   it("uses a stable bounded keyset cursor and allowlisted audit response", async () => {

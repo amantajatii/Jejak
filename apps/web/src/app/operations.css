@@ -2,6 +2,7 @@
 .institution-shell,
 .app-shell {
   background: #1b1b1b;
+  font-family: var(--font-plus-jakarta-sans), Arial, Helvetica, sans-serif;
 }
 
 .workspace-sidebar {
@@ -27,7 +28,7 @@
 
 .institution-shell .wordmark span,
 .app-shell .brand span {
-  color: #ff4b2b;
+  color: #8588ff;
 }
 
 .institution-shell .sandbox-note,
@@ -179,7 +180,7 @@
 .app-shell .text-risk,
 .app-shell .metric-risk strong,
 .app-shell .negative-cell {
-  color: #ff4b2b !important;
+  color: #8588ff !important;
 }
 
 .app-shell .shortfall-alert {
@@ -192,7 +193,7 @@
 .app-shell .text-link,
 .app-shell .case-link,
 .app-shell .row-arrow {
-  color: #ff4b2b;
+  color: #8588ff;
 }
 
 .institution-shell .primary-button,
@@ -308,7 +309,7 @@
   }
 
   .workspace-mobile-nav a.active {
-    background: #ff4b2b;
+    background: #8588ff;
     color: #fff;
     font-weight: 700;
   }
@@ -367,12 +368,12 @@
 .institution-shell .back-row,
 .institution-shell .state-block button,
 .institution-shell .demo-controls button {
-  color: #ff4b2b;
+  color: #8588ff;
 }
 
 .institution-shell .danger,
 .institution-shell .state-error {
-  color: #ff4b2b !important;
+  color: #8588ff !important;
 }
 
 .institution-shell .loader {
@@ -385,8 +386,8 @@
 }
 
 .app-shell .alert-icon {
-  border-color: #ff4b2b;
-  color: #ff4b2b;
+  border-color: #8588ff;
+  color: #8588ff;
 }
 
 .app-shell .section-band {
@@ -416,8 +417,8 @@
 }
 
 .app-shell .timeline li.risk .timeline-marker {
-  border-color: #ff4b2b;
-  background: #ff4b2b;
+  border-color: #8588ff;
+  background: #8588ff;
   color: #fff;
 }
 

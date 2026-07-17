@@ -4,11 +4,19 @@ import type { ClaimWorkspace, DemoRole, DemoScenario } from "@/lib/jejak/gateway
  * A scripted, strictly-gated walkthrough over the deterministic MOCK gateway.
  * Each step spotlights a real console element and only advances once the user
  * performs the required action (role switch / lifecycle action / acknowledge).
+ *
+ * Routes point at the six dedicated per-role consoles (not the retired shared
+ * /institution workspace). `data-tour="op-action"` lives inside <OperationPanel>
+ * itself and `data-tour="role-switch"` inside the global account switcher in the
+ * demo toolbar, so both anchors are already present on every console that
+ * renders those shared components — only the page-specific anchors
+ * (`portfolio-claims`, `claim-financials`, `claim-evidence`) needed to be added
+ * once, on the pages that show that content.
  */
 export type StepGate =
   // Advance only when the user clicks the coach-mark "continue" button (pure observe).
   | { kind: "observe" }
-  // Advance when the active demo role matches (user must use the role selector).
+  // Advance when the active demo role matches (user must sign in as / switch to that role).
   | { kind: "role"; role: DemoRole }
   // Advance when the workspace satisfies the predicate (user must run the action).
   | { kind: "action"; until: (workspace: ClaimWorkspace) => boolean; hint: string };
@@ -24,27 +32,27 @@ export type TourStep = {
   gate: StepGate;
 };
 
-const institution = (claimId: string) => `/institution/claims/${claimId}`;
+const resolutionCase = (claimId: string) => `/resolution/${claimId}`;
 
 const HAPPY: TourStep[] = [
   {
     id: "intro",
     route: () => "/",
     title: "Selamat datang di walkthrough Jejak",
-    body: "Walkthrough ini memakai data contoh tanpa transaksi nyata. Anda akan meninjau proses pendanaan marketplace dari awal hingga lunas dan berganti peran sesuai kebutuhan.",
+    body: "Walkthrough ini memakai data contoh tanpa transaksi nyata. Anda akan meninjau proses pendanaan marketplace dari awal hingga lunas, berpindah antar konsol khusus tiap peran sesuai kebutuhan.",
     gate: { kind: "observe" },
   },
   {
     id: "portfolio-overview",
-    route: () => "/institution/portfolio",
+    route: () => "/originator",
     target: "portfolio-claims",
-    title: "Tinjauan Portfolio",
-    body: "Daftar seluruh klaim aktif beserta Gross unsettled dan Eligible Settlement Value (ESV). Tinjau posisi arus kas marketplace dan status klaim sebelum analisis lebih lanjut.",
+    title: "Konsol Originator: seller yang di-onboard",
+    body: "Setiap peran punya konsol sendiri. Ini konsol Originator — daftar seller yang di-onboard beserta Gross unsettled dan Eligible Settlement Value (ESV) klaimnya.",
     gate: { kind: "observe" },
   },
   {
     id: "financials",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "claim-financials",
     title: "Kenapa bukan seluruh nilai kotor?",
     body: "Perhatikan Gross unsettled selalu lebih besar dari Eligible Value. Selisihnya adalah buffer dilusi (refund, RTO, chargeback). Jejak mendanai nilai yang realistis tertagih, bukan angka kotor.",
@@ -52,15 +60,15 @@ const HAPPY: TourStep[] = [
   },
   {
     id: "role-originator-analyze",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "role-switch",
-    title: "Berperan sebagai Originator",
-    body: "Analisis risiko dilakukan oleh Originator. Buka pemilih peran di bilah atas dan pilih “Originator sandbox”.",
+    title: "Masuk sebagai Originator",
+    body: "Analisis risiko dilakukan oleh Originator. Buka pemilih akun di bilah atas dan pilih “Originator sandbox”.",
     gate: { kind: "role", role: "ORIGINATOR" },
   },
   {
     id: "analyze",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "op-action",
     title: "Hitung SDS, ESV, dan terbitkan JCC",
     body: "Centang kotak konfirmasi lalu klik tombol Analyze. Ini menghitung Settlement Dilution Score dan menerbitkan JCC — kredensial collectibility yang bisa dibagikan.",
@@ -68,31 +76,31 @@ const HAPPY: TourStep[] = [
   },
   {
     id: "observe-jcc",
-    route: (claimId) => institution(claimId),
+    route: () => "/issuer",
     target: "claim-evidence",
     title: "JCC aktif",
-    body: "Perhatikan status JCC menjadi ACTIVE dengan skor SDS. Ini bukti bahwa nilai klaim sudah dinilai sebelum keputusan pendanaan apa pun.",
+    body: "Ini konsol Issuer — tempat status JCC dan bukti kontrol payout dipantau sebelum penerbitan. Perhatikan status JCC menjadi ACTIVE dengan skor SDS.",
     gate: { kind: "observe" },
   },
   {
     id: "create-offer",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "op-action",
     title: "Buat penawaran pendanaan",
-    body: "Masih sebagai Originator: centang konfirmasi lalu klik Create offer untuk menyusun penawaran berdasarkan ESV.",
+    body: "Kembali ke konsol Originator: centang konfirmasi lalu klik Create offer untuk menyusun penawaran berdasarkan ESV.",
     gate: { kind: "action", until: (w) => w.latestOffer?.status === "ACTIVE", hint: "Centang konfirmasi lalu klik Create offer." },
   },
   {
     id: "role-seller",
-    route: (claimId, w) => (w?.latestOffer ? `/seller/offers/${w.latestOffer.id}` : institution(claimId)),
+    route: (claimId, w) => (w?.latestOffer ? `/seller/offers/${w.latestOffer.id}` : "/seller"),
     target: "role-switch",
     title: "Berganti menjadi Seller",
-    body: "Seller yang menerima penawaran. Ganti peran ke “Seller” di bilah atas.",
+    body: "Seller yang menerima penawaran, di konsolnya sendiri. Ganti akun ke “Seller” di bilah atas.",
     gate: { kind: "role", role: "SELLER" },
   },
   {
     id: "accept-offer",
-    route: (claimId, w) => (w?.latestOffer ? `/seller/offers/${w.latestOffer.id}` : institution(claimId)),
+    route: (claimId, w) => (w?.latestOffer ? `/seller/offers/${w.latestOffer.id}` : "/seller"),
     target: "op-action",
     title: "Terima penawaran",
     body: "Tinjau term-hash, jumlah, dan kewajiban. Centang konfirmasi lalu klik Accept offer untuk menyetujui.",
@@ -100,15 +108,15 @@ const HAPPY: TourStep[] = [
   },
   {
     id: "role-originator-control",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "role-switch",
     title: "Kembali sebagai Originator",
-    body: "Sebelum penerbitan, kontrol payout harus diverifikasi. Ganti peran kembali ke “Originator sandbox”.",
+    body: "Sebelum penerbitan, kontrol payout harus diverifikasi. Ganti akun kembali ke “Originator sandbox”.",
     gate: { kind: "role", role: "ORIGINATOR" },
   },
   {
     id: "verify-control",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "op-action",
     title: "Verifikasi bukti kontrol",
     body: "Centang konfirmasi lalu pilih Verify control. Status klaim berubah dari ELIGIBLE menjadi CONTROLLED setelah jalur pembayaran terverifikasi.",
@@ -116,31 +124,31 @@ const HAPPY: TourStep[] = [
   },
   {
     id: "role-issuer",
-    route: (claimId) => institution(claimId),
+    route: () => "/issuer",
     target: "role-switch",
-    title: "Berperan sebagai Issuer",
-    body: "Issuer menerbitkan aset terbatas jCLAIM di Stellar. Ganti peran ke “Issuer sandbox”.",
+    title: "Masuk sebagai Issuer",
+    body: "Issuer menerbitkan aset terbatas jCLAIM di Stellar, di konsolnya sendiri. Ganti akun ke “Issuer sandbox”.",
     gate: { kind: "role", role: "ISSUER" },
   },
   {
     id: "issue",
-    route: (claimId) => institution(claimId),
+    route: () => "/issuer",
     target: "op-action",
     title: "Issue jCLAIM",
-    body: "Centang konfirmasi lalu klik Issue jCLAIM. Perhatikan referensi transaksi Stellar muncul di panel “Stellar references”.",
+    body: "Centang konfirmasi lalu klik Issue jCLAIM. Perhatikan referensi transaksi Stellar muncul di panel referensi.",
     gate: { kind: "action", until: (w) => w.claim.state === "ISSUED", hint: "Centang konfirmasi lalu klik Issue jCLAIM." },
   },
   {
     id: "role-facility",
-    route: (claimId) => institution(claimId),
+    route: () => "/facility",
     target: "role-switch",
-    title: "Berperan sebagai Facility",
-    body: "Facility mendanai dengan JUSD. Ganti peran ke “Facility operator”.",
+    title: "Masuk sebagai Facility",
+    body: "Facility mendanai dengan JUSD dari konsolnya sendiri — di sini Anda melihat likuiditas dan eksposur pool modal. Ganti akun ke “Facility operator”.",
     gate: { kind: "role", role: "FACILITY" },
   },
   {
     id: "fund",
-    route: (claimId) => institution(claimId),
+    route: () => "/facility",
     target: "op-action",
     title: "Danai dengan JUSD",
     body: "Centang konfirmasi lalu klik Fund JUSD. Posisi facility menjadi aktif; klaim berpindah ke FUNDED.",
@@ -148,15 +156,15 @@ const HAPPY: TourStep[] = [
   },
   {
     id: "role-servicer",
-    route: (claimId) => institution(claimId),
+    route: () => "/servicer",
     target: "role-switch",
-    title: "Berperan sebagai Servicer",
-    body: "Servicer mencatat settlement dan menjalankan waterfall. Ganti peran ke “Servicer”.",
+    title: "Masuk sebagai Servicer",
+    body: "Servicer mencatat settlement dan menjalankan waterfall dari konsolnya sendiri. Ganti akun ke “Servicer”.",
     gate: { kind: "role", role: "SERVICER" },
   },
   {
     id: "settle",
-    route: (claimId) => institution(claimId),
+    route: () => "/servicer",
     target: "op-action",
     title: "Catat settlement",
     body: "Centang konfirmasi lalu klik Record settlement. Klaim berpindah ke SETTLING.",
@@ -164,7 +172,7 @@ const HAPPY: TourStep[] = [
   },
   {
     id: "waterfall",
-    route: (claimId) => institution(claimId),
+    route: () => "/servicer",
     target: "op-action",
     title: "Jalankan waterfall",
     body: "Centang konfirmasi lalu pilih Run waterfall. Kas dialokasikan secara berurutan untuk biaya, pokok senior, biaya pembiayaan, dan residual seller.",
@@ -172,10 +180,10 @@ const HAPPY: TourStep[] = [
   },
   {
     id: "done",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "claim-financials",
     title: "Selesai — klaim lunas (CLOSED)",
-    body: "Seller menerima dana lebih awal, facility dilunasi penuh, dan seluruh jejak audit + referensi Stellar tercatat. Inilah happy path. Coba bandingkan dengan skenario Adverse.",
+    body: "Seller menerima dana lebih awal, facility dilunasi penuh, dan seluruh jejak audit + referensi Stellar tercatat. Setiap peran mengamati hasil ini dari konsolnya sendiri. Coba bandingkan dengan skenario Adverse.",
     gate: { kind: "observe" },
   },
 ];
@@ -185,36 +193,36 @@ const ADVERSE: TourStep[] = [
     id: "intro",
     route: () => "/",
     title: "Skenario resolusi dengan data contoh",
-    body: "Skenario dimulai dari klaim berstatus FUNDED sebelum terjadi lonjakan refund. Anda akan meninjau cara Jejak menangani penurunan nilai dan mengalokasikan kerugian secara terkendali.",
+    body: "Skenario dimulai dari klaim berstatus FUNDED sebelum terjadi lonjakan refund. Anda akan meninjau cara Jejak menangani penurunan nilai dan mengalokasikan kerugian secara terkendali, dari konsol tiap peran.",
     gate: { kind: "observe" },
   },
   {
     id: "portfolio-overview",
-    route: () => "/institution/portfolio",
+    route: () => "/originator",
     target: "portfolio-claims",
-    title: "Tinjauan Portfolio (Adverse)",
-    body: "Pada portfolio overview, pilih klaim yang sudah didanai (FUNDED). Skenario ini memperlihatkan dampak lonjakan refund terhadap nilai tertagih dan proteksi first-loss.",
+    title: "Tinjauan seller (Adverse)",
+    body: "Klaim ini sudah didanai (FUNDED). Skenario ini memperlihatkan dampak lonjakan refund terhadap nilai tertagih dan proteksi first-loss.",
     gate: { kind: "observe" },
   },
   {
     id: "funded",
-    route: (claimId) => institution(claimId),
+    route: () => "/facility",
     target: "claim-financials",
     title: "Klaim sudah didanai",
-    body: "Klaim ini berada di status FUNDED — modal senior sudah dicairkan dan first-loss sudah didanai. Sekarang sesuatu memburuk.",
+    body: "Dari konsol Facility: klaim ini berada di status FUNDED — modal senior sudah dicairkan dan first-loss sudah didanai. Sekarang sesuatu memburuk.",
     gate: { kind: "observe" },
   },
   {
     id: "role-originator",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "role-switch",
-    title: "Berperan sebagai Originator",
-    body: "Lonjakan refund memicu atestasi ulang. Ganti peran ke “Originator sandbox”.",
+    title: "Masuk sebagai Originator",
+    body: "Lonjakan refund memicu atestasi ulang. Ganti akun ke “Originator sandbox”.",
     gate: { kind: "role", role: "ORIGINATOR" },
   },
   {
     id: "refund-spike",
-    route: (claimId) => institution(claimId),
+    route: () => "/originator",
     target: "op-action",
     title: "Injeksi lonjakan refund",
     body: "Centang konfirmasi lalu klik Inject refund spike. Perhatikan ESV turun dan SDS naik tajam — nilai tertagih memburuk setelah pendanaan.",
@@ -222,15 +230,15 @@ const ADVERSE: TourStep[] = [
   },
   {
     id: "role-servicer-settle",
-    route: (claimId) => institution(claimId),
+    route: () => "/servicer",
     target: "role-switch",
-    title: "Berperan sebagai Servicer",
-    body: "Servicer mencatat settlement yang tersisa. Ganti peran ke “Servicer”.",
+    title: "Masuk sebagai Servicer",
+    body: "Servicer mencatat settlement yang tersisa. Ganti akun ke “Servicer”.",
     gate: { kind: "role", role: "SERVICER" },
   },
   {
     id: "settle",
-    route: (claimId) => institution(claimId),
+    route: () => "/servicer",
     target: "op-action",
     title: "Catat settlement",
     body: "Centang konfirmasi lalu klik Record settlement. Klaim berpindah ke SETTLING.",
@@ -238,7 +246,7 @@ const ADVERSE: TourStep[] = [
   },
   {
     id: "waterfall",
-    route: (claimId) => institution(claimId),
+    route: () => "/servicer",
     target: "op-action",
     title: "Jalankan waterfall (kas kurang)",
     body: "Centang konfirmasi lalu pilih Run waterfall. Karena kas tidak mencukupi, klaim berubah menjadi SHORTFALL dan first-loss mulai digunakan.",
@@ -246,15 +254,15 @@ const ADVERSE: TourStep[] = [
   },
   {
     id: "role-resolver",
-    route: (claimId, w) => `/resolution/${w?.claim.id ?? ""}`,
+    route: (claimId, w) => resolutionCase(w?.claim.id ?? claimId),
     target: "role-switch",
-    title: "Berperan sebagai Resolver",
-    body: "Klaim distressed ditangani oleh Authorized Resolver. Ganti peran ke “Authorized resolver”.",
+    title: "Masuk sebagai Resolver",
+    body: "Klaim distressed ditangani oleh Authorized Resolver, di konsol resolusi. Ganti akun ke “Authorized resolver”.",
     gate: { kind: "role", role: "RESOLVER" },
   },
   {
     id: "open-resolution",
-    route: (claimId, w) => `/resolution/${w?.claim.id ?? ""}`,
+    route: (claimId, w) => resolutionCase(w?.claim.id ?? claimId),
     target: "op-action",
     title: "Buka resolusi",
     body: "Centang konfirmasi lalu klik Open resolution. Klaim masuk proses recovery terkendali.",
@@ -262,7 +270,7 @@ const ADVERSE: TourStep[] = [
   },
   {
     id: "record-recovery",
-    route: (claimId, w) => `/resolution/${w?.claim.id ?? ""}`,
+    route: (claimId, w) => resolutionCase(w?.claim.id ?? claimId),
     target: "op-action",
     title: "Catat recovery",
     body: "Centang konfirmasi lalu klik Record recovery untuk mencatat dana yang berhasil ditarik kembali.",
@@ -270,7 +278,7 @@ const ADVERSE: TourStep[] = [
   },
   {
     id: "close-resolution",
-    route: (claimId, w) => `/resolution/${w?.claim.id ?? ""}`,
+    route: (claimId, w) => resolutionCase(w?.claim.id ?? claimId),
     target: "op-action",
     title: "Tutup dengan kerugian final",
     body: "Centang konfirmasi lalu klik Close with final loss. Kerugian dialokasikan eksplisit: first-loss dulu, lalu senior. Klaim berpindah ke CLOSED_WITH_LOSS.",
@@ -278,7 +286,7 @@ const ADVERSE: TourStep[] = [
   },
   {
     id: "done",
-    route: (claimId, w) => `/resolution/${w?.claim.id ?? ""}`,
+    route: (claimId, w) => resolutionCase(w?.claim.id ?? claimId),
     target: "claim-financials",
     title: "Selesai — CLOSED_WITH_LOSS",
     body: "Kerugian diserap oleh first-loss sebelum dialokasikan ke senior dan seluruh hasilnya tercatat. Bandingkan dengan alur pendanaan untuk melihat perbedaan alokasi.",

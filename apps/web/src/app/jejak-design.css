@@ -1,0 +1,196 @@
+/*
+ * Shared DESIGN.md token + component layer for the account picker and the
+ * per-role consoles (originator/facility/issuer/servicer; seller and resolver
+ * reuse selected pieces). Prefixed `jj-` so it never collides with the older
+ * institution/resolver/seller stylesheets that still back existing pages.
+ */
+
+:root {
+  --jj-ink: #050505;
+  --jj-paper: #f7f7f5;
+  --jj-white: #ffffff;
+  --jj-muted: #6f6f6f;
+  --jj-line: #dedee8;
+  --jj-lavender: #dedeff;
+  --jj-lavender-soft: #e9eaff;
+  --jj-periwinkle: #8588ff;
+  --jj-periwinkle-strong: #7379fc;
+  --jj-navy: #02063f;
+  --jj-navy-card: #17164d;
+  --jj-radius-lg: 32px;
+  --jj-radius-md: 20px;
+  --jj-radius-sm: 12px;
+  --jj-pill: 999px;
+  --jj-font: var(--font-plus-jakarta-sans), Arial, Helvetica, sans-serif;
+}
+
+.jj-shell {
+  min-height: 100vh;
+  background: var(--jj-paper);
+  color: var(--jj-ink);
+  font-family: var(--jj-font);
+}
+
+.jj-container {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 56px);
+}
+
+.jj-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 6px 14px;
+  border-radius: var(--jj-pill);
+  background: var(--jj-periwinkle);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.jj-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--jj-pill);
+  background: var(--jj-lavender);
+  color: var(--jj-navy);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.jj-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Pill buttons — DESIGN.md: black bg / white text, radius 999px */
+.jj-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 28px;
+  border-radius: var(--jj-pill);
+  border: 0;
+  font-family: var(--jj-font);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 21px;
+  white-space: nowrap;
+  transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+.jj-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.jj-button-primary { background: var(--jj-ink); color: #fff; }
+.jj-button-primary:hover:not(:disabled) { background: #222; transform: translateY(-1px); }
+.jj-button-secondary { background: #fff; color: var(--jj-ink); border: 1px solid var(--jj-line); }
+.jj-button-secondary:hover:not(:disabled) { background: var(--jj-lavender-soft); }
+.jj-button-quiet { background: transparent; color: var(--jj-muted); height: 40px; padding: 0 14px; }
+.jj-button-quiet:hover:not(:disabled) { color: var(--jj-ink); }
+.jj-button-compact { height: 44px; padding: 0 22px; font-size: 13px; }
+
+/* Cards — large radius, flat fill, clipped */
+.jj-card {
+  background: #fff;
+  border: 1px solid var(--jj-line);
+  border-radius: var(--jj-radius-lg);
+  overflow: hidden;
+}
+.jj-card-navy {
+  background: var(--jj-navy-card);
+  color: #fff;
+  border-radius: var(--jj-radius-lg);
+  overflow: hidden;
+}
+
+.jj-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--jj-pill);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.jj-status i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.jj-status-neutral { background: #eef0ff; color: #3538a8; }
+.jj-status-positive { background: #dff5df; color: #1c6b1c; }
+.jj-status-caution { background: #fff2c9; color: #6b5000; }
+.jj-status-risk { background: #ffdfe4; color: #9a0d29; }
+
+/* Metric tile */
+.jj-metric { padding: 20px 22px; }
+.jj-metric span { display: block; color: var(--jj-muted); font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; }
+.jj-metric strong { display: block; margin: 8px 0 4px; font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+.jj-metric small { display: block; color: var(--jj-muted); font-size: 11px; }
+
+/* Console shell shared by the four new role consoles */
+.jj-console { display: flex; min-height: 100vh; background: var(--jj-paper); font-family: var(--jj-font); }
+.jj-console-sidebar {
+  width: 248px;
+  flex: none;
+  background: var(--jj-navy);
+  color: #fff;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+}
+.jj-console-brand { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: #fff; }
+.jj-console-brand span { color: var(--jj-periwinkle); }
+.jj-console-role { margin: 22px 0 26px; padding: 12px 14px; border-radius: var(--jj-radius-sm); background: var(--jj-navy-card); }
+.jj-console-role span { display: block; color: #9fa2d8; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.jj-console-role strong { display: block; margin-top: 4px; font-size: 15px; font-weight: 600; }
+.jj-console-nav { display: grid; gap: 3px; }
+.jj-console-nav a { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--jj-radius-sm); color: #c7c9ee; font-weight: 550; font-size: 13px; }
+.jj-console-nav a:hover, .jj-console-nav a.active { background: rgba(255,255,255,0.08); color: #fff; }
+.jj-console-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; gap: 10px; }
+.jj-console-footer button { background: transparent; border: 0; color: #c7c9ee; font-size: 12px; font-weight: 600; }
+.jj-console-footer button:hover { color: #fff; }
+.jj-console-main { flex: 1; min-width: 0; }
+.jj-console-topbar { height: 76px; display: flex; align-items: center; gap: 18px; padding: 0 clamp(20px, 3vw, 44px); border-bottom: 1px solid var(--jj-line); background: #fff; }
+.jj-console-topbar .jj-crumb { color: var(--jj-muted); font-weight: 600; font-size: 13px; }
+.jj-console-body { padding: clamp(24px, 3vw, 44px); display: grid; gap: 20px; }
+.jj-console-heading h1 { font-size: clamp(28px, 3vw, 40px); font-weight: 400; line-height: 1.08; letter-spacing: -0.03em; margin: 6px 0 8px; }
+.jj-console-heading p { max-width: 62ch; color: var(--jj-muted); font-size: 14px; margin: 0; }
+.jj-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+
+/* Login / account picker */
+.jj-login-hero { padding: clamp(48px, 8vw, 96px) 0 clamp(28px, 4vw, 48px); text-align: center; }
+.jj-login-hero h1 { font-size: clamp(36px, 5vw, 56px); font-weight: 300; line-height: 1.05; letter-spacing: -0.04em; margin: 18px 0 14px; }
+.jj-login-hero p { max-width: 620px; margin: 0 auto; color: var(--jj-muted); font-size: 16px; line-height: 1.5; }
+.jj-scenario-toggle { display: inline-flex; margin-top: 26px; padding: 4px; border-radius: var(--jj-pill); background: #fff; border: 1px solid var(--jj-line); }
+.jj-scenario-toggle button { border: 0; background: transparent; padding: 10px 20px; border-radius: var(--jj-pill); font-family: var(--jj-font); font-size: 13px; font-weight: 650; color: var(--jj-muted); }
+.jj-scenario-toggle button.active { background: var(--jj-ink); color: #fff; }
+.jj-account-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; padding: 8px 0 96px; }
+.jj-account-card { display: flex; flex-direction: column; gap: 14px; padding: 26px; text-align: left; border: 1px solid var(--jj-line); }
+.jj-account-card-icon { width: 44px; height: 44px; border-radius: var(--jj-radius-sm); background: var(--jj-lavender); display: grid; place-items: center; font-weight: 700; color: var(--jj-navy); }
+.jj-account-card h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+.jj-account-card p { flex: 1; margin: 0; color: var(--jj-muted); font-size: 13px; line-height: 1.5; }
+.jj-account-card .jj-button { width: 100%; }
+.jj-role-gate { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+.jj-role-gate-card { max-width: 420px; padding: 34px; text-align: center; display: grid; gap: 14px; justify-items: center; }
+
+/* Light DESIGN.md touch on the persistent demo toolbar without restructuring its existing rules. */
+.jejak-demo-toolbar { font-family: var(--jj-font); background: var(--jj-navy) !important; }
+.jejak-demo-toolbar .truth-labels strong { background: var(--jj-periwinkle); color: #fff; }
+.jejak-demo-toolbar .demo-toolbar-actions button { border-radius: var(--jj-pill); }
+
+@media (max-width: 900px) {
+  .jj-console { display: block; }
+  .jj-console-sidebar { width: 100%; flex-direction: row; align-items: center; padding: 14px 16px; }
+  .jj-console-role { display: none; }
+  .jj-console-nav { display: none; }
+  .jj-console-footer { margin: 0 0 0 auto; padding: 0; border: 0; }
+}

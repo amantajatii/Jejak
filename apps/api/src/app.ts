@@ -66,6 +66,23 @@ function hasValidation(error: unknown): boolean {
   );
 }
 
+function isDevelopmentLocalOrigin(origin: string, nodeEnv: AppConfig["nodeEnv"]): boolean {
+  if (nodeEnv !== "development") return false;
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== "http:") return false;
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]") return true;
+
+    const octets = url.hostname.split(".").map(Number);
+    if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) return false;
+    const [first, second] = octets;
+    if (first === undefined || second === undefined) return false;
+    return first === 10 || first === 127 || (first === 192 && second === 168) || (first === 172 && second >= 16 && second <= 31);
+  } catch {
+    return false;
+  }
+}
+
 function publicError(error: unknown): {
   code: string;
   message: string;
@@ -162,7 +179,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     ],
     credentials: true,
     exposedHeaders: ["X-Request-Id", "X-Jejak-Sandbox"],
-    origin: config.webOrigin,
+    origin: (origin, callback) => {
+      const allowed = origin === undefined || origin === config.webOrigin || isDevelopmentLocalOrigin(origin, config.nodeEnv);
+      callback(null, allowed);
+    },
   });
 
   const probes = options.readinessProbes ?? [

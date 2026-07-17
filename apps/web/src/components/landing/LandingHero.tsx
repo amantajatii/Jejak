@@ -19,13 +19,16 @@ export function LandingHero() {
     () => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const tl = gsap.timeline({ defaults: { duration: 0.7, ease: "power3.out" } });
+        const tl = gsap.timeline({
+          defaults: { duration: 0.7, ease: "power3.out" },
+        });
         tl.from(".hero-line > span", { yPercent: 110, stagger: 0.08 }, 0)
           .from(".hero-support", { autoAlpha: 0, y: 16 }, "<0.25")
           .from(".hero-actions", { autoAlpha: 0, y: 12 }, "<0.1")
           .from(".hero-figures", { autoAlpha: 0, y: 20 }, "<0.1");
 
-        const maxInset = () => Math.min(48, Math.max(16, window.innerWidth * 0.03));
+        const maxInset = () =>
+          Math.min(48, Math.max(16, window.innerWidth * 0.03));
         const maxRadius = () => (window.innerWidth <= 680 ? 18 : 28);
         const inset = gsap.to(root.current, {
           "--hero-inset": () => `${maxInset()}px`,
@@ -63,18 +66,27 @@ export function LandingHero() {
             ))}
           </h1>
           <p className="hero-support">
-            Jejak funds marketplace earnings that have been earned but not yet paid out — with clear
-            evidence before every decision and no crypto knowledge required.
+            Jejak funds marketplace earnings that have been earned but not yet
+            paid out — with clear evidence before every decision and no crypto
+            knowledge required.
           </p>
           <div className="hero-actions">
-            <button type="button" className="button button-primary" onClick={() => tour.openSelect()}>
+            <button
+              type="button"
+              className="button button-primary"
+              onClick={() => tour.openSelect()}
+            >
               Mulai walkthrough terpandu
             </button>
-            <Link href="/seller/onboarding" className="button button-secondary">Coba sistem langsung (Testnet)</Link>
+            <Link href="/login" className="button button-secondary">
+              Coba sistem langsung (Testnet)
+            </Link>
           </div>
           <p className="hero-actions-note">
-            <strong>Walkthrough</strong> memakai data contoh (mock) — tur terpandu tanpa transaksi nyata.{" "}
-            <strong>Coba sistem langsung</strong> memakai data nyata di Stellar Testnet (bukan mock).
+            <strong>Walkthrough</strong> memakai data contoh (mock) — tur
+            terpandu tanpa transaksi nyata.{" "}
+            <strong>Coba sistem langsung</strong> memakai data nyata di Stellar
+            Testnet (bukan mock).
           </p>
         </div>
         <div className="hero-figures">

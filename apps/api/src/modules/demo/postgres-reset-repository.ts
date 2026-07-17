@@ -262,7 +262,10 @@ export class PostgresDemoResetRepository implements DemoResetRepository {
     for (const actor of plan.actors) {
       if (actor.membershipId === undefined) continue;
       await database.insert(resourceAssignments).values({
-        capability: actor.role === "RESOLVER" ? "RESOLVE" : "OPERATE",
+        // Every claim-mutation route (claims/routes.ts, settlement/routes.ts) checks for the
+        // literal "MANAGE" capability on this resource; "OPERATE" was never a recognized value
+        // anywhere, so no seeded demo actor could ever pass a resource-authorized command.
+        capability: actor.role === "RESOLVER" ? "RESOLVE" : "MANAGE",
         id: this.options.nextId?.() ?? uuidv7(),
         membershipId: actor.membershipId,
         resourceId: plan.context.claimId,

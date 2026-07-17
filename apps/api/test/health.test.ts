@@ -37,4 +37,17 @@ describe("GET /health", () => {
     expect(body.meta.sandbox).toBe(true);
     expect(new Date(body.meta.timestamp).toISOString()).toBe(body.meta.timestamp);
   });
+
+  it("permits a local development frontend served from a loopback address", async () => {
+    const app = await buildApp({ config: testConfig({ nodeEnv: "development" }), logger: false, readinessProbes: [] });
+    apps.push(app);
+
+    const response = await app.inject({
+      headers: { origin: "http://127.0.0.1:3000" },
+      method: "GET",
+      url: "/health",
+    });
+
+    expect(response.headers["access-control-allow-origin"]).toBe("http://127.0.0.1:3000");
+  });
 });

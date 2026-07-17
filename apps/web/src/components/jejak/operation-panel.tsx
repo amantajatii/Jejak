@@ -1,11 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ACTION_LABELS, ROLE_LABELS, type JejakAction } from "@/lib/jejak/gateway";
+import { ACTION_LABELS, ROLE_BY_ACTION, ROLE_LABELS, type JejakAction } from "@/lib/jejak/gateway";
 import { describeAsset, formatMoney } from "@/lib/jejak/money";
 import { useJejak } from "@/lib/jejak/provider";
-
-const ROLE_BY_ACTION = { ANALYZE: "ORIGINATOR", CREATE_OFFER: "ORIGINATOR", ACCEPT_OFFER: "SELLER", VERIFY_CONTROL: "ORIGINATOR", ISSUE: "ISSUER", FUND: "FACILITY", RECORD_SETTLEMENT: "SERVICER", RUN_WATERFALL: "SERVICER", REFUND_SPIKE: "ORIGINATOR", OPEN_RESOLUTION: "RESOLVER", RECORD_RECOVERY: "RESOLVER", CLOSE_RESOLUTION: "RESOLVER" } as const;
 
 export function OperationPanel({ action }: { action: JejakAction }) {
   const { workspace, session, execute } = useJejak();
