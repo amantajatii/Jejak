@@ -116,9 +116,11 @@ Build canonical request contexts from database records and configured addresses.
 
 Implement issue, fund, settlement, waterfall, and resolution commands from authoritative workspace values. Use stable hashes for demo evidence/source identities and exact Money values. Preserve provider polling and visible pending/failure states.
 
-## Task 11 — Configure and verify Testnet roles
+## Task 11 — Deploy, verify, and promote the parallel Testnet stack
 
-Read each current role with non-mutating simulations first. Submit only the required admin-authorized role changes using public addresses in `docs/deploy/testnet-role-wallets.md`. Verify contract state/authorization after every transaction and record public transaction hashes. Never print or commit secret seeds.
+Preserve the existing promoted deployment. Reuse the frozen contract build/deployment harness to create fresh `JUSD`/`JCLAIM` assets and all six contracts using the public role addresses and locally stored aliases in `docs/deploy/testnet-role-wallets.md`. Configure facility, servicing, waterfall, resolver, pauser, lifecycle, holder authorization, and candidate liquidity without printing or committing secret seeds.
+
+Run the complete HAPPY and ADVERSE CLI smoke paths against the candidate. Promote `contracts/soroban/deployments/testnet.json` and runtime public configuration only after every assertion passes. Record public transaction hashes and retain the previous public manifest identifiers in deployment history so rollback never requires deleting chain state.
 
 ## Task 12 — Full verification and documentation
 
@@ -140,4 +142,3 @@ Then prove:
 - guided walkthrough mock isolation.
 
 Update `CLAUDE.md`, `docs/status/be.md`, and deployment notes with evidence and explicit hosted-dashboard blockers. Commit task-owned paths explicitly and leave unrelated working-tree changes untouched.
-

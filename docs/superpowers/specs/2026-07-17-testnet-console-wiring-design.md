@@ -106,9 +106,24 @@ Runtime route families are independently gated. Missing resolution configuration
 
 ### 4.5 Contract-role configuration
 
-Before API-signed operations are enabled, each deployed contract role is read from Testnet and compared with `docs/deploy/testnet-role-wallets.md`. Required admin setter transactions are prepared from the contract's actual generated/Rust interface and executed with the existing deployer authority.
+The promoted deployment cannot safely rotate to the new API wallets in place. `JejakAssetController` has no issuer-operator setter, the classic `JUSD` and `JCLAIM` issuer identities are intrinsic to their assets, `JejakFacility` is initialized against the existing `JUSD` SAC, and the old issuer/operator/treasury signing keys are not available in the local keystore. Upgrading frozen ABIs merely to repair deployment configuration is rejected.
 
-Every role update is verified by a contract read or subsequent authorized simulation. Existing oracle configuration is checked rather than blindly repeated. Public addresses and transaction hashes may be documented; secret seeds may not.
+Stage 2 therefore promotes a parallel Testnet stack. The existing deployment remains intact and queryable. Fresh `JUSD` and `JCLAIM` Testnet assets and all six Soroban contracts are deployed and initialized from the current frozen sources using the 11 role wallets in `docs/deploy/testnet-role-wallets.md`. The new deployment must complete the existing contract smoke harness before its manifest replaces the promoted `testnet.json` configuration.
+
+Every initialized role is verified by an authorized simulation or successful smoke action. Public addresses and transaction hashes may be documented; secret seeds may not. No old contract, asset, balance, or manifest backup is deleted.
+
+### 4.6 Parallel Testnet promotion boundary
+
+Promotion is an atomic configuration decision even though deployment uses multiple transactions:
+
+1. deploy and initialize the new assets/contracts without modifying the promoted manifest;
+2. configure facility limits, servicing, waterfall, resolver, pauser, lifecycle roles, holder authorization, and Testnet liquidity;
+3. run complete HAPPY and ADVERSE CLI smoke paths against the candidate stack;
+4. write a candidate manifest containing only public identifiers and smoke evidence;
+5. switch the committed promoted manifest and runtime public configuration together;
+6. retain the previous manifest identifiers in deployment history for rollback.
+
+If any pre-promotion transaction or smoke assertion fails, the candidate is abandoned and the currently promoted stack remains authoritative. After promotion, rollback means restoring the prior public manifest/configuration; it never means deleting chain history.
 
 ## 5. Data and action flow
 
@@ -153,7 +168,7 @@ Deployment order:
 2. risk service health and signer readiness;
 3. API Stage 1 configuration and manual deployment;
 4. browser Stage 1 rehearsal;
-5. Testnet role configuration;
+5. parallel Testnet stack deployment, smoke verification, and manifest promotion;
 6. API Stage 2 signer configuration and manual deployment;
 7. browser and Testnet full-lifecycle rehearsal.
 
