@@ -50,6 +50,13 @@ export class MockJejakGateway implements JejakGateway {
 
   clearSession() { this.state.sessionRole = undefined; }
 
+  // Additive only — does not touch any existing walkthrough state transition.
+  async syncMarketplace(idempotencyKey: string) {
+    void idempotencyKey;
+    if (!this.state.context) throw new JejakGatewayError("NOT_FOUND", "Reset a demo scenario first.", false, 404);
+    return { ingestionId: randomId(), qualityReport: { totalRows: 1, validUniqueRows: 1, rejectedRows: 0, qualityScoreBps: 10000 }, replayed: false };
+  }
+
   async getWorkspace(claimId: string): Promise<ClaimWorkspace> {
     if (!this.state.workspace || this.state.workspace.claim.id !== claimId) throw new JejakGatewayError("NOT_FOUND", "Claim workspace was not found.", false, 404);
     if (this.state.pending) {

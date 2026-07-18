@@ -1,2 +1,6 @@
-import { ClaimDetailPage } from "@/features/institution/InstitutionWorkspace";
-export default async function InstitutionClaim({ params }: { params: Promise<{ claimId: string }> }) { const { claimId } = await params; return <ClaimDetailPage claimId={claimId} />; }
+import { redirect } from "next/navigation";
+
+// Retired: split into dedicated per-role consoles (/originator, /facility, /issuer, /servicer).
+export default function InstitutionClaim() {
+  redirect("/login");
+}

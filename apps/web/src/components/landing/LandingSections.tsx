@@ -39,8 +39,8 @@ export function LandingHeader() {
         <a href="#for-institutions">For Institutions</a>
       </nav>
       <div className="landing-header-actions">
-        <Link href="/seller/onboarding" className="button button-secondary">Log In</Link>
-        <Link href="/seller/onboarding" className="button button-primary">Try the Demo</Link>
+        <Link href="/login" className="button button-secondary">Log In</Link>
+        <Link href="/login" className="button button-primary">Try the Demo</Link>
       </div>
     </header>
   );
@@ -77,7 +77,7 @@ export function ForSeller() {
             <ul className="audience-list">
               {sellerPoints.map((point) => <li key={point}>{point}</li>)}
             </ul>
-            <Link href="/seller/onboarding" className="button button-primary">Try it as a Seller</Link>
+            <Link href="/seller" className="button button-primary">Try it as a Seller</Link>
           </div>
           <aside className="audience-aside">
             <strong>Evidence before action</strong>
@@ -101,7 +101,7 @@ export function ForInstitution() {
             <ul className="audience-list">
               {institutionPoints.map((point) => <li key={point}>{point}</li>)}
             </ul>
-            <Link href="/institution/portfolio" className="button button-primary">View institution portfolio</Link>
+            <Link href="/login" className="button button-primary">View an institutional console</Link>
           </div>
           <aside className="audience-aside">
             <strong>Need to resolve a shortfall claim?</strong>
@@ -151,8 +151,11 @@ export function LandingFooter() {
             </div>
             <div className="landing-footer-group">
               <strong>Demos</strong>
-              <Link href="/seller/onboarding">Seller</Link>
-              <Link href="/institution/portfolio">Institution</Link>
+              <Link href="/seller">Seller</Link>
+              <Link href="/originator">Originator</Link>
+              <Link href="/facility">Facility</Link>
+              <Link href="/issuer">Issuer</Link>
+              <Link href="/servicer">Servicer</Link>
               <Link href="/resolution">Resolver</Link>
             </div>
             <div className="landing-footer-group">

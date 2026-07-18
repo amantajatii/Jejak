@@ -26,6 +26,75 @@ export type ClaimWorkspaceConfiguration = {
   sandbox: boolean;
 };
 
+/**
+ * Raw query against an already-open, already-context-applied transaction. Split out from
+ * PostgresClaimWorkspaceRepository#get so workspace/routes.ts can compose the authorization
+ * checks and this query into a single transaction, removing two of what were three separate
+ * BEGIN/COMMIT round trips to the Postgres pooler for this route.
+ */
+export async function queryClaimWorkspace(
+  database: JejakDatabase,
+  config: ClaimWorkspaceConfiguration,
+  input: { claimId: string; role: ActorRole; tenantId: string },
+): Promise<ClaimWorkspaceProjection | undefined> {
+  const [claimRow] = await database.select().from(claims).where(and(eq(claims.tenantId, input.tenantId), eq(claims.id, input.claimId))).limit(1);
+  if (claimRow === undefined) return undefined;
+
+  const [[attestationRow], [offerRow], [evidenceRow], [facilityRow], [waterfallRow], [resolutionRow], [pendingRow], timelineRows, stellarRows] = await Promise.all([
+    database.select().from(eligibilityAttestations).where(and(eq(eligibilityAttestations.tenantId, input.tenantId), eq(eligibilityAttestations.claimId, input.claimId))).orderBy(desc(eligibilityAttestations.updatedAt), desc(eligibilityAttestations.id)).limit(1),
+    database.select().from(financingOffers).where(and(eq(financingOffers.tenantId, input.tenantId), eq(financingOffers.claimId, input.claimId))).orderBy(desc(financingOffers.updatedAt), desc(financingOffers.id)).limit(1),
+    database.select().from(controlEvidence).where(and(eq(controlEvidence.tenantId, input.tenantId), eq(controlEvidence.claimId, input.claimId))).orderBy(desc(controlEvidence.updatedAt), desc(controlEvidence.id)).limit(1),
+    database.select().from(facilityPositions).where(and(eq(facilityPositions.tenantId, input.tenantId), eq(facilityPositions.claimId, input.claimId))).orderBy(desc(facilityPositions.updatedAt), desc(facilityPositions.id)).limit(1),
+    database.select().from(waterfallResults).where(and(eq(waterfallResults.tenantId, input.tenantId), eq(waterfallResults.claimId, input.claimId))).orderBy(desc(waterfallResults.createdAt), desc(waterfallResults.id)).limit(1),
+    database.select().from(resolutionCases).where(and(eq(resolutionCases.tenantId, input.tenantId), eq(resolutionCases.claimId, input.claimId))).orderBy(desc(resolutionCases.updatedAt), desc(resolutionCases.id)).limit(1),
+    database.select().from(operations).where(and(
+      eq(operations.tenantId, input.tenantId),
+      or(eq(operations.resourceId, input.claimId), sql`${operations.context}->>'claimId' = ${input.claimId}`),
+      sql`${operations.status} not in ('COMPLETED', 'SUCCEEDED', 'RECONCILED', 'FAILED_PROTOCOL', 'TERMINAL_FAILURE')`,
+    )).orderBy(desc(operations.updatedAt), desc(operations.id)).limit(1),
+    database.select().from(auditEvents).where(and(
+      eq(auditEvents.tenantId, input.tenantId),
+      or(eq(auditEvents.resourceId, input.claimId), sql`${auditEvents.references}->>'claimId' = ${input.claimId}`),
+    )).orderBy(auditEvents.createdAt, auditEvents.id).limit(100),
+    database.select().from(chainEvents).where(and(eq(chainEvents.tenantId, input.tenantId), eq(chainEvents.claimKey, claimRow.claimKey))).orderBy(chainEvents.ledgerSequence, chainEvents.eventId).limit(100),
+  ]);
+
+  const claimPayload = {
+    ...object(claimRow.canonicalPayload), id: claimRow.id, tenantId: claimRow.tenantId, claimKey: claimRow.claimKey,
+    state: claimRow.state, eligibleSettlementValue: moneyFromClaim(claimRow), createdAt: claimRow.createdAt.toISOString(),
+    updatedAt: claimRow.updatedAt.toISOString(), version: claimRow.version,
+  };
+  const parts = safeWorkspaceParts({
+    claim: normalizeReasons(claimPayload),
+    ...(attestationRow === undefined ? {} : { attestation: normalizeReasons(attestationRow.canonicalPayload) }),
+    ...(offerRow === undefined ? {} : { latestOffer: offerRow.canonicalPayload }),
+    ...(evidenceRow === undefined ? {} : { controlEvidence: normalizeReasons({ ...object(evidenceRow.canonicalPayload), documentSecretRef: undefined }) }),
+    ...(facilityRow === undefined ? {} : { facilityPosition: facilityView(facilityRow, claimPayload, config) }),
+    ...(waterfallRow === undefined ? {} : { latestWaterfall: waterfallView(waterfallRow) }),
+    ...(resolutionRow === undefined ? {} : { resolutionCase: normalizeReasons(resolutionRow.canonicalPayload) }),
+  });
+  const stellarReferences = stellarRows.map((row) => stellarReference(row, config));
+  const referenceByHash = new Map(stellarRows.map((row, index) => [row.transactionHash, String(stellarReferences[index]?.id)]));
+  return {
+    allowedActions: allowedWorkspaceActions({
+      ...(parts.controlEvidence === null
+        ? {}
+        : { controlStatus: parts.controlEvidence.status }),
+      ...(parts.latestOffer === null ? {} : { offerStatus: parts.latestOffer.status }),
+      role: input.role,
+      sandbox: config.sandbox,
+      state: parts.claim.state,
+    }),
+    chainMode: config.chainMode,
+    checkpoint: { asOf: claimRow.updatedAt.toISOString(), version: claimRow.version },
+    ...parts,
+    pendingOperation: pendingRow === undefined ? null : pendingOperation(pendingRow),
+    sandbox: config.sandbox,
+    stellarReferences,
+    timeline: timelineRows.map((row) => timeline(row, referenceByHash)),
+  };
+}
+
 export class PostgresClaimWorkspaceRepository implements ClaimWorkspaceRepository {
   constructor(private readonly database: JejakDatabase, private readonly config: ClaimWorkspaceConfiguration) {}
 
@@ -33,62 +102,7 @@ export class PostgresClaimWorkspaceRepository implements ClaimWorkspaceRepositor
     return this.database.transaction(async (transaction) => {
       const database = transaction as JejakDatabase;
       await applyTransactionContext(database, input);
-      const [claimRow] = await database.select().from(claims).where(and(eq(claims.tenantId, input.tenantId), eq(claims.id, input.claimId))).limit(1);
-      if (claimRow === undefined) return undefined;
-
-      const [[attestationRow], [offerRow], [evidenceRow], [facilityRow], [waterfallRow], [resolutionRow], [pendingRow], timelineRows, stellarRows] = await Promise.all([
-        database.select().from(eligibilityAttestations).where(and(eq(eligibilityAttestations.tenantId, input.tenantId), eq(eligibilityAttestations.claimId, input.claimId))).orderBy(desc(eligibilityAttestations.updatedAt), desc(eligibilityAttestations.id)).limit(1),
-        database.select().from(financingOffers).where(and(eq(financingOffers.tenantId, input.tenantId), eq(financingOffers.claimId, input.claimId))).orderBy(desc(financingOffers.updatedAt), desc(financingOffers.id)).limit(1),
-        database.select().from(controlEvidence).where(and(eq(controlEvidence.tenantId, input.tenantId), eq(controlEvidence.claimId, input.claimId))).orderBy(desc(controlEvidence.updatedAt), desc(controlEvidence.id)).limit(1),
-        database.select().from(facilityPositions).where(and(eq(facilityPositions.tenantId, input.tenantId), eq(facilityPositions.claimId, input.claimId))).orderBy(desc(facilityPositions.updatedAt), desc(facilityPositions.id)).limit(1),
-        database.select().from(waterfallResults).where(and(eq(waterfallResults.tenantId, input.tenantId), eq(waterfallResults.claimId, input.claimId))).orderBy(desc(waterfallResults.createdAt), desc(waterfallResults.id)).limit(1),
-        database.select().from(resolutionCases).where(and(eq(resolutionCases.tenantId, input.tenantId), eq(resolutionCases.claimId, input.claimId))).orderBy(desc(resolutionCases.updatedAt), desc(resolutionCases.id)).limit(1),
-        database.select().from(operations).where(and(
-          eq(operations.tenantId, input.tenantId),
-          or(eq(operations.resourceId, input.claimId), sql`${operations.context}->>'claimId' = ${input.claimId}`),
-          sql`${operations.status} not in ('COMPLETED', 'SUCCEEDED', 'RECONCILED', 'FAILED_PROTOCOL', 'TERMINAL_FAILURE')`,
-        )).orderBy(desc(operations.updatedAt), desc(operations.id)).limit(1),
-        database.select().from(auditEvents).where(and(
-          eq(auditEvents.tenantId, input.tenantId),
-          or(eq(auditEvents.resourceId, input.claimId), sql`${auditEvents.references}->>'claimId' = ${input.claimId}`),
-        )).orderBy(auditEvents.createdAt, auditEvents.id).limit(100),
-        database.select().from(chainEvents).where(and(eq(chainEvents.tenantId, input.tenantId), eq(chainEvents.claimKey, claimRow.claimKey))).orderBy(chainEvents.ledgerSequence, chainEvents.eventId).limit(100),
-      ]);
-
-      const claimPayload = {
-        ...object(claimRow.canonicalPayload), id: claimRow.id, tenantId: claimRow.tenantId, claimKey: claimRow.claimKey,
-        state: claimRow.state, eligibleSettlementValue: moneyFromClaim(claimRow), createdAt: claimRow.createdAt.toISOString(),
-        updatedAt: claimRow.updatedAt.toISOString(), version: claimRow.version,
-      };
-      const parts = safeWorkspaceParts({
-        claim: normalizeReasons(claimPayload),
-        ...(attestationRow === undefined ? {} : { attestation: normalizeReasons(attestationRow.canonicalPayload) }),
-        ...(offerRow === undefined ? {} : { latestOffer: offerRow.canonicalPayload }),
-        ...(evidenceRow === undefined ? {} : { controlEvidence: normalizeReasons({ ...object(evidenceRow.canonicalPayload), documentSecretRef: undefined }) }),
-        ...(facilityRow === undefined ? {} : { facilityPosition: facilityView(facilityRow, claimPayload, this.config) }),
-        ...(waterfallRow === undefined ? {} : { latestWaterfall: waterfallView(waterfallRow) }),
-        ...(resolutionRow === undefined ? {} : { resolutionCase: normalizeReasons(resolutionRow.canonicalPayload) }),
-      });
-      const stellarReferences = stellarRows.map((row) => stellarReference(row, this.config));
-      const referenceByHash = new Map(stellarRows.map((row, index) => [row.transactionHash, String(stellarReferences[index]?.id)]));
-      return {
-        allowedActions: allowedWorkspaceActions({
-          ...(parts.controlEvidence === null
-            ? {}
-            : { controlStatus: parts.controlEvidence.status }),
-          ...(parts.latestOffer === null ? {} : { offerStatus: parts.latestOffer.status }),
-          role: input.role,
-          sandbox: this.config.sandbox,
-          state: parts.claim.state,
-        }),
-        chainMode: this.config.chainMode,
-        checkpoint: { asOf: claimRow.updatedAt.toISOString(), version: claimRow.version },
-        ...parts,
-        pendingOperation: pendingRow === undefined ? null : pendingOperation(pendingRow),
-        sandbox: this.config.sandbox,
-        stellarReferences,
-        timeline: timelineRows.map((row) => timeline(row, referenceByHash)),
-      };
+      return queryClaimWorkspace(database, this.config, input);
     }, { accessMode: "read only", isolationLevel: "repeatable read" });
   }
 }

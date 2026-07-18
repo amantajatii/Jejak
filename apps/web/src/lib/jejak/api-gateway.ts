@@ -1,24 +1,9 @@
 import type { JejakClient } from "@jejak/api-client";
 import { JejakGatewayError } from "./errors.ts";
-import type { ActionCommand, ActionReceipt, ClaimWorkspace, DemoContext, DemoRole, DemoScenario, DemoSession, JejakAction, JejakGateway, Money, PortfolioView } from "./gateway.ts";
+import { ROLE_BY_ACTION, type ActionCommand, type ActionReceipt, type ClaimWorkspace, type DemoContext, type DemoRole, type DemoScenario, type DemoSession, type JejakGateway, type MarketplaceSyncResult, type Money, type PortfolioView } from "./gateway.ts";
 import { mapDemoContext, mapDemoSession, mapPortfolio, mapWorkspace } from "./api-mapping.ts";
 
 function randomKey() { return globalThis.crypto?.randomUUID?.() ?? `key-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
-
-const ROLE_BY_ACTION: Record<JejakAction, DemoRole> = {
-  ACCEPT_OFFER: "SELLER",
-  ANALYZE: "ORIGINATOR",
-  CLOSE_RESOLUTION: "RESOLVER",
-  CREATE_OFFER: "ORIGINATOR",
-  FUND: "FACILITY",
-  ISSUE: "ISSUER",
-  OPEN_RESOLUTION: "RESOLVER",
-  RECORD_RECOVERY: "RESOLVER",
-  RECORD_SETTLEMENT: "SERVICER",
-  REFUND_SPIKE: "ORIGINATOR",
-  RUN_WATERFALL: "SERVICER",
-  VERIFY_CONTROL: "ORIGINATOR",
-};
 
 function checkedFee(gross: Money): Money {
   return { ...gross, amountMinor: ((BigInt(gross.amountMinor) * 400n) / 10_000n).toString() };
@@ -29,10 +14,29 @@ async function sha256Hex(value: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Mirrors the backend's `deterministicUuidV7` (apps/api/src/modules/demo/reset-service.ts):
+ * sha256(seed) truncated to 16 bytes with UUIDv7 version/variant bits forced. Given the same
+ * idempotency key the demo reset used server-side, this recomputes the exact same entity ids
+ * (e.g. the seeded marketplace connection) without the API needing to expose them separately.
+ */
+async function deterministicUuidV7(seed: string): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(seed));
+  const bytes = new Uint8Array(digest).slice(0, 16);
+  bytes[6] = (bytes[6]! & 0x0f) | 0x70;
+  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 type ApiEnvelope<T> = { data: T; meta: { requestId: string; timestamp: string; sandbox: boolean } };
 type ApiErrorEnvelope = { error?: { code?: string; message?: string; retryable?: boolean } };
 type SessionStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const SESSION_KEY = "jejak.api.session.v1";
+// `window.fetch` is context-sensitive in browsers. Keep the call attached to its
+// global owner instead of storing and later invoking the native function as a
+// gateway instance method, which Chrome rejects before any network request.
+const defaultFetch: typeof globalThis.fetch = (input, init) => globalThis.fetch(input, init);
 
 export class ApiJejakGateway implements JejakGateway {
   readonly transport = "api" as const;
@@ -41,18 +45,22 @@ export class ApiJejakGateway implements JejakGateway {
   private activeScenario: DemoScenario | null = null;
   private settlementEventByClaim: Record<string, string> = {};
   private tenantId: string | null = null;
+  /** The idempotency key resetDemo() was last called with for the current tenant — needed to
+   * recompute deterministic ids (e.g. the seeded marketplace connection) client-side. */
+  private resetIdempotencyKey: string | null = null;
 
   private readonly baseUrl: string; private readonly fetchImpl: typeof globalThis.fetch; private readonly now: () => Date; private readonly storage?: SessionStorage;
-  constructor(baseUrl: string, fetchImpl: typeof globalThis.fetch = globalThis.fetch, now: () => Date = () => new Date(), storage: SessionStorage | undefined = typeof window === "undefined" ? undefined : window.sessionStorage) {
+  constructor(baseUrl: string, fetchImpl: typeof globalThis.fetch = defaultFetch, now: () => Date = () => new Date(), storage: SessionStorage | undefined = typeof window === "undefined" ? undefined : window.sessionStorage) {
     this.baseUrl = baseUrl; this.fetchImpl = fetchImpl; this.now = now; this.storage = storage;
     if (!/^https?:\/\//.test(baseUrl)) throw new JejakGatewayError("INVALID_CONFIGURATION", "NEXT_PUBLIC_JEJAK_API_URL must be an absolute HTTP URL.");
     const saved = storage?.getItem(SESSION_KEY);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as { activeRole?: DemoRole; activeScenario?: DemoScenario; settlementEventByClaim?: Record<string, string>; tenantId?: string };
+        const parsed = JSON.parse(saved) as { activeRole?: DemoRole; activeScenario?: DemoScenario; resetIdempotencyKey?: string; settlementEventByClaim?: Record<string, string>; tenantId?: string };
         this.tenantId = parsed.tenantId ?? null;
         this.activeRole = parsed.activeRole ?? null;
         this.activeScenario = parsed.activeScenario ?? null;
+        this.resetIdempotencyKey = parsed.resetIdempotencyKey ?? null;
         this.settlementEventByClaim = parsed.settlementEventByClaim ?? {};
       } catch {
         storage?.removeItem(SESSION_KEY);
@@ -68,7 +76,13 @@ export class ApiJejakGateway implements JejakGateway {
     if (this.tenantId) headers.set("X-Jejak-Tenant-Id", this.tenantId);
     let response: Response;
     try { response = await this.fetchImpl(new URL(path, this.baseUrl), { ...init, headers }); }
-    catch { throw new JejakGatewayError("TRANSPORT_FAILURE", "The API did not respond. Reconcile before retrying.", true); }
+    catch {
+      throw new JejakGatewayError(
+        "TRANSPORT_FAILURE",
+        `The API at ${this.baseUrl} did not respond. Start the API with \`bun run dev\` in apps/api, then retry.`,
+        true,
+      );
+    }
     const payload = await response.json().catch(() => ({})) as ApiEnvelope<T> & ApiErrorEnvelope;
     if (!response.ok) throw new JejakGatewayError(payload.error?.code ?? `HTTP_${response.status}`, payload.error?.message ?? "The API rejected the request.", payload.error?.retryable ?? response.status >= 500, response.status);
     return payload.data;
@@ -96,10 +110,20 @@ export class ApiJejakGateway implements JejakGateway {
     const context = mapDemoContext(be);
     this.tenantId = context.tenantId;
     this.activeScenario = context.scenario;
+    this.resetIdempotencyKey = idempotencyKey;
     this.settlementEventByClaim = {};
     this.activeRole = null;
     this.persistContext();
     return context;
+  }
+
+  /** Sandbox marketplace connector sync — POST /v1/marketplace-connections/:id/sync. */
+  async syncMarketplace(idempotencyKey: string): Promise<MarketplaceSyncResult> {
+    if (!this.resetIdempotencyKey) throw new JejakGatewayError("INVALID_STATE_TRANSITION", "Sign in before connecting a marketplace.", false, 409);
+    const marketplaceConnectionId = await deterministicUuidV7(`${this.resetIdempotencyKey}:marketplace-connection`);
+    return this.request<MarketplaceSyncResult>(`/v1/marketplace-connections/${encodeURIComponent(marketplaceConnectionId)}/sync`, {
+      method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: JSON.stringify({}),
+    });
   }
 
   async createDemoSession(role: DemoRole): Promise<DemoSession> {
@@ -281,6 +305,7 @@ export class ApiJejakGateway implements JejakGateway {
     this.storage?.setItem(SESSION_KEY, JSON.stringify({
       ...(this.activeRole === null ? {} : { activeRole: this.activeRole }),
       ...(this.activeScenario === null ? {} : { activeScenario: this.activeScenario }),
+      ...(this.resetIdempotencyKey === null ? {} : { resetIdempotencyKey: this.resetIdempotencyKey }),
       settlementEventByClaim: this.settlementEventByClaim,
       tenantId: this.tenantId,
     }));

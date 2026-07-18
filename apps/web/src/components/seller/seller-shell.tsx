@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MenuButton, MobileNav } from "@/components/operations/WorkspaceNav";
 import { WorkspaceSidebar } from "@/components/operations/WorkspaceSidebar";
 import { useJejak } from "@/lib/jejak/provider";
 
 const navigation = [
   ["Overview", "/seller/dashboard"],
-  ["Data source", "/seller/data-source"],
+  ["Connect marketplace", "/seller/connect"],
   ["Offer", "/seller/offers/active"],
   ["Claim", "/seller/claims/claim-001"],
 ] as const;
@@ -20,8 +20,10 @@ export function SellerShell({ children }: { children: React.ReactNode }) {
   const [accountMenuVisible, setAccountMenuVisible] = useState(false);
   const accountMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname();
-  const { context } = useJejak();
+  const router = useRouter();
+  const { context, signOut } = useJejak();
   const isNavigationActive = (href: string) => pathname.startsWith(href.replace(/\/(active|claim-001)$/, ""));
+  function switchAccount() { signOut(); router.push("/login"); }
   const navItems = navigation.map(([label, href]) => ({ label, href, isActive: isNavigationActive(href) }));
   function openAccountMenu() {
     if (accountMenuTimer.current) clearTimeout(accountMenuTimer.current);
@@ -46,7 +48,7 @@ export function SellerShell({ children }: { children: React.ReactNode }) {
           <span>Authoritative scenario</span>
           <strong>{context?.scenario ?? "Not reset"}</strong>
         </div>
-        <div className="profile-row">{accountMenuVisible && <div className={`profile-menu${accountMenuOpen ? "" : " is-closing"}`} id="seller-account-menu" role="menu"><Link href="/seller/onboarding" role="menuitem" onClick={closeAccountMenu}>Seller setup</Link><button type="button" role="menuitem" onClick={closeAccountMenu}>Close menu</button></div>}<button className="profile-trigger" type="button" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}><span className="avatar">DP</span><span><strong>Dinda</strong><small>Seller</small></span></button><button className="profile-menu-button" type="button" aria-label="Open account menu" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}>•••</button></div></>}
+        <div className="profile-row">{accountMenuVisible && <div className={`profile-menu${accountMenuOpen ? "" : " is-closing"}`} id="seller-account-menu" role="menu"><button type="button" role="menuitem" onClick={() => { closeAccountMenu(); switchAccount(); }}>Switch account</button></div>}<button className="profile-trigger" type="button" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}><span className="avatar">SL</span><span><strong>Seller account</strong><small>Sandbox identity</small></span></button><button className="profile-menu-button" type="button" aria-label="Open account menu" aria-expanded={accountMenuOpen} aria-controls="seller-account-menu" onClick={toggleAccountMenu}>•••</button></div></>}
         footerClassName="seller-sidebar-bottom"
       />
       <div className="seller-main">

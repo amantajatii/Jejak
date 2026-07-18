@@ -6,7 +6,7 @@ WORKDIR /workspace
 
 RUN corepack enable && corepack prepare pnpm@10.18.3 --activate
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json .npmrc ./
 COPY apps/api/package.json apps/api/package.json
 COPY packages/domain/package.json packages/domain/package.json
 COPY packages/config/package.json packages/config/package.json

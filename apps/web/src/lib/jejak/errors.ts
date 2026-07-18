@@ -10,7 +10,7 @@ export function explainError(error: unknown) {
     FORBIDDEN: ["This role cannot perform that action", "Switch to the role shown beside the next action."],
     INVALID_STATE_TRANSITION: ["The claim has already moved", "We refreshed the authoritative workspace state."],
     VERSION_CONFLICT: ["The financial state changed", "Review the refreshed amounts and confirm again."],
-    TRANSPORT_FAILURE: ["The connection was interrupted", "The command identity is preserved. Refresh status before retrying."],
+    TRANSPORT_FAILURE: ["The API connection was interrupted", "Check that the local API is running, then refresh and retry."],
     INTERFACE_NOT_READY: ["API integration is waiting for its generated contract", "Use mock transport until the Person 1 ClaimWorkspace handoff is published."],
   };
   const [title, detail] = known[error.code] ?? ["The action could not be completed", error.message];

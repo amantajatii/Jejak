@@ -46,7 +46,8 @@ export type PortfolioMoneyRow = {
 };
 
 export type PortfolioReadProjection = {
-  checkpointUpdatedAt?: Date;
+  /** Postgres aggregate expressions may be decoded as ISO strings rather than Dates. */
+  checkpointUpdatedAt?: Date | string;
   mismatchedSubmissions: number;
   money: PortfolioMoneyRow[];
   pendingSubmissions: number;

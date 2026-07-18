@@ -45,11 +45,9 @@ import {
   type ResolutionReconciliationPort,
   type ResolutionRouteDependencies,
 } from "../modules/resolution/index.js";
-import {
-  ClaimWorkspaceService,
-  PostgresClaimWorkspaceRepository,
-  type ClaimWorkspaceConfiguration,
-  type WorkspaceRouteDependencies,
+import type {
+  ClaimWorkspaceConfiguration,
+  WorkspaceRouteDependencies,
 } from "../modules/workspace/index.js";
 import type { InvitationRouteDependencies } from "../routes/invitations.js";
 import type { ReadModelRouteDependencies } from "../routes/read-models.js";
@@ -197,11 +195,10 @@ export function createRuntimeRouteDependencies(input: {
       ? {}
       : {
           workspaceDependencies: {
-            ...authorization,
+            config: input.workspace,
+            database: input.database,
             sandbox: input.workspace.sandbox,
-            service: new ClaimWorkspaceService(
-              new PostgresClaimWorkspaceRepository(input.database, input.workspace),
-            ),
+            verifier: input.verifier,
           },
         }),
   };
